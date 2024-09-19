@@ -1,0 +1,75 @@
+[project]
+name = "elastic-opentelemetry-instrumentation-openai"
+dynamic = ["version"]
+description = "OpenAI Instrumentation Package"
+authors = [
+    {name = "Riccardo Magliocchetti", email = "riccardo.magliocchetti@elastic.co"},
+]
+maintainers = [
+    {name = "Riccardo Magliocchetti", email = "riccardo.magliocchetti@elastic.co"},
+]
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Framework :: OpenTelemetry",
+    "Framework :: OpenTelemetry :: Distros",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    # 1.27.0 is required for Events API
+    "opentelemetry-api >= 1.27.0",
+    "opentelemetry-instrumentation >= 0.48b0",
+    "opentelemetry-semantic-conventions >= 0.48b0",
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/elastic/elastic-otel-python-instrumentations"
+"Bug Tracker" = "https://github.com/elastic/elastic-otel-python-instrumentations/issues"
+
+[project.optional-dependencies]
+dev = ["pytest", "pip-tools", "openai", "opentelemetry-test-utils", "vcrpy"]
+instruments = [
+  "openai >= 1.0.0",
+]
+
+[project.entry-points.opentelemetry_instrumentor]
+openai = "opentelemetry.instrumentation.openai:OpenAIInstrumentor"
+
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[tool.setuptools]
+include-package-data = true
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "opentelemetry.instrumentation.openai.version.__version__"}
+
+[tool.ruff]
+target-version = "py38"
+line-length = 120
+
+[tool.ruff.lint.isort]
+known-third-party = [
+  "opentelemetry",
+]

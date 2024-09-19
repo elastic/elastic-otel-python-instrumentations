@@ -1,0 +1,113 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are a helpful customer
+      support assistant. Use the supplied tools to assist the user."}, {"role": "user",
+      "content": "Hi, can you tell me the delivery date for my order?"}, {"role":
+      "assistant", "content": "Hi there! I can help with that. Can you please provide
+      your order ID?"}, {"role": "user", "content": "i think it is order_12345"}],
+      "model": "gpt-4o-mini", "tools": [{"type": "function", "function": {"name":
+      "get_delivery_date", "description": "Get the delivery date for a customer''s
+      order. Call this whenever you need to know the delivery date, for example when
+      a customer asks ''Where is my package''", "parameters": {"type": "object", "properties":
+      {"order_id": {"type": "string", "description": "The customer''s order ID."}},
+      "required": ["order_id"], "additionalProperties": false}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '842'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      openai-organization:
+      - test_openai_org_key
+      openai-project:
+      - test_openai_project_id
+      user-agent:
+      - AsyncOpenAI/Python 1.43.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.43.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.5
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: "{\n  \"id\": \"chatcmpl-A9CT8USSOYj6tJBMsrClMJdppNCf3\",\n  \"object\":
+        \"chat.completion\",\n  \"created\": 1726756246,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n
+        \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
+        \"assistant\",\n        \"content\": null,\n        \"tool_calls\": [\n          {\n
+        \           \"id\": \"call_GVSapIIRQ6xmhIGepoc0nTyQ\",\n            \"type\":
+        \"function\",\n            \"function\": {\n              \"name\": \"get_delivery_date\",\n
+        \             \"arguments\": \"{\\\"order_id\\\":\\\"order_12345\\\"}\"\n
+        \           }\n          }\n        ],\n        \"refusal\": null\n      },\n
+        \     \"logprobs\": null,\n      \"finish_reason\": \"tool_calls\"\n    }\n
+        \ ],\n  \"usage\": {\n    \"prompt_tokens\": 140,\n    \"completion_tokens\":
+        19,\n    \"total_tokens\": 159,\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\":
+        0\n    }\n  },\n  \"system_fingerprint\": \"fp_e9627b5346\"\n}\n"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8c5a468c2915ce4f-SIN
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 19 Sep 2024 14:30:47 GMT
+      Server:
+      - cloudflare
+      Set-Cookie: test_set_cookie
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '855'
+      openai-organization: test_openai_org_key
+      openai-processing-ms:
+      - '565'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15552000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '200000'
+      x-ratelimit-remaining-requests:
+      - '9992'
+      x-ratelimit-remaining-tokens:
+      - '199921'
+      x-ratelimit-reset-requests:
+      - 1m4.051s
+      x-ratelimit-reset-tokens:
+      - 23ms
+      x-request-id:
+      - req_b360a3435f90b260591649ad9067f57d
+    status:
+      code: 200
+      message: OK
+version: 1

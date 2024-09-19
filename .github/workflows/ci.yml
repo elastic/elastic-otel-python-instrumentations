@@ -1,0 +1,61 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/env-install
+    - uses: pre-commit/action@v3.0.1
+
+  license-header-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: ./scripts/license_headers_check.sh
+
+  pip-installable:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        working-dir: ['instrumentation/elastic-opentelemetry-instrumentation-openai']
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/env-install
+    - run: pip install .
+      working-directory: ${{ matrix.working-dir }}
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      py38: 3.8
+      py39: 3.9
+      py310: "3.10"
+      py311: "3.11"
+      py312: "3.12"
+    strategy:
+      fail-fast: false
+      matrix:
+        working-dir: ['instrumentation/elastic-opentelemetry-instrumentation-openai']
+        python-version: [py38, py39, py310, py311, py312]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ env[matrix.python-version] }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env[matrix.python-version] }}
+        architecture: "x64"
+    - run: pip install -r dev-requirements.txt
+      working-directory: ${{ matrix.working-dir }}
+    - run: pytest
+      working-directory: ${{ matrix.working-dir }}
