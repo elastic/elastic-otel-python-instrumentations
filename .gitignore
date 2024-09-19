@@ -14,6 +14,7 @@ pip-log.txt
 /build
 /cover
 /dist
+/instrumentation/*/dist
 /example_project/local_settings.py
 /docs/html
 /docs/doctrees
