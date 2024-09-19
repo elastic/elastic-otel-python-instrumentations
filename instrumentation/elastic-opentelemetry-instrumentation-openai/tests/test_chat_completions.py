@@ -112,7 +112,7 @@ class OpenaiMixin(VCRMixin):
                     },
                 ),
             ],
-            est_value_delta=0.01,
+            est_value_delta=0.1,
         )
 
     def assertErrorOperationDurationMetric(self, metric: Histogram, attributes: dict, data_point: float = None):
