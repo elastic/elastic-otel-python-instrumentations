@@ -46,7 +46,7 @@ messages = [
 chat_completion = client.chat.completions.create(model="gpt-4o-mini", messages=messages)
 ```
 
-### Instrumentation specific configuration environment variables
+### Instrumentation specific environment variable configuration
 
 - `ELASTIC_OTEL_GENAI_CAPTURE_CONTENT` (default: `false`): when sets to `true` collect more
 informations about prompts and responses by enabling content capture
