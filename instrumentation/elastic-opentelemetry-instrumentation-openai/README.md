@@ -22,7 +22,7 @@ pip install elastic-opentelemetry-instrumentation-openai
 This instrumentation supports *0-code* / *auto* instrumentation:
 
 ```
-ELASTIC_OTEL_GENAI_CAPTURE_CONTENT=true opentelemetry-instrument python use_openai.py
+opentelemetry-instrument python use_openai.py
 ```
 
 Or manual instrumentation:
@@ -46,7 +46,7 @@ messages = [
 chat_completion = client.chat.completions.create(model="gpt-4o-mini", messages=messages)
 ```
 
-### Instrumentation specific configuration variables
+### Instrumentation specific configuration environment variables
 
 - `ELASTIC_OTEL_GENAI_CAPTURE_CONTENT` (default: `false`): when sets to `true` collect more
 informations about prompts and responses by enabling content capture
