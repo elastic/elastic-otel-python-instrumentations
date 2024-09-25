@@ -44,15 +44,18 @@ jobs:
     environment: release
     permissions:
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+    env:
+      DIST_DIR: instrumentation/elastic-opentelemetry-instrumentation-openai/dist/
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: packages
-          path: instrumentation/elastic-opentelemetry-instrumentation-openai/dist
+          path: ${{ env.DIST_DIR }}
 
       - name: Upload pypi.org
         if: startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@897895f1e160c830e369f9779632ebc134688e1b
         with:
           repository-url: https://upload.pypi.org/legacy/
-          attestation: true
+          packages-dir: ${{ env.DIST_DIR }}
+          attestations: true
