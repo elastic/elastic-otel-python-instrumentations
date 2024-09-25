@@ -7,4 +7,4 @@ Initial release with the following features:
 - Streaming support
 - Functions calling with tools
 - Client side metrics
-- Following 1.27.0 Gen AI Semantic Convention
+- Following 1.27.0 [Gen AI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/)
