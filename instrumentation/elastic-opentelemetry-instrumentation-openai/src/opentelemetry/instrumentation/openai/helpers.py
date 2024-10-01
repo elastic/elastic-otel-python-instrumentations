@@ -112,17 +112,17 @@ def _get_span_attributes_from_wrapper(instance, kwargs):
                 elif scheme == "https":
                     span_attributes[SERVER_PORT] = 443
 
-    if frequency_penalty := kwargs.get("frequency_penalty") is not None:
+    if (frequency_penalty := kwargs.get("frequency_penalty")) is not None:
         span_attributes[GEN_AI_REQUEST_FREQUENCY_PENALTY] = frequency_penalty
-    if max_tokens := kwargs.get("max_tokens") is not None:
+    if (max_tokens := kwargs.get("max_completion_tokens", kwargs.get("max_tokens"))) is not None:
         span_attributes[GEN_AI_REQUEST_MAX_TOKENS] = max_tokens
-    if presence_penalty := kwargs.get("presence_penalty") is not None:
+    if (presence_penalty := kwargs.get("presence_penalty")) is not None:
         span_attributes[GEN_AI_REQUEST_PRESENCE_PENALTY] = presence_penalty
-    if temperature := kwargs.get("temperature") is not None:
+    if (temperature := kwargs.get("temperature")) is not None:
         span_attributes[GEN_AI_REQUEST_TEMPERATURE] = temperature
-    if top_p := kwargs.get("top_p") is not None:
+    if (top_p := kwargs.get("top_p")) is not None:
         span_attributes[GEN_AI_REQUEST_TOP_P] = top_p
-    if stop_sequences := kwargs.get("stop") is not None:
+    if (stop_sequences := kwargs.get("stop")) is not None:
         if isinstance(stop_sequences, str):
             stop_sequences = [stop_sequences]
         span_attributes[GEN_AI_REQUEST_STOP_SEQUENCES] = stop_sequences
