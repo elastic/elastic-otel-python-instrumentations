@@ -1166,4 +1166,8 @@ class TestAsyncChatCompletions(OpenaiMixin, TestBase, IsolatedAsyncioTestCase):
         self.assertEqual(span.events, ())
 
         (operation_duration_metric,) = self.get_sorted_metrics()
-        self.assertErrorOperationDurationMetric(operation_duration_metric, {"error.type": "APIConnectionError"})
+        self.assertErrorOperationDurationMetric(
+            operation_duration_metric,
+            {"error.type": "APIConnectionError"},
+            data_point=0.0072969673201441765,
+        )
