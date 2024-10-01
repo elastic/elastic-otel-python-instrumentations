@@ -8,7 +8,13 @@
 The Elastic Distribution of OpenTelemetry Python (EDOT Python) is a customized version of [OpenTelemetry Python](https://opentelemetry.io/docs/languages/python).
 EDOT Python makes it easier to get started using OpenTelemetry in your Python applications through strictly OpenTelemetry native means, while also providing a smooth and rich out of the box experience with [Elastic Observability](https://www.elastic.co/observability). It's an explicit goal of this distribution to introduce **no new concepts** in addition to those defined by the wider OpenTelemetry community.
 
-This repository contains instrumentation libraries following the OpenTelemetry Semantic conventions.
+With EDOT Python you have access to all the features of the OpenTelemetry Python agent plus:
+
+* Access to improvements and bug fixes contributed by the Elastic team _before_ the changes are available upstream in OpenTelemetry repositories.
+* Access to optional features that can enhance OpenTelemetry data that is being sent to Elastic.
+* Elastic-specific processors that ensure optimal compatibility when exporting OpenTelemetry signal data to an Elastic backend like an Elastic Observability deployment.
+* Preconfigured collection of tracing and metrics signals, applying some opinionated defaults, such as which sources are collected by default.
+* Elastic-specific enhancements and integrations such as extensions to GenAI semantic conventions
 
 ## Available instrumentations
 
