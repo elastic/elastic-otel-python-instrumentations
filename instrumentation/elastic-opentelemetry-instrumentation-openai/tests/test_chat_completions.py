@@ -141,16 +141,16 @@ class OpenaiMixin(VCRMixin):
             est_value_delta=0.5,
         )
 
-    def assertTokenUsageMetric(self, metric: Histogram):
+    def assertTokenUsageMetric(self, metric: Histogram, input_data_point=24, output_data_point=4):
         self.assertEqual(metric.name, "gen_ai.client.token.usage")
         self.assert_metric_expected(
             metric,
             [
                 self.create_histogram_data_point(
                     count=1,
-                    sum_data_point=24,
-                    max_data_point=24,
-                    min_data_point=24,
+                    sum_data_point=input_data_point,
+                    max_data_point=input_data_point,
+                    min_data_point=input_data_point,
                     attributes={
                         "gen_ai.operation.name": "chat",
                         "gen_ai.request.model": OPENAI_TOOL_MODEL,
@@ -163,9 +163,9 @@ class OpenaiMixin(VCRMixin):
                 ),
                 self.create_histogram_data_point(
                     count=1,
-                    sum_data_point=4,
-                    max_data_point=4,
-                    min_data_point=4,
+                    sum_data_point=output_data_point,
+                    max_data_point=output_data_point,
+                    min_data_point=output_data_point,
                     attributes={
                         "gen_ai.operation.name": "chat",
                         "gen_ai.request.model": OPENAI_TOOL_MODEL,
@@ -286,6 +286,10 @@ class TestChatCompletions(OpenaiMixin, TestBase):
             },
         )
         self.assertEqual(span.events, ())
+
+        operation_duration_metric, token_usage_metric = self.get_sorted_metrics()
+        self.assertOperationDurationMetric(operation_duration_metric)
+        self.assertTokenUsageMetric(token_usage_metric, input_data_point=140, output_data_point=19)
 
     def test_tools_with_capture_content(self):
         # Redo the instrumentation dance to be affected by the environment variable
