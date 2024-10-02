@@ -25,7 +25,13 @@ from opentelemetry.metrics import Histogram
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPERATION_NAME,
+    GEN_AI_REQUEST_FREQUENCY_PENALTY,
+    GEN_AI_REQUEST_MAX_TOKENS,
     GEN_AI_REQUEST_MODEL,
+    GEN_AI_REQUEST_PRESENCE_PENALTY,
+    GEN_AI_REQUEST_STOP_SEQUENCES,
+    GEN_AI_REQUEST_TEMPERATURE,
+    GEN_AI_REQUEST_TOP_P,
     GEN_AI_SYSTEM,
     GEN_AI_RESPONSE_ID,
     GEN_AI_RESPONSE_MODEL,
@@ -141,16 +147,16 @@ class OpenaiMixin(VCRMixin):
             est_value_delta=0.5,
         )
 
-    def assertTokenUsageMetric(self, metric: Histogram):
+    def assertTokenUsageMetric(self, metric: Histogram, input_data_point=24, output_data_point=4):
         self.assertEqual(metric.name, "gen_ai.client.token.usage")
         self.assert_metric_expected(
             metric,
             [
                 self.create_histogram_data_point(
                     count=1,
-                    sum_data_point=24,
-                    max_data_point=24,
-                    min_data_point=24,
+                    sum_data_point=input_data_point,
+                    max_data_point=input_data_point,
+                    min_data_point=input_data_point,
                     attributes={
                         "gen_ai.operation.name": "chat",
                         "gen_ai.request.model": OPENAI_TOOL_MODEL,
@@ -163,9 +169,9 @@ class OpenaiMixin(VCRMixin):
                 ),
                 self.create_histogram_data_point(
                     count=1,
-                    sum_data_point=4,
-                    max_data_point=4,
-                    min_data_point=4,
+                    sum_data_point=output_data_point,
+                    max_data_point=output_data_point,
+                    min_data_point=output_data_point,
                     attributes={
                         "gen_ai.operation.name": "chat",
                         "gen_ai.request.model": OPENAI_TOOL_MODEL,
@@ -209,6 +215,62 @@ class TestChatCompletions(OpenaiMixin, TestBase):
                 GEN_AI_SYSTEM: "openai",
                 GEN_AI_RESPONSE_ID: "chatcmpl-A9CSutUkLCxwZIXuXRXlgEJUCMnlT",
                 GEN_AI_RESPONSE_MODEL: OPENAI_TOOL_MODEL + "-2024-07-18",  # Note it is more specific than request!
+                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+                GEN_AI_USAGE_INPUT_TOKENS: 24,
+                GEN_AI_USAGE_OUTPUT_TOKENS: 4,
+                SERVER_ADDRESS: "api.openai.com",
+                SERVER_PORT: 443,
+            },
+        )
+        self.assertEqual(span.events, ())
+
+        operation_duration_metric, token_usage_metric = self.get_sorted_metrics()
+        self.assertOperationDurationMetric(operation_duration_metric)
+        self.assertTokenUsageMetric(token_usage_metric)
+
+    def test_all_the_client_options(self):
+        messages = [
+            {
+                "role": "user",
+                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+            }
+        ]
+
+        chat_completion = self.client.chat.completions.create(
+            model=OPENAI_TOOL_MODEL,
+            messages=messages,
+            frequency_penalty=0,
+            max_completion_tokens=100,
+            presence_penalty=0,
+            temperature=1,
+            top_p=1,
+            stop="foo",
+        )
+
+        self.assertEqual(chat_completion.choices[0].message.content, "South Atlantic Ocean.")
+
+        spans = self.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+
+        span = spans[0]
+        self.assertEqual(span.name, f"chat {OPENAI_TOOL_MODEL}")
+        self.assertEqual(span.kind, SpanKind.CLIENT)
+        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+
+        self.assertEqual(
+            dict(span.attributes),
+            {
+                GEN_AI_OPERATION_NAME: "chat",
+                GEN_AI_REQUEST_FREQUENCY_PENALTY: 0,
+                GEN_AI_REQUEST_MAX_TOKENS: 100,
+                GEN_AI_REQUEST_MODEL: OPENAI_TOOL_MODEL,
+                GEN_AI_REQUEST_PRESENCE_PENALTY: 0,
+                GEN_AI_REQUEST_STOP_SEQUENCES: ("foo",),
+                GEN_AI_REQUEST_TEMPERATURE: 1,
+                GEN_AI_REQUEST_TOP_P: 1,
+                GEN_AI_SYSTEM: "openai",
+                GEN_AI_RESPONSE_ID: "chatcmpl-ADUdg61PwWqn3FPn4VNkz4vwMkS62",
+                GEN_AI_RESPONSE_MODEL: OPENAI_TOOL_MODEL + "-2024-07-18",  # Note it is more specific than request!,
                 GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
                 GEN_AI_USAGE_INPUT_TOKENS: 24,
                 GEN_AI_USAGE_OUTPUT_TOKENS: 4,
@@ -286,6 +348,10 @@ class TestChatCompletions(OpenaiMixin, TestBase):
             },
         )
         self.assertEqual(span.events, ())
+
+        operation_duration_metric, token_usage_metric = self.get_sorted_metrics()
+        self.assertOperationDurationMetric(operation_duration_metric)
+        self.assertTokenUsageMetric(token_usage_metric, input_data_point=140, output_data_point=19)
 
     def test_tools_with_capture_content(self):
         # Redo the instrumentation dance to be affected by the environment variable
@@ -1166,4 +1232,8 @@ class TestAsyncChatCompletions(OpenaiMixin, TestBase, IsolatedAsyncioTestCase):
         self.assertEqual(span.events, ())
 
         (operation_duration_metric,) = self.get_sorted_metrics()
-        self.assertErrorOperationDurationMetric(operation_duration_metric, {"error.type": "APIConnectionError"})
+        self.assertErrorOperationDurationMetric(
+            operation_duration_metric,
+            {"error.type": "APIConnectionError"},
+            data_point=0.0072969673201441765,
+        )

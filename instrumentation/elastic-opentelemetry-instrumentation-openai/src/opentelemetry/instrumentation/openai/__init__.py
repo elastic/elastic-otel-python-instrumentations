@@ -77,9 +77,9 @@ class OpenAIInstrumentor(BaseInstrumentor):
         capture_content = "true" if kwargs.get("capture_content") else "false"
         self.capture_content = os.environ.get(ELASTIC_OTEL_GENAI_CAPTURE_CONTENT, capture_content).lower() == "true"
         tracer_provider = kwargs.get("tracer_provider")
-        self.tracer = get_tracer(__name__, __version__, tracer_provider, schema_url=Schemas.V1_27_0)
+        self.tracer = get_tracer(__name__, __version__, tracer_provider, schema_url=Schemas.V1_27_0.value)
         meter_provider = kwargs.get("meter_provider")
-        self.meter = get_meter(__name__, __version__, meter_provider, schema_url=Schemas.V1_27_0)
+        self.meter = get_meter(__name__, __version__, meter_provider, schema_url=Schemas.V1_27_0.value)
         self.token_usage_metric = create_gen_ai_client_token_usage(self.meter)
         self.operation_duration_metric = create_gen_ai_client_operation_duration(self.meter)
 
