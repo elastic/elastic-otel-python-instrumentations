@@ -102,7 +102,7 @@ If you have commit access, the process is as follows:
 1. Update the version in `instrumentation/elastic-opentelemetry-instrumentation-openai/src/opentelemetry/instrumentation/openai/version.py` according to the scale of the change (major, minor or patch).
 1. Update `instrumentation/elastic-opentelemetry-instrumentation-openai/CHANGELOG.md` as necessary.
 1. Commit changes with message `update CHANGELOG and bump version to X.Y.Z`
-   where `X.Y.Z` is the version in `src/elasticotel/distro/version.py`
+   where `X.Y.Z` is the version in aforementioned `version.py`
 1. Open a PR against `main` with these changes leaving the body empty
 1. Once the PR is merged, fetch and checkout `upstream/main`
 1. Tag the commit with `git tag -s openai-vX.Y.Z`, for example `git tag -s openai-v1.2.3`.
