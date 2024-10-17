@@ -17,8 +17,8 @@
 import json
 from collections.abc import Iterable
 from timeit import default_timer
+from typing import TYPE_CHECKING
 
-from openai.types import CompletionUsage
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, SERVER_PORT
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
@@ -40,6 +40,11 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from opentelemetry.metrics import Histogram
 from opentelemetry.trace import Span
+
+if TYPE_CHECKING:
+    from openai.types import CompletionUsage
+else:
+    CompletionUsage = None
 
 
 def _set_span_attributes_from_response(

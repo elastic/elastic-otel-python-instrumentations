@@ -20,8 +20,7 @@ import os
 from timeit import default_timer
 from typing import Collection
 
-import openai
-from wrapt import wrap_function_wrapper
+from wrapt import register_post_import_hook, wrap_function_wrapper
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
@@ -83,6 +82,9 @@ class OpenAIInstrumentor(BaseInstrumentor):
         self.token_usage_metric = create_gen_ai_client_token_usage(self.meter)
         self.operation_duration_metric = create_gen_ai_client_operation_duration(self.meter)
 
+        register_post_import_hook(self._patch, "openai")
+
+    def _patch(self, _module):
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "Completions.create",
@@ -95,6 +97,10 @@ class OpenAIInstrumentor(BaseInstrumentor):
         )
 
     def _uninstrument(self, **kwargs):
+        # unwrap only supports uninstrementing real module references so we
+        # import here.
+        import openai
+
         unwrap(openai.resources.chat.completions.Completions, "create")
         unwrap(openai.resources.chat.completions.AsyncCompletions, "create")
 
