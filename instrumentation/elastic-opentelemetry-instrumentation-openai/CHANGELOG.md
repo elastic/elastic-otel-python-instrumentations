@@ -1,5 +1,9 @@
 # Elastic OpenTelemetry Instrumentation OpenAI
 
+## v0.3.0
+
+- Delay loading of the openai module to close race condition with httpx instrumentation (#16)
+
 ## v0.2.0
 
 - Fix tracing of optional OpenAI client parameters (#12)
