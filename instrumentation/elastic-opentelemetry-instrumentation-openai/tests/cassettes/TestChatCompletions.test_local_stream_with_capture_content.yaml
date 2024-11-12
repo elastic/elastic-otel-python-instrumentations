@@ -1,7 +1,7 @@
 interactions:
 - request:
     body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
-      ocean contains the falkland islands?"}], "model": "sam4096/qwen2tools:0.5b",
+      ocean contains the falkland islands?"}], "model": "qwen2.5:0.5b",
       "stream": true}'
     headers:
       accept:
@@ -38,17 +38,17 @@ interactions:
     uri: http://localhost:11434/v1/chat/completions
   response:
     body:
-      string: 'data: {"id":"chatcmpl-829","object":"chat.completion.chunk","created":1726048508,"model":"sam4096/qwen2tools:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"Pacific"},"finish_reason":null}]}
+      string: 'data: {"id":"chatcmpl-829","object":"chat.completion.chunk","created":1726048508,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"Pacific"},"finish_reason":null}]}
 
 
-        data: {"id":"chatcmpl-829","object":"chat.completion.chunk","created":1726048508,"model":"sam4096/qwen2tools:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
+        data: {"id":"chatcmpl-829","object":"chat.completion.chunk","created":1726048508,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
         Ocean"},"finish_reason":null}]}
 
 
-        data: {"id":"chatcmpl-829","object":"chat.completion.chunk","created":1726048508,"model":"sam4096/qwen2tools:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"."},"finish_reason":null}]}
+        data: {"id":"chatcmpl-829","object":"chat.completion.chunk","created":1726048508,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"."},"finish_reason":null}]}
 
 
-        data: {"id":"chatcmpl-829","object":"chat.completion.chunk","created":1726048508,"model":"sam4096/qwen2tools:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"stop"}]}
+        data: {"id":"chatcmpl-829","object":"chat.completion.chunk","created":1726048508,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"stop"}]}
 
 
         data: [DONE]
