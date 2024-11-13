@@ -28,11 +28,13 @@ from opentelemetry.instrumentation.openai.environment_variables import (
     ELASTIC_OTEL_GENAI_CAPTURE_CONTENT,
 )
 from opentelemetry.instrumentation.openai.helpers import (
+    _get_embeddings_span_attributes_from_wrapper,
     _get_span_attributes_from_wrapper,
     _message_from_choice,
     _record_token_usage_metrics,
     _record_operation_duration_metric,
     _set_span_attributes_from_response,
+    _set_embeddings_span_attributes_from_response,
 )
 from opentelemetry.instrumentation.openai.package import _instruments
 from opentelemetry.instrumentation.openai.version import __version__
@@ -95,6 +97,16 @@ class OpenAIInstrumentor(BaseInstrumentor):
             "AsyncCompletions.create",
             self._async_chat_completion_wrapper,
         )
+        wrap_function_wrapper(
+            "openai.resources.embeddings",
+            "Embeddings.create",
+            self._embeddings_wrapper,
+        )
+        wrap_function_wrapper(
+            "openai.resources.embeddings",
+            "AsyncEmbeddings.create",
+            self._async_embeddings_wrapper,
+        )
 
     def _uninstrument(self, **kwargs):
         # unwrap only supports uninstrementing real module references so we
@@ -103,6 +115,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
         unwrap(openai.resources.chat.completions.Completions, "create")
         unwrap(openai.resources.chat.completions.AsyncCompletions, "create")
+        unwrap(openai.resources.embeddings.Embeddings, "create")
+        unwrap(openai.resources.embeddings.AsyncEmbeddings, "create")
 
     def _chat_completion_wrapper(self, wrapped, instance, args, kwargs):
         logger.debug(f"openai.resources.chat.completions.Completions.create kwargs: {kwargs}")
@@ -222,6 +236,66 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     )
                 except TypeError:
                     logger.error(f"Failed to serialize {EVENT_GEN_AI_CONTENT_COMPLETION}")
+
+            span.end()
+
+            return result
+
+    def _embeddings_wrapper(self, wrapped, instance, args, kwargs):
+        span_attributes = _get_embeddings_span_attributes_from_wrapper(instance, kwargs)
+
+        span_name = f"{span_attributes[GEN_AI_OPERATION_NAME]} {span_attributes[GEN_AI_REQUEST_MODEL]}"
+        with self.tracer.start_as_current_span(
+            name=span_name,
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+            # this is important to avoid having the span closed before ending the stream
+            end_on_exit=False,
+        ) as span:
+            start_time = default_timer()
+            try:
+                result = wrapped(*args, **kwargs)
+            except Exception as exc:
+                span.set_status(StatusCode.ERROR, str(exc))
+                span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
+                span.end()
+                _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+                raise
+
+            _set_embeddings_span_attributes_from_response(span, result.model, result.usage)
+
+            _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
+            _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+
+            span.end()
+
+            return result
+
+    async def _async_embeddings_wrapper(self, wrapped, instance, args, kwargs):
+        span_attributes = _get_embeddings_span_attributes_from_wrapper(instance, kwargs)
+
+        span_name = f"{span_attributes[GEN_AI_OPERATION_NAME]} {span_attributes[GEN_AI_REQUEST_MODEL]}"
+        with self.tracer.start_as_current_span(
+            name=span_name,
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+            # this is important to avoid having the span closed before ending the stream
+            end_on_exit=False,
+        ) as span:
+            start_time = default_timer()
+            try:
+                result = await wrapped(*args, **kwargs)
+            except Exception as exc:
+                span.set_status(StatusCode.ERROR, str(exc))
+                span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
+                span.end()
+                _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+                raise
+
+            _set_embeddings_span_attributes_from_response(span, result.model, result.usage)
+
+            _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
+            _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
 
             span.end()
 

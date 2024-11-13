@@ -46,6 +46,8 @@ if TYPE_CHECKING:
 else:
     CompletionUsage = None
 
+GEN_AI_REQUEST_ENCODING_FORMAT = "gen_ai.request.encoding_format"
+
 
 def _set_span_attributes_from_response(
     span: Span, response_id: str, model: str, choices, usage: CompletionUsage
@@ -59,6 +61,11 @@ def _set_span_attributes_from_response(
     if usage:
         span.set_attribute(GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
         span.set_attribute(GEN_AI_USAGE_OUTPUT_TOKENS, usage.completion_tokens)
+
+
+def _set_embeddings_span_attributes_from_response(span: Span, model: str, usage: CompletionUsage) -> None:
+    span.set_attribute(GEN_AI_RESPONSE_MODEL, model)
+    span.set_attribute(GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
 
 
 def _decode_function_arguments(arguments: str):
@@ -98,6 +105,23 @@ def _message_from_stream_choices(choices):
     return message
 
 
+def _attributes_from_client(client):
+    span_attributes = {}
+
+    if base_url := getattr(client, "_base_url", None):
+        if host := getattr(base_url, "host", None):
+            span_attributes[SERVER_ADDRESS] = host
+        if port := getattr(base_url, "port", None):
+            span_attributes[SERVER_PORT] = port
+        elif scheme := getattr(base_url, "scheme", None):
+            if scheme == "http":
+                span_attributes[SERVER_PORT] = 80
+            elif scheme == "https":
+                span_attributes[SERVER_PORT] = 443
+
+    return span_attributes
+
+
 def _get_span_attributes_from_wrapper(instance, kwargs):
     span_attributes = {
         GEN_AI_OPERATION_NAME: "chat",
@@ -106,16 +130,7 @@ def _get_span_attributes_from_wrapper(instance, kwargs):
     }
 
     if client := getattr(instance, "_client", None):
-        if base_url := getattr(client, "_base_url", None):
-            if host := getattr(base_url, "host", None):
-                span_attributes[SERVER_ADDRESS] = host
-            if port := getattr(base_url, "port", None):
-                span_attributes[SERVER_PORT] = port
-            elif scheme := getattr(base_url, "scheme", None):
-                if scheme == "http":
-                    span_attributes[SERVER_PORT] = 80
-                elif scheme == "https":
-                    span_attributes[SERVER_PORT] = 443
+        span_attributes.update(_attributes_from_client(client))
 
     if (frequency_penalty := kwargs.get("frequency_penalty")) is not None:
         span_attributes[GEN_AI_REQUEST_FREQUENCY_PENALTY] = frequency_penalty
@@ -131,6 +146,22 @@ def _get_span_attributes_from_wrapper(instance, kwargs):
         if isinstance(stop_sequences, str):
             stop_sequences = [stop_sequences]
         span_attributes[GEN_AI_REQUEST_STOP_SEQUENCES] = stop_sequences
+
+    return span_attributes
+
+
+def _get_embeddings_span_attributes_from_wrapper(instance, kwargs):
+    span_attributes = {
+        GEN_AI_OPERATION_NAME: "embeddings",
+        GEN_AI_REQUEST_MODEL: kwargs["model"],
+        GEN_AI_SYSTEM: "openai",
+    }
+
+    if client := getattr(instance, "_client", None):
+        span_attributes.update(_attributes_from_client(client))
+
+    if (encoding_format := kwargs.get("encoding_format")) is not None:
+        span_attributes[GEN_AI_REQUEST_ENCODING_FORMAT] = encoding_format
 
     return span_attributes
 
@@ -154,7 +185,9 @@ def _record_token_usage_metrics(metric: Histogram, span: Span, usage: Completion
         ),
     )
     metric.record(usage.prompt_tokens, {**token_usage_metric_attrs, GEN_AI_TOKEN_TYPE: "input"})
-    metric.record(usage.completion_tokens, {**token_usage_metric_attrs, GEN_AI_TOKEN_TYPE: "output"})
+    # embeddings responses only have input tokens
+    if hasattr(usage, "completion_tokens"):
+        metric.record(usage.completion_tokens, {**token_usage_metric_attrs, GEN_AI_TOKEN_TYPE: "output"})
 
 
 def _record_operation_duration_metric(metric: Histogram, span: Span, start: float):

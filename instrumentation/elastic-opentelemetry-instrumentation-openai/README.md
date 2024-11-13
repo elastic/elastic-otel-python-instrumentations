@@ -51,6 +51,11 @@ chat_completion = client.chat.completions.create(model="gpt-4o-mini", messages=m
 - `ELASTIC_OTEL_GENAI_CAPTURE_CONTENT` (default: `false`): when sets to `true` collect more
 informations about prompts and responses by enabling content capture
 
+### Elastic specific semantic conventions
+
+- New `embeddings` value for `gen_ai.operation.name`
+- New `gen_ai.request.encoding_format` attribute with openai specific values `[float, base64]`
+
 ## Development
 
 We use [pytest](https://docs.pytest.org/en/stable/) to execute tests written with the standard
