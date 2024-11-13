@@ -1,0 +1,67 @@
+interactions:
+- request:
+    body: '{"input": ["South Atlantic Ocean."], "model": "not-found-model", "encoding_format":
+      "base64"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - test_azure_api_key
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '93'
+      content-type:
+      - application/json
+      host:
+      - test.openai.azure.com
+      user-agent:
+      - AzureOpenAI/Python 1.50.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.50.0
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/embeddings?api-version=2023-05-15
+  response:
+    body:
+      string: '{"error":{"code":"DeploymentNotFound", "message":"The API deployment
+        for this resource does not exist. If you created the deployment within the
+        last 5 minutes, please wait a moment and try again."}}'
+    headers:
+      Content-Length:
+      - '198'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 29 Oct 2024 08:43:31 GMT
+      Set-Cookie: test_set_cookie
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - 975b7870-9f64-4e72-9d3d-ecfd22f4a68d
+      openai-organization: test_openai_org_key
+      x-content-type-options:
+      - nosniff
+      x-ms-region:
+      - East US
+    status:
+      code: 404
+      message: Not Found
+version: 1

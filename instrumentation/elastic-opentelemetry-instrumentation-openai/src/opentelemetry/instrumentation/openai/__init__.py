@@ -35,6 +35,7 @@ from opentelemetry.instrumentation.openai.helpers import (
     _record_operation_duration_metric,
     _set_span_attributes_from_response,
     _set_embeddings_span_attributes_from_response,
+    _span_name_from_span_attributes,
 )
 from opentelemetry.instrumentation.openai.package import _instruments
 from opentelemetry.instrumentation.openai.version import __version__
@@ -42,9 +43,7 @@ from opentelemetry.instrumentation.openai.wrappers import StreamWrapper
 from opentelemetry.metrics import get_meter
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_COMPLETION,
-    GEN_AI_OPERATION_NAME,
     GEN_AI_PROMPT,
-    GEN_AI_REQUEST_MODEL,
 )
 from opentelemetry.semconv._incubating.metrics.gen_ai_metrics import (
     create_gen_ai_client_token_usage,
@@ -123,7 +122,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
         span_attributes = _get_span_attributes_from_wrapper(instance, kwargs)
 
-        span_name = f"{span_attributes[GEN_AI_OPERATION_NAME]} {span_attributes[GEN_AI_REQUEST_MODEL]}"
+        span_name = _span_name_from_span_attributes(span_attributes)
         with self.tracer.start_as_current_span(
             name=span_name,
             kind=SpanKind.CLIENT,
@@ -185,7 +184,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
         span_attributes = _get_span_attributes_from_wrapper(instance, kwargs)
 
-        span_name = f"{span_attributes[GEN_AI_OPERATION_NAME]} {span_attributes[GEN_AI_REQUEST_MODEL]}"
+        span_name = _span_name_from_span_attributes(span_attributes)
         with self.tracer.start_as_current_span(
             name=span_name,
             kind=SpanKind.CLIENT,
@@ -244,7 +243,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
     def _embeddings_wrapper(self, wrapped, instance, args, kwargs):
         span_attributes = _get_embeddings_span_attributes_from_wrapper(instance, kwargs)
 
-        span_name = f"{span_attributes[GEN_AI_OPERATION_NAME]} {span_attributes[GEN_AI_REQUEST_MODEL]}"
+        span_name = _span_name_from_span_attributes(span_attributes)
         with self.tracer.start_as_current_span(
             name=span_name,
             kind=SpanKind.CLIENT,
@@ -274,7 +273,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
     async def _async_embeddings_wrapper(self, wrapped, instance, args, kwargs):
         span_attributes = _get_embeddings_span_attributes_from_wrapper(instance, kwargs)
 
-        span_name = f"{span_attributes[GEN_AI_OPERATION_NAME]} {span_attributes[GEN_AI_REQUEST_MODEL]}"
+        span_name = _span_name_from_span_attributes(span_attributes)
         with self.tracer.start_as_current_span(
             name=span_name,
             kind=SpanKind.CLIENT,

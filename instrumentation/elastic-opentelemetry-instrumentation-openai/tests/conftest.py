@@ -352,7 +352,9 @@ def assert_operation_duration_metric(provider, metric: Histogram, attributes: di
     )
 
 
-def assert_error_operation_duration_metric(provider, metric: Histogram, attributes: dict, data_point: float):
+def assert_error_operation_duration_metric(
+    provider, metric: Histogram, attributes: dict, data_point: float, value_delta: float = 0.5
+):
     assert metric.name == "gen_ai.client.operation.duration"
     default_attributes = {
         "gen_ai.operation.name": provider.operation_name,
@@ -372,7 +374,7 @@ def assert_error_operation_duration_metric(provider, metric: Histogram, attribut
                 attributes={**default_attributes, **attributes},
             ),
         ],
-        est_value_delta=0.5,
+        est_value_delta=value_delta,
     )
 
 
