@@ -14,11 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from timeit import default_timer
 from typing import TYPE_CHECKING
 
+from opentelemetry._events import Event, EventLogger
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, SERVER_PORT
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
@@ -42,12 +42,22 @@ from opentelemetry.metrics import Histogram
 from opentelemetry.trace import Span
 from opentelemetry.util.types import Attributes
 
+EVENT_GEN_AI_ASSISTANT_MESSAGE = "gen_ai.assistant.message"
+EVENT_GEN_AI_CHOICE = "gen_ai.choice"
+EVENT_GEN_AI_USER_MESSAGE = "gen_ai.user.message"
+EVENT_GEN_AI_SYSTEM_MESSAGE = "gen_ai.system.message"
+EVENT_GEN_AI_TOOL_MESSAGE = "gen_ai.tool.message"
+
+# elastic specific attributes
+GEN_AI_REQUEST_ENCODING_FORMAT = "gen_ai.request.encoding_format"
+
+# As this is only used for a type annotation, only import from openai module
+# when running type checker like pyright since we otherwise don't want to import
+# it before the app.
 if TYPE_CHECKING:
     from openai.types import CompletionUsage
 else:
     CompletionUsage = None
-
-GEN_AI_REQUEST_ENCODING_FORMAT = "gen_ai.request.encoding_format"
 
 
 def _set_span_attributes_from_response(
@@ -69,44 +79,63 @@ def _set_embeddings_span_attributes_from_response(span: Span, model: str, usage:
     span.set_attribute(GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
 
 
-def _decode_function_arguments(arguments: str):
-    try:
-        return json.loads(arguments)
-    except (TypeError, json.JSONDecodeError):
-        return None
-
-
 def _message_from_choice(choice):
     """Format a choice into a message of the same shape of the prompt"""
     if tool_calls := getattr(choice.message, "tool_calls", None):
-        tool_call = tool_calls[0]
-        return {"role": choice.message.role, "content": _decode_function_arguments(tool_call.function.arguments)}
+        return {
+            "role": choice.message.role,
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": tool_call.id,
+                    "type": tool_call.type,
+                    "function": {
+                        "name": tool_call.function.name,
+                        "arguments": tool_call.function.arguments,
+                    },
+                }
+                for tool_call in tool_calls
+            ],
+        }
     else:
         return {"role": choice.message.role, "content": choice.message.content}
 
 
 def _message_from_stream_choices(choices):
     """Format an iterable of choices into a message of the same shape of the prompt"""
-    message = {"role": None, "content": ""}
-    tools_arguments = ""
+    messages = {}
+    tool_calls = {}
     for choice in choices:
+        messages.setdefault(choice.index, {"role": None, "content": ""})
+        message = messages[choice.index]
         if choice.delta.role:
             message["role"] = choice.delta.role
         if choice.delta.content:
             message["content"] += choice.delta.content
+
         if choice.delta.tool_calls:
             for call in choice.delta.tool_calls:
+                tool_calls.setdefault(choice.index, {})
+                tool_calls[choice.index].setdefault(call.index, {"function": {"arguments": ""}})
+                tool_call = tool_calls[choice.index][call.index]
                 if call.function.arguments:
-                    tools_arguments += call.function.arguments
+                    tool_call["function"]["arguments"] += call.function.arguments
+                if call.function.name:
+                    tool_call["function"]["name"] = call.function.name
+                if call.id:
+                    tool_call["id"] = call.id
+                if call.type:
+                    tool_call["type"] = call.type
 
-    if tools_arguments:
-        if decoded_arguments := _decode_function_arguments(tools_arguments):
-            message["content"] = decoded_arguments
+    for message_index in tool_calls:
+        message = messages[message_index]
+        message["tool_calls"] = [arguments for _, arguments in sorted(tool_calls[message_index].items())]
 
-    return message
+    # assumes there's only one message
+    return [message for _, message in sorted(messages.items())][0]
 
 
-def _attributes_from_client(client):
+def _attributes_from_client(client) -> Attributes:
     span_attributes = {}
 
     if base_url := getattr(client, "_base_url", None):
@@ -123,12 +152,13 @@ def _attributes_from_client(client):
     return span_attributes
 
 
-def _get_span_attributes_from_wrapper(instance, kwargs):
+def _get_span_attributes_from_wrapper(instance, kwargs) -> Attributes:
     span_attributes = {
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_SYSTEM: "openai",
     }
 
+    # on some azure clients the model was not mandatory
     if (request_model := kwargs.get("model")) is not None:
         span_attributes[GEN_AI_REQUEST_MODEL] = request_model
 
@@ -162,7 +192,7 @@ def _span_name_from_span_attributes(attributes: Attributes) -> str:
     )
 
 
-def _get_embeddings_span_attributes_from_wrapper(instance, kwargs):
+def _get_embeddings_span_attributes_from_wrapper(instance, kwargs) -> Attributes:
     span_attributes = {
         GEN_AI_OPERATION_NAME: "embeddings",
         GEN_AI_SYSTEM: "openai",
@@ -180,7 +210,11 @@ def _get_embeddings_span_attributes_from_wrapper(instance, kwargs):
     return span_attributes
 
 
-def _get_attributes_if_set(span: Span, names: Iterable) -> dict:
+def _get_event_attributes() -> Attributes:
+    return {GEN_AI_SYSTEM: "openai"}
+
+
+def _get_attributes_if_set(span: Span, names: Iterable) -> Attributes:
     """Returns a dict with any attribute found in the span attributes"""
     attributes = span.attributes
     return {name: attributes[name] for name in names if name in attributes}
@@ -219,3 +253,113 @@ def _record_operation_duration_metric(metric: Histogram, span: Span, start: floa
     )
     duration_s = default_timer() - start
     metric.record(duration_s, operation_duration_metric_attrs)
+
+
+def _key_or_property(obj, name):
+    if isinstance(obj, Mapping):
+        return obj[name]
+    return getattr(obj, name)
+
+
+def _serialize_tool_calls_for_event(tool_calls):
+    return [
+        {
+            "id": _key_or_property(tool_call, "id"),
+            "type": _key_or_property(tool_call, "type"),
+            "function": {
+                "name": _key_or_property(_key_or_property(tool_call, "function"), "name"),
+                "arguments": _key_or_property(_key_or_property(tool_call, "function"), "arguments"),
+            },
+        }
+        for tool_call in tool_calls
+    ]
+
+
+def _send_log_events_from_messages(event_logger: EventLogger, messages, attributes: Attributes):
+    for message in messages:
+        if message["role"] == "system":
+            event = Event(name=EVENT_GEN_AI_SYSTEM_MESSAGE, body={"content": message["content"]}, attributes=attributes)
+            event_logger.emit(event)
+        elif message["role"] == "user":
+            event = Event(name=EVENT_GEN_AI_USER_MESSAGE, body={"content": message["content"]}, attributes=attributes)
+            event_logger.emit(event)
+        elif message["role"] == "assistant":
+            body = {}
+            if content := message.get("content"):
+                body["content"] = content
+            tool_calls = _serialize_tool_calls_for_event(message.get("tool_calls", []))
+            if tool_calls:
+                body["tool_calls"] = tool_calls
+            event = Event(
+                name=EVENT_GEN_AI_ASSISTANT_MESSAGE,
+                body=body,
+                attributes=attributes,
+            )
+            event_logger.emit(event)
+        elif message["role"] == "tool":
+            event = Event(
+                name=EVENT_GEN_AI_TOOL_MESSAGE,
+                body={"content": message["content"], "id": message["tool_call_id"]},
+                attributes=attributes,
+            )
+            event_logger.emit(event)
+
+
+def _send_log_events_from_choices(event_logger: EventLogger, choices, attributes: Attributes):
+    for choice in choices:
+        tool_calls = _serialize_tool_calls_for_event(choice.message.tool_calls or [])
+        body = {"finish_reason": choice.finish_reason, "index": choice.index, "message": {}}
+        if tool_calls:
+            body["message"]["tool_calls"] = tool_calls
+        if choice.message.content:
+            body["message"]["content"] = choice.message.content
+
+        event = Event(name=EVENT_GEN_AI_CHOICE, body=body, attributes=attributes)
+        event_logger.emit(event)
+
+
+def _send_log_events_from_stream_choices(event_logger: EventLogger, choices, span: Span, attributes: Attributes):
+    body = {}
+    message = {}
+    message_content = ""
+    tool_calls = {}
+    for choice in choices:
+        if choice.delta.content:
+            message_content += choice.delta.content
+        if choice.delta.tool_calls:
+            for call in choice.delta.tool_calls:
+                tool_calls.setdefault(call.index, {"function": {"arguments": ""}})
+                tool_call = tool_calls[call.index]
+                if call.function.arguments:
+                    tool_call["function"]["arguments"] += call.function.arguments
+                if call.function.name:
+                    tool_call["function"]["name"] = call.function.name
+                if call.id:
+                    tool_call["id"] = call.id
+                if call.type:
+                    tool_call["type"] = call.type
+        if choice.finish_reason:
+            body["finish_reason"] = choice.finish_reason
+        body["index"] = choice.index
+
+    if message_content:
+        message["content"] = message_content
+    if tool_calls:
+        message["tool_calls"] = [call for _, call in sorted(tool_calls.items())]
+
+    body = {
+        "finish_reason": choice.finish_reason,
+        "index": choice.index,
+        "message": message,
+    }
+    # StreamWrapper is consumed after start_as_current_span exits, so capture the current span
+    ctx = span.get_span_context()
+    event = Event(
+        name=EVENT_GEN_AI_CHOICE,
+        body=body,
+        attributes=attributes,
+        trace_id=ctx.trace_id,
+        span_id=ctx.span_id,
+        trace_flags=ctx.trace_flags,
+    )
+    event_logger.emit(event)

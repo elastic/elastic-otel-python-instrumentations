@@ -1,0 +1,124 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are a helpful customer
+      support assistant. Use the supplied tools to assist the user."}, {"role": "user",
+      "content": "Hi, can you tell me the delivery date for my order?"}, {"role":
+      "assistant", "content": "Hi there! I can help with that. Can you please provide
+      your order ID?"}, {"role": "user", "content": "i think it is order_12345"}],
+      "model": "gpt-4o-mini", "stream": true, "tools": [{"type": "function", "function":
+      {"name": "get_delivery_date", "description": "Get the delivery date for a customer''s
+      order. Call this whenever you need to know the delivery date, for example when
+      a customer asks ''Where is my package''", "parameters": {"type": "object", "properties":
+      {"order_id": {"type": "string", "description": "The customer''s order ID."}},
+      "required": ["order_id"], "additionalProperties": false}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - test_azure_api_key
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '858'
+      content-type:
+      - application/json
+      host:
+      - test.openai.azure.com
+      user-agent:
+      - AzureOpenAI/Python 1.34.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.34.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2023-03-15-preview
+  response:
+    body:
+      string: 'data: {"choices":[{"delta":{"role":"assistant","tool_calls":[{"function":{"arguments":"","name":"get_delivery_date"},"id":"call_XNHRbrreMnt9ReHJfNH30mom","index":0,"type":"function"}]},"finish_reason":null,"index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"{\""},"index":0}]},"finish_reason":null,"index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"order"},"index":0}]},"finish_reason":null,"index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"_id"},"index":0}]},"finish_reason":null,"index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"\":\""},"index":0}]},"finish_reason":null,"index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"order"},"index":0}]},"finish_reason":null,"index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"_"},"index":0}]},"finish_reason":null,"index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"123"},"index":0}]},"finish_reason":null,"index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"45"},"index":0}]},"finish_reason":null,"index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"\"}"},"index":0}]},"finish_reason":null,"index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{},"finish_reason":"tool_calls","index":0}],"created":1728909019,"id":"chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Mon, 14 Oct 2024 12:30:19 GMT
+      Set-Cookie: test_set_cookie
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      apim-request-id:
+      - 1bb18f17-07a0-4c26-a747-724303e11ebf
+      azureml-model-session:
+      - d017-20240921115920
+      openai-organization: test_openai_org_key
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-envoy-upstream-service-time:
+      - '123'
+      x-ms-client-request-id:
+      - 1bb18f17-07a0-4c26-a747-724303e11ebf
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - East US
+      x-ratelimit-remaining-requests:
+      - '907'
+      x-ratelimit-remaining-tokens:
+      - '88941'
+      x-request-id:
+      - 5a07aea0-8492-4144-8c21-5c9b81d82ea1
+    status:
+      code: 200
+      message: OK
+version: 1
