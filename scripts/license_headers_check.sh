@@ -22,7 +22,7 @@ else
     FILES=$@
 fi
 
-LICENSE_HEADER="Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one"
+LICENSE_HEADER="Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one\|Copyright The OpenTelemetry Authors"
 
 MISSING=$(grep --files-without-match "$LICENSE_HEADER" ${FILES})
 
