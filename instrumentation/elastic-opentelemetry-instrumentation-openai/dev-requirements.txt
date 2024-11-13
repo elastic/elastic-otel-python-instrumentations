@@ -6,13 +6,13 @@
 #
 annotated-types==0.7.0
     # via pydantic
-anyio==4.5.0
+anyio==4.6.2.post1
     # via
     #   httpx
     #   openai
 asgiref==3.8.1
     # via opentelemetry-test-utils
-build==1.2.2
+build==1.2.2.post1
     # via pip-tools
 certifi==2024.8.30
     # via
@@ -32,7 +32,7 @@ exceptiongroup==1.2.2
     #   pytest
 h11==0.14.0
     # via httpcore
-httpcore==1.0.5
+httpcore==1.0.6
     # via httpx
 httpx==0.27.2
     # via openai
@@ -41,48 +41,52 @@ idna==3.10
     #   anyio
     #   httpx
     #   yarl
-importlib-metadata==8.4.0
+importlib-metadata==8.5.0
     # via opentelemetry-api
 iniconfig==2.0.0
     # via pytest
-jiter==0.5.0
+jiter==0.7.1
     # via openai
 multidict==6.1.0
     # via yarl
 numpy==2.1.3
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-openai==1.50.2
+openai==1.54.4
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-opentelemetry-api==1.27.0
+opentelemetry-api==1.28.1
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   opentelemetry-instrumentation
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
     #   opentelemetry-test-utils
-opentelemetry-instrumentation==0.48b0
+opentelemetry-instrumentation==0.49b1
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-opentelemetry-sdk==1.27.0
+opentelemetry-sdk==1.28.1
     # via opentelemetry-test-utils
-opentelemetry-semantic-conventions==0.48b0
+opentelemetry-semantic-conventions==0.49b1
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
+    #   opentelemetry-instrumentation
     #   opentelemetry-sdk
-opentelemetry-test-utils==0.48b0
+opentelemetry-test-utils==0.49b1
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-packaging==24.1
+packaging==24.2
     # via
     #   build
+    #   opentelemetry-instrumentation
     #   pytest
 pip-tools==7.4.1
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
 pluggy==1.5.0
     # via pytest
+propcache==0.2.0
+    # via yarl
 pydantic==2.9.2
     # via openai
 pydantic-core==2.23.4
     # via pydantic
-pyproject-hooks==1.1.0
+pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
@@ -102,12 +106,12 @@ sniffio==1.3.1
     #   anyio
     #   httpx
     #   openai
-tomli==2.0.1
+tomli==2.1.0
     # via
     #   build
     #   pip-tools
     #   pytest
-tqdm==4.66.5
+tqdm==4.67.0
     # via openai
 typing-extensions==4.12.2
     # via
@@ -118,20 +122,22 @@ typing-extensions==4.12.2
     #   opentelemetry-sdk
     #   pydantic
     #   pydantic-core
-vcrpy==6.0.1
+urllib3==2.2.3
+    # via vcrpy
+vcrpy==6.0.2
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   pytest-vcr
-wheel==0.44.0
+wheel==0.45.0
     # via pip-tools
 wrapt==1.16.0
     # via
     #   deprecated
     #   opentelemetry-instrumentation
     #   vcrpy
-yarl==1.11.1
+yarl==1.17.1
     # via vcrpy
-zipp==3.20.2
+zipp==3.21.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
