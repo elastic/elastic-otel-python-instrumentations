@@ -85,14 +85,18 @@ However, unit test recordings should use the authoritative OpenAI platform unles
 about a specific portability corner case.
 
 To refresh a test, delete its cassette file in tests/cassettes and make sure you have the
-following environment variables set:
+following environment variables set for OpenAI recordings:
 
 * `OPENAI_API_KEY` - from https://platform.openai.com/settings/profile?tab=api-keys
   * It should look like `sk-...` 
-* `OPENAI_ORG_ID` - from https://platform.openai.com/settings/organization/general
-  * It should look like `org-...` 
-* `OPENAI_PROJECT_ID` - from https://platform.openai.com/settings/profile (click Project)
-  * It should look like `proj_...` 
+
+and the following for Azure recordings, deployment url and api key are available for each deployment
+in https://oai.azure.com/resource/deployments:
+
+* `AZURE_CHAT_COMPLETIONS_DEPLOYMENT_URL`
+* `AZURE_CHAT_COMPLETIONS_API_KEY`
+* `AZURE_EMBEDDINGS_DEPLOYMENT_URL`
+* `AZURE_EMBEDDINGS_API_KEY`
 
 If writing a new test, start with the test logic with no assertions. If extending an existing unit test
 rather than writing a new one, remove the corresponding recorded response from [cassettes](./tests/cassettes/)

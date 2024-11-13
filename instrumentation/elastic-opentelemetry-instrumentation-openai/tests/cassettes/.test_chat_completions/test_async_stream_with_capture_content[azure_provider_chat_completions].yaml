@@ -1,0 +1,102 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
+      ocean contains the falkland islands?"}], "model": "gpt-4o-mini", "stream": true}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - test_azure_api_key
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '154'
+      content-type:
+      - application/json
+      host:
+      - test.openai.azure.com
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.50.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.50.0
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2023-03-15-preview
+  response:
+    body:
+      string: 'data: {"choices":[{"delta":{"role":"assistant"},"finish_reason":null,"index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"content":"South"},"finish_reason":null,"index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"content":" Atlantic"},"finish_reason":null,"index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"content":" Ocean"},"finish_reason":null,"index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{"content":"."},"finish_reason":null,"index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: {"choices":[{"delta":{},"finish_reason":"stop","index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Thu, 03 Oct 2024 14:12:21 GMT
+      Set-Cookie: test_set_cookie
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      apim-request-id:
+      - b43f4547-c4fd-4fa5-ac31-8c1c1ac95f13
+      azureml-model-session:
+      - d008-20240925051300
+      openai-organization: test_openai_org_key
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-envoy-upstream-service-time:
+      - '155'
+      x-ms-client-request-id:
+      - b43f4547-c4fd-4fa5-ac31-8c1c1ac95f13
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - East US
+      x-ratelimit-remaining-requests:
+      - '906'
+      x-ratelimit-remaining-tokens:
+      - '88372'
+      x-request-id:
+      - e9c64286-f767-46a7-b0b4-cb7876d451a0
+    status:
+      code: 200
+      message: OK
+version: 1

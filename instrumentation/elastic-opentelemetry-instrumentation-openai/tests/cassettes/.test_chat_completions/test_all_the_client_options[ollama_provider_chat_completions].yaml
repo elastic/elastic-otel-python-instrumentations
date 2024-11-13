@@ -1,0 +1,60 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
+      ocean contains the falkland islands?"}], "model": "qwen2.5:0.5b", "frequency_penalty":
+      0, "max_completion_tokens": 100, "presence_penalty": 0, "stop": "foo", "temperature":
+      1, "top_p": 1}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '261'
+      content-type:
+      - application/json
+      host:
+      - localhost:11434
+      user-agent:
+      - OpenAI/Python 1.50.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.50.0
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:11434/v1/chat/completions
+  response:
+    body:
+      string: '{"id":"chatcmpl-398","object":"chat.completion","created":1727962341,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"message":{"role":"assistant","content":"The
+        Great British Oceanic Peninsula."},"finish_reason":"stop"}],"usage":{"prompt_tokens":46,"completion_tokens":8,"total_tokens":54}}
+
+        '
+    headers:
+      Content-Length:
+      - '322'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 03 Oct 2024 13:32:21 GMT
+      Set-Cookie: test_set_cookie
+      openai-organization: test_openai_org_key
+    status:
+      code: 200
+      message: OK
+version: 1

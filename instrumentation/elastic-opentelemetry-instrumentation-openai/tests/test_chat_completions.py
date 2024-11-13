@@ -15,12 +15,11 @@
 # limitations under the License.
 
 import json
-import os
-from unittest import IsolatedAsyncioTestCase, mock
+from unittest import mock
 
 import openai
+import pytest
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
-from opentelemetry.test.test_base import TestBase
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPERATION_NAME,
@@ -41,1069 +40,1533 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, SERVER_PORT
 
-from .base import (
-    LOCAL_MODEL,
-    OPENAI_API_KEY,
-    OPENAI_ORG_ID,
-    OPENAI_PROJECT_ID,
-    OpenaiMixin,
+from .conftest import (
+    assert_error_operation_duration_metric,
+    assert_operation_duration_metric,
+    assert_token_usage_metric,
 )
+from .utils import get_sorted_metrics
+
+providers = ["openai_provider_chat_completions", "ollama_provider_chat_completions", "azure_provider_chat_completions"]
 
 
-class TestChatCompletions(OpenaiMixin, TestBase):
-    def test_basic(self):
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
+# TODO: provide a wrapper to generate parameters names and values for parametrize?
+test_basic_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEEtEV5mndU1WYBSLgvTpAIKAoYeu",
+        24,
+        4,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean",
+        "chatcmpl-AEEtFi8N27MCQoHr62DvUowImjwEc",
+        24,
+        3,
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "The Falklands Islands are located in the oceans south of South America.",
+        "chatcmpl-645",
+        46,
+        15,
+        0.002600736916065216,
+    ),
+]
 
-        chat_completion = self.client.chat.completions.create(model=self.openai_env.model, messages=messages)
 
-        self.assertEqual(chat_completion.choices[0].message.content, "South Atlantic Ocean.")
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration", test_basic_test_data
+)
+def test_basic(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    input_tokens,
+    output_tokens,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    client = provider.get_client()
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A9CSutUkLCxwZIXuXRXlgEJUCMnlT",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                GEN_AI_USAGE_INPUT_TOKENS: 24,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 4,
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
-        self.assertEqual(span.events, ())
+    chat_completion = client.chat.completions.create(model=model, messages=messages)
 
-        operation_duration_metric, token_usage_metric = self.get_sorted_metrics()
-        self.assertOperationDurationMetric(operation_duration_metric)
-        self.assertTokenUsageMetric(token_usage_metric)
+    assert chat_completion.choices[0].message.content == content
 
-    def test_all_the_client_options(self):
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
 
-        chat_completion = self.client.chat.completions.create(
-            model=self.openai_env.model,
-            messages=messages,
-            frequency_penalty=0,
-            max_completion_tokens=100,
-            presence_penalty=0,
-            temperature=1,
-            top_p=1,
-            stop="foo",
-        )
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
 
-        self.assertEqual(chat_completion.choices[0].message.content, "South Atlantic Ocean.")
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: output_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert span.events == ()
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=input_tokens,
+        output_data_point=output_tokens,
+    )
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_FREQUENCY_PENALTY: 0,
-                GEN_AI_REQUEST_MAX_TOKENS: 100,
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_REQUEST_PRESENCE_PENALTY: 0,
-                GEN_AI_REQUEST_STOP_SEQUENCES: ("foo",),
-                GEN_AI_REQUEST_TEMPERATURE: 1,
-                GEN_AI_REQUEST_TOP_P: 1,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-ADUdg61PwWqn3FPn4VNkz4vwMkS62",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                GEN_AI_USAGE_INPUT_TOKENS: 24,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 4,
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
-        self.assertEqual(span.events, ())
+test_all_the_client_options_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGEFRHEOGpX0H3Nx84zgOEbJ8g6Y",
+        24,
+        4,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGHLLqYkgJxUgLgX8RCLeL85irQR",
+        24,
+        4,
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "The Great British Oceanic Peninsula.",
+        "chatcmpl-398",
+        46,
+        8,
+        0.002600736916065216,
+    ),
+]
 
-        operation_duration_metric, token_usage_metric = self.get_sorted_metrics()
-        self.assertOperationDurationMetric(operation_duration_metric)
-        self.assertTokenUsageMetric(token_usage_metric)
 
-    def test_function_calling_with_tools(self):
-        tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_delivery_date",
-                    "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "order_id": {
-                                "type": "string",
-                                "description": "The customer's order ID.",
-                            },
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
+    test_all_the_client_options_test_data,
+)
+def test_all_the_client_options(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    input_tokens,
+    output_tokens,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_client()
+
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
+
+    chat_completion = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        frequency_penalty=0,
+        max_tokens=100,  # AzureOpenAI still does not support max_completions_tokens
+        presence_penalty=0,
+        temperature=1,
+        top_p=1,
+        stop="foo",
+    )
+
+    assert chat_completion.choices[0].message.content == content
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_FREQUENCY_PENALTY: 0,
+        GEN_AI_REQUEST_MAX_TOKENS: 100,
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_REQUEST_PRESENCE_PENALTY: 0,
+        GEN_AI_REQUEST_STOP_SEQUENCES: ("foo",),
+        GEN_AI_REQUEST_TEMPERATURE: 1,
+        GEN_AI_REQUEST_TOP_P: 1,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: output_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert span.events == ()
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=input_tokens,
+        output_data_point=output_tokens,
+    )
+
+
+test_function_calling_with_tools_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGIgPL1ReEL2yG6M4MrD3Uw960Bu",
+        140,
+        19,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean",
+        "chatcmpl-AEGIh5ygWzdZJL7BvIVeFLmgDSdT7",
+        140,
+        19,
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "The Falklands Islands are located in the oceans south of South America.",
+        "chatcmpl-363",
+        241,
+        28,
+        0.002600736916065216,
+    ),
+]
+
+
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
+    test_function_calling_with_tools_test_data,
+)
+def test_function_calling_with_tools(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    input_tokens,
+    output_tokens,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_client()
+
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_delivery_date",
+                "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "order_id": {
+                            "type": "string",
+                            "description": "The customer's order ID.",
                         },
-                        "required": ["order_id"],
-                        "additionalProperties": False,
                     },
+                    "required": ["order_id"],
+                    "additionalProperties": False,
                 },
-            }
-        ]
-
-        messages = [
-            {
-                "role": "system",
-                "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user.",
             },
-            {"role": "user", "content": "Hi, can you tell me the delivery date for my order?"},
-            {
-                "role": "assistant",
-                "content": "Hi there! I can help with that. Can you please provide your order ID?",
-            },
-            {"role": "user", "content": "i think it is order_12345"},
-        ]
+        }
+    ]
 
-        response = self.client.chat.completions.create(model=self.openai_env.model, messages=messages, tools=tools)
-        tool_call = response.choices[0].message.tool_calls[0]
-        self.assertEqual(tool_call.function.name, "get_delivery_date")
-        self.assertEqual(json.loads(tool_call.function.arguments), {"order_id": "order_12345"})
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user.",
+        },
+        {"role": "user", "content": "Hi, can you tell me the delivery date for my order?"},
+        {
+            "role": "assistant",
+            "content": "Hi there! I can help with that. Can you please provide your order ID?",
+        },
+        {"role": "user", "content": "i think it is order_12345"},
+    ]
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    response = client.chat.completions.create(model=model, messages=messages, tools=tools)
+    tool_call = response.choices[0].message.tool_calls[0]
+    assert tool_call.function.name == "get_delivery_date"
+    # FIXME: add to test data
+    assert json.loads(tool_call.function.arguments) == {"order_id": "order_12345"}
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A9CSwJdb2481bxsjIiuD8yIBOAfql",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("tool_calls",),
-                GEN_AI_USAGE_INPUT_TOKENS: 140,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 19,
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
-        self.assertEqual(span.events, ())
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
 
-        operation_duration_metric, token_usage_metric = self.get_sorted_metrics()
-        self.assertOperationDurationMetric(operation_duration_metric)
-        self.assertTokenUsageMetric(token_usage_metric, input_data_point=140, output_data_point=19)
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("tool_calls",),
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: output_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert span.events == ()
 
-    def test_tools_with_capture_content(self):
-        # Redo the instrumentation dance to be affected by the environment variable
-        OpenAIInstrumentor().uninstrument()
-        with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
-            OpenAIInstrumentor().instrument()
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=input_tokens,
+        output_data_point=output_tokens,
+    )
 
-        tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_delivery_date",
-                    "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "order_id": {
-                                "type": "string",
-                                "description": "The customer's order ID.",
-                            },
+
+test_tools_with_capture_content_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGM5OhimYEMDsRq20IQCBx4vzf2Z",
+        140,
+        19,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean",
+        "chatcmpl-AEGM6niNxWuulOpOMXNelXUZqF443",
+        140,
+        19,
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "The Falklands Islands are located in the oceans south of South America.",
+        "chatcmpl-556",
+        241,
+        28,
+        0.002600736916065216,
+    ),
+]
+
+
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
+    test_tools_with_capture_content_test_data,
+)
+def test_tools_with_capture_content(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    input_tokens,
+    output_tokens,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_client()
+
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
+        OpenAIInstrumentor().instrument()
+
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_delivery_date",
+                "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "order_id": {
+                            "type": "string",
+                            "description": "The customer's order ID.",
                         },
-                        "required": ["order_id"],
-                        "additionalProperties": False,
                     },
+                    "required": ["order_id"],
+                    "additionalProperties": False,
                 },
-            }
-        ]
-
-        messages = [
-            {
-                "role": "system",
-                "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user.",
             },
-            {"role": "user", "content": "Hi, can you tell me the delivery date for my order?"},
-            {
-                "role": "assistant",
-                "content": "Hi there! I can help with that. Can you please provide your order ID?",
-            },
-            {"role": "user", "content": "i think it is order_12345"},
-        ]
+        }
+    ]
 
-        response = self.client.chat.completions.create(model=self.openai_env.model, messages=messages, tools=tools)
-        tool_call = response.choices[0].message.tool_calls[0]
-        self.assertEqual(tool_call.function.name, "get_delivery_date")
-        self.assertEqual(json.loads(tool_call.function.arguments), {"order_id": "order_12345"})
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user.",
+        },
+        {"role": "user", "content": "Hi, can you tell me the delivery date for my order?"},
+        {
+            "role": "assistant",
+            "content": "Hi there! I can help with that. Can you please provide your order ID?",
+        },
+        {"role": "user", "content": "i think it is order_12345"},
+    ]
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    response = client.chat.completions.create(model=model, messages=messages, tools=tools)
+    tool_call = response.choices[0].message.tool_calls[0]
+    assert tool_call.function.name == "get_delivery_date"
+    assert json.loads(tool_call.function.arguments) == {"order_id": "order_12345"}
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A9CSzz613rRslGZpG79Js1deMz98G",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("tool_calls",),
-                GEN_AI_USAGE_INPUT_TOKENS: 140,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 19,
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
 
-        self.assertEqual(len(span.events), 2)
-        prompt_event, completion_event = span.events
-        self.assertEqual(prompt_event.name, "gen_ai.content.prompt")
-        self.assertEqual(dict(prompt_event.attributes), {"gen_ai.prompt": json.dumps(messages)})
-        self.assertEqual(completion_event.name, "gen_ai.content.completion")
-        self.assertEqual(
-            dict(completion_event.attributes),
-            {"gen_ai.completion": '[{"role": "assistant", "content": {"order_id": "order_12345"}}]'},
-        )
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("tool_calls",),
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: output_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
 
-    def test_connection_error(self):
-        client = openai.Client(base_url="http://localhost:9999/v5", api_key="unused", max_retries=1)
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
+    assert len(span.events) == 2
+    prompt_event, completion_event = span.events
+    assert prompt_event.name == "gen_ai.content.prompt"
+    assert dict(prompt_event.attributes) == {"gen_ai.prompt": json.dumps(messages)}
+    assert completion_event.name == "gen_ai.content.completion"
+    assert dict(completion_event.attributes) == {
+        "gen_ai.completion": '[{"role": "assistant", "content": {"order_id": "order_12345"}}]'
+    }
 
-        self.assertRaises(
-            Exception, lambda: client.chat.completions.create(model=self.openai_env.model, messages=messages)
-        )
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=input_tokens,
+        output_data_point=output_tokens,
+    )
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.ERROR)
+test_connection_error_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        0.002600736916065216,
+    ),
+]
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                ERROR_TYPE: "APIConnectionError",
-                SERVER_ADDRESS: "localhost",
-                SERVER_PORT: 9999,
-            },
-        )
-        self.assertEqual(span.events, ())
 
-        (operation_duration_metric,) = self.get_sorted_metrics()
-        self.assertErrorOperationDurationMetric(operation_duration_metric, {"error.type": "APIConnectionError"})
+@pytest.mark.vcr()
+@pytest.mark.parametrize("provider_str,model,duration", test_connection_error_test_data)
+def test_connection_error(provider_str, model, duration, trace_exporter, metrics_reader, request):
+    provider = request.getfixturevalue(provider_str)
 
-    def test_local(self):
-        client = openai.Client(base_url="http://localhost:11434/v1", api_key="unused", max_retries=1)
+    client = openai.Client(base_url="http://localhost:9999/v5", api_key="unused", max_retries=1)
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
 
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
+    with pytest.raises(Exception):
+        client.chat.completions.create(model=model, messages=messages)
 
-        chat_completion = client.chat.completions.create(model=LOCAL_MODEL, messages=messages)
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
 
-        self.assertEqual(
-            chat_completion.choices[0].message.content, "The South Atlantic Ocean contains the Falklands Islands."
-        )
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.ERROR
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        ERROR_TYPE: "APIConnectionError",
+        SERVER_ADDRESS: "localhost",
+        SERVER_PORT: 9999,
+    }
+    assert span.events == ()
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {LOCAL_MODEL}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        ERROR_TYPE: "APIConnectionError",
+    }
+    assert_error_operation_duration_metric(
+        provider,
+        operation_duration_metric,
+        attributes=attributes,
+        data_point=duration,
+    )
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: LOCAL_MODEL,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-753",
-                GEN_AI_RESPONSE_MODEL: LOCAL_MODEL,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                GEN_AI_USAGE_INPUT_TOKENS: 52,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 11,
-                SERVER_ADDRESS: "localhost",
-                SERVER_PORT: 11434,
-            },
-        )
-        self.assertEqual(span.events, ())
 
-    def test_local_with_capture_content(self):
-        # Redo the instrumentation dance to be affected by the environment variable
-        OpenAIInstrumentor().uninstrument()
-        with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
-            OpenAIInstrumentor().instrument()
-        client = openai.Client(base_url="http://localhost:11434/v1", api_key="unused", max_retries=1)
+test_basic_with_capture_content_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEFu3fjzje87q8tfrYWpazqelNIfW",
+        24,
+        4,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "Atlantic Ocean.",
+        "chatcmpl-AEFu4REQubxeCCkrv6wgeJ4VdN6o5",
+        24,
+        3,
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "The Atlantic Ocean contains the Falkland Islands.",
+        "chatcmpl-976",
+        46,
+        10,
+        0.002600736916065216,
+    ),
+]
 
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
 
-        chat_completion = client.chat.completions.create(model=LOCAL_MODEL, messages=messages)
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
+    test_basic_with_capture_content_test_data,
+)
+def test_basic_with_capture_content(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    input_tokens,
+    output_tokens,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_client()
 
-        self.assertEqual(chat_completion.choices[0].message.content, "ocean A: Atlantic, B: Arctic Ocean")
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
+        OpenAIInstrumentor().instrument()
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {LOCAL_MODEL}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    chat_completion = client.chat.completions.create(model=model, messages=messages)
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: LOCAL_MODEL,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-364",
-                GEN_AI_RESPONSE_MODEL: LOCAL_MODEL,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                GEN_AI_USAGE_INPUT_TOKENS: 52,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 11,
-                SERVER_ADDRESS: "localhost",
-                SERVER_PORT: 11434,
-            },
-        )
-        self.assertEqual(len(span.events), 2)
-        prompt_event, completion_event = span.events
-        self.assertEqual(prompt_event.name, "gen_ai.content.prompt")
-        self.assertEqual(dict(prompt_event.attributes), {"gen_ai.prompt": json.dumps(messages)})
-        self.assertEqual(completion_event.name, "gen_ai.content.completion")
-        self.assertEqual(
-            dict(completion_event.attributes),
-            {"gen_ai.completion": '[{"role": "assistant", "content": "ocean A: Atlantic, B: Arctic Ocean"}]'},
-        )
+    assert chat_completion.choices[0].message.content == content
 
-    def test_stream(self):
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
 
-        chat_completion = self.client.chat.completions.create(
-            model=self.openai_env.model, messages=messages, stream=True
-        )
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
 
-        chunks = [chunk.choices[0].delta.content or "" for chunk in chat_completion if chunk.choices]
-        self.assertEqual("".join(chunks), "South Atlantic Ocean.")
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: output_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    assert len(span.events) == 2
+    prompt_event, completion_event = span.events
+    assert prompt_event.name == "gen_ai.content.prompt"
+    assert dict(prompt_event.attributes) == {"gen_ai.prompt": json.dumps(messages)}
+    assert completion_event.name == "gen_ai.content.completion"
+    assert dict(completion_event.attributes) == {
+        "gen_ai.completion": '[{"role": "assistant", "content": "' + content + '"}]'
+    }
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=input_tokens,
+        output_data_point=output_tokens,
+    )
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A6Fj6kEv975Uw3vNCyA2njL0mP4Lg",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
-        self.assertEqual(span.events, ())
 
-        (operation_duration_metric,) = self.get_sorted_metrics()
-        self.assertOperationDurationMetric(operation_duration_metric)
+test_stream_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGTAvX2YSIO9EQwMleHTB91Cgn4G",
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGTBkVVthwTc3DgRp6RGKJxyY1pE",
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "The Falkland Islands, also known as the Argentinian Islands or British South America Land (BSAL), is an archipelago of several small islands and peninsulas located off the coast of Argentina. It contains nine uninhabited Falkland Islands, plus a mix of uninhabitable territory and other small features that are not considered part of the Falkland Islands' current administrative divisions.",
+        "chatcmpl-415",
+        0.002600736916065216,
+    ),
+]
 
-    def test_stream_with_include_usage_option(self):
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
 
-        chat_completion = self.client.chat.completions.create(
-            model=self.openai_env.model, messages=messages, stream=True, stream_options={"include_usage": True}
-        )
+@pytest.mark.vcr()
+@pytest.mark.parametrize("provider_str,model,response_model,content,response_id,duration", test_stream_test_data)
+def test_stream(
+    provider_str, model, response_model, content, response_id, duration, trace_exporter, metrics_reader, request
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_client()
 
-        chunks = [chunk.choices[0].delta.content or "" for chunk in chat_completion if chunk.choices]
-        self.assertEqual("".join(chunks), "South Atlantic Ocean.")
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    chat_completion = client.chat.completions.create(model=model, messages=messages, stream=True)
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    chunks = [chunk.choices[0].delta.content or "" for chunk in chat_completion if chunk.choices]
+    assert "".join(chunks) == content
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A6Fj6QSKWN7eCCTYz5lKYkZMHngDq",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                GEN_AI_USAGE_INPUT_TOKENS: 24,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 4,
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
-        self.assertEqual(span.events, ())
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
 
-        operation_duration_metric, token_usage_metric = self.get_sorted_metrics()
-        self.assertOperationDurationMetric(operation_duration_metric)
-        self.assertTokenUsageMetric(token_usage_metric)
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
 
-    def test_stream_with_tools_and_capture_content(self):
-        # Redo the instrumentation dance to be affected by the environment variable
-        OpenAIInstrumentor().uninstrument()
-        with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
-            OpenAIInstrumentor().instrument()
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert span.events == ()
 
-        tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_delivery_date",
-                    "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "order_id": {
-                                "type": "string",
-                                "description": "The customer's order ID.",
-                            },
+    (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+
+
+# FIXME: add custom ollama
+test_stream_with_include_usage_option_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGTE6nGqR4tbVuy6CPSHnXIF2eqy",
+        24,
+        4,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGTFYMyoBBDm4Qz37Lc8bekb2QOO",
+        24,
+        4,
+        0.002889830619096756,
+    ),
+]
+
+
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
+    test_stream_with_include_usage_option_test_data,
+)
+def test_stream_with_include_usage_option(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    input_tokens,
+    output_tokens,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_client()
+
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
+
+    chat_completion = client.chat.completions.create(
+        model=model, messages=messages, stream=True, stream_options={"include_usage": True}
+    )
+
+    chunks = [chunk.choices[0].delta.content or "" for chunk in chat_completion if chunk.choices]
+    assert "".join(chunks) == content
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: output_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert span.events == ()
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=input_tokens,
+        output_data_point=output_tokens,
+    )
+
+
+test_stream_with_tools_and_capture_content_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "",
+        '{"order_id": "order_12345"}',
+        "chatcmpl-AEGTFZ2zBPeLJlZ1EA10ZEDA12VfO",
+        "tool_calls",
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "",
+        '{"order_id": "order_12345"}',
+        "chatcmpl-AEGTHbbvqBK2BE52I8GByDCM2dypS",
+        "tool_calls",
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        '<tool_call>\n{"name": "get_delivery_date", "arguments": {"order_id": "order_12345"}}\n</tool_call>',
+        json.dumps(
+            '<tool_call>\n{"name": "get_delivery_date", "arguments": {"order_id": "order_12345"}}\n</tool_call>'
+        ),
+        "chatcmpl-598",
+        "stop",
+        0.002600736916065216,
+    ),
+]
+
+
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,completion_content,response_id,finish_reason,duration",
+    test_stream_with_tools_and_capture_content_test_data,
+)
+def test_stream_with_tools_and_capture_content(
+    provider_str,
+    model,
+    response_model,
+    content,
+    completion_content,
+    response_id,
+    finish_reason,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_client()
+
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
+        OpenAIInstrumentor().instrument()
+
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_delivery_date",
+                "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "order_id": {
+                            "type": "string",
+                            "description": "The customer's order ID.",
                         },
-                        "required": ["order_id"],
-                        "additionalProperties": False,
                     },
+                    "required": ["order_id"],
+                    "additionalProperties": False,
                 },
-            }
-        ]
-
-        messages = [
-            {
-                "role": "system",
-                "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user.",
             },
-            {"role": "user", "content": "Hi, can you tell me the delivery date for my order?"},
-            {
-                "role": "assistant",
-                "content": "Hi there! I can help with that. Can you please provide your order ID?",
-            },
-            {"role": "user", "content": "i think it is order_12345"},
-        ]
+        }
+    ]
 
-        chat_completion = self.client.chat.completions.create(
-            model=self.openai_env.model, messages=messages, tools=tools, stream=True
-        )
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user.",
+        },
+        {"role": "user", "content": "Hi, can you tell me the delivery date for my order?"},
+        {
+            "role": "assistant",
+            "content": "Hi there! I can help with that. Can you please provide your order ID?",
+        },
+        {"role": "user", "content": "i think it is order_12345"},
+    ]
 
-        chunks = [chunk.choices[0].delta.content or "" for chunk in chat_completion if chunk.choices]
-        self.assertEqual("".join(chunks), "")
+    chat_completion = client.chat.completions.create(model=model, messages=messages, tools=tools, stream=True)
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    chunks = [chunk.choices[0].delta.content or "" for chunk in chat_completion if chunk.choices]
+    assert "".join(chunks) == content
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A86CT7lmQpCMrARhR2GkBP5JBYLfn",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("tool_calls",),
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
 
-        self.assertEqual(len(span.events), 2)
-        prompt_event, completion_event = span.events
-        self.assertEqual(prompt_event.name, "gen_ai.content.prompt")
-        self.assertEqual(dict(prompt_event.attributes), {"gen_ai.prompt": json.dumps(messages)})
-        self.assertEqual(completion_event.name, "gen_ai.content.completion")
-        self.assertEqual(
-            dict(completion_event.attributes),
-            {"gen_ai.completion": '[{"role": "assistant", "content": {"order_id": "order_12345"}}]'},
-        )
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: (finish_reason,),
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
 
-    def test_local_stream(self):
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
+    assert len(span.events) == 2
+    prompt_event, completion_event = span.events
+    assert prompt_event.name == "gen_ai.content.prompt"
+    assert dict(prompt_event.attributes) == {"gen_ai.prompt": json.dumps(messages)}
+    assert completion_event.name == "gen_ai.content.completion"
+    assert dict(completion_event.attributes) == {
+        "gen_ai.completion": '[{"role": "assistant", "content": ' + completion_content + "}]"
+    }
 
-        client = openai.Client(base_url="http://localhost:11434/v1", api_key="unused", max_retries=1)
-        chat_completion = client.chat.completions.create(model=LOCAL_MODEL, messages=messages, stream=True)
-
-        chunks = [chunk.choices[0].delta.content for chunk in chat_completion if chunk.choices]
-        self.assertEqual("".join(chunks), "Oceania")
-
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
-
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {LOCAL_MODEL}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
-
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: LOCAL_MODEL,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-735",
-                GEN_AI_RESPONSE_MODEL: LOCAL_MODEL,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                SERVER_ADDRESS: "localhost",
-                SERVER_PORT: 11434,
-            },
-        )
-        self.assertEqual(span.events, ())
-
-    def test_local_stream_with_capture_content(self):
-        # Redo the instrumentation dance to be affected by the environment variable
-        OpenAIInstrumentor().uninstrument()
-        with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
-            OpenAIInstrumentor().instrument()
-
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
-
-        client = openai.Client(base_url="http://localhost:11434/v1", api_key="unused", max_retries=1)
-        chat_completion = client.chat.completions.create(model=LOCAL_MODEL, messages=messages, stream=True)
-
-        chunks = [chunk.choices[0].delta.content for chunk in chat_completion if chunk.choices]
-        self.assertEqual("".join(chunks), "Pacific Ocean.")
-
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
-
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {LOCAL_MODEL}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
-
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: LOCAL_MODEL,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-829",
-                GEN_AI_RESPONSE_MODEL: LOCAL_MODEL,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                SERVER_ADDRESS: "localhost",
-                SERVER_PORT: 11434,
-            },
-        )
-
-        self.assertEqual(len(span.events), 2)
-        prompt_event, completion_event = span.events
-        self.assertEqual(prompt_event.name, "gen_ai.content.prompt")
-        self.assertEqual(dict(prompt_event.attributes), {"gen_ai.prompt": json.dumps(messages)})
-        self.assertEqual(completion_event.name, "gen_ai.content.completion")
-        self.assertEqual(
-            dict(completion_event.attributes),
-            {"gen_ai.completion": ('[{"role": "assistant", "content": "Pacific Ocean."}]')},
-        )
-
-    def test_local_stream_error_handling(self):
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
-
-        client = openai.Client(base_url="http://localhost:11434/v1", api_key="unused", max_retries=1)
-        with mock.patch.object(openai._streaming.Stream, "__next__", side_effect=ValueError):
-            chat_completion = client.chat.completions.create(model=LOCAL_MODEL, messages=messages, stream=True)
-            with self.assertRaises(ValueError):
-                [chunk.choices[0].delta.content for chunk in chat_completion if chunk.choices]
-
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
-
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {LOCAL_MODEL}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.ERROR)
-
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                ERROR_TYPE: "ValueError",
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: LOCAL_MODEL,
-                GEN_AI_SYSTEM: "openai",
-                SERVER_ADDRESS: "localhost",
-                SERVER_PORT: 11434,
-            },
-        )
-        self.assertEqual(span.events, ())
+    (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
 
 
-class TestAsyncChatCompletions(OpenaiMixin, TestBase, IsolatedAsyncioTestCase):
-    @classmethod
-    def setup_client(cls):
-        # Control the arguments
-        return openai.AsyncOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY", OPENAI_API_KEY),
-            organization=os.getenv("OPENAI_ORG_ID", OPENAI_ORG_ID),
-            project=os.getenv("OPENAI_PROJECT_ID", OPENAI_PROJECT_ID),
-            max_retries=1,
-        )
+test_async_basic_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGqstM7lJ74sLzKJxMyhZZJixowh",
+        24,
+        4,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGqs0IFKsicvFYSaiyWFpZVr6OHe",
+        24,
+        4,
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "Atlantic Ocean",
+        "chatcmpl-425",
+        46,
+        3,
+        0.002600736916065216,
+    ),
+]
 
-    async def test_async_basic(self):
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
 
-        chat_completion = await self.client.chat.completions.create(model=self.openai_env.model, messages=messages)
+@pytest.mark.asyncio
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
+    test_async_basic_test_data,
+)
+async def test_async_basic(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    input_tokens,
+    output_tokens,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_async_client()
 
-        self.assertEqual(chat_completion.choices[0].message.content, "South Atlantic Ocean.")
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    chat_completion = await client.chat.completions.create(model=model, messages=messages)
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    assert chat_completion.choices[0].message.content == content
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A9CT0G8qhgAE0LVHYoClD0IG4eyKa",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                GEN_AI_USAGE_INPUT_TOKENS: 24,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 4,
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
-        self.assertEqual(span.events, ())
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
 
-        operation_duration_metric, token_usage_metric = self.get_sorted_metrics()
-        self.assertOperationDurationMetric(operation_duration_metric)
-        self.assertTokenUsageMetric(token_usage_metric)
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
 
-    async def test_async_basic_with_capture_content(self):
-        # Redo the instrumentation dance to be affected by the environment variable
-        OpenAIInstrumentor().uninstrument()
-        with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
-            OpenAIInstrumentor().instrument()
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: output_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert span.events == ()
 
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=input_tokens,
+        output_data_point=output_tokens,
+    )
 
-        chat_completion = await self.client.chat.completions.create(model=self.openai_env.model, messages=messages)
 
-        self.assertEqual(chat_completion.choices[0].message.content, "South Atlantic Ocean.")
+test_async_basic_with_capture_content_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGquKdflabT1q3yPFXFggu0hn6Cg",
+        24,
+        4,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGqv0J1RJgG477zKEayzIFWtBfoN",
+        24,
+        4,
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "Antarctica",
+        "chatcmpl-280",
+        46,
+        4,
+        0.002600736916065216,
+    ),
+]
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+@pytest.mark.asyncio
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
+    test_async_basic_with_capture_content_test_data,
+)
+async def test_async_basic_with_capture_content(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    input_tokens,
+    output_tokens,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_async_client()
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A9CT2ePKnjnz40F1K7G6YhKMoNLsD",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                GEN_AI_USAGE_INPUT_TOKENS: 24,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 4,
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
-        self.assertEqual(len(span.events), 2)
-        prompt_event, completion_event = span.events
-        self.assertEqual(prompt_event.name, "gen_ai.content.prompt")
-        self.assertEqual(dict(prompt_event.attributes), {"gen_ai.prompt": json.dumps(messages)})
-        self.assertEqual(completion_event.name, "gen_ai.content.completion")
-        self.assertEqual(
-            dict(completion_event.attributes),
-            {"gen_ai.completion": ('[{"role": "assistant", "content": "South Atlantic Ocean."}]')},
-        )
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
+        OpenAIInstrumentor().instrument()
 
-    async def test_async_stream(self):
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
 
-        chat_completion = await self.client.chat.completions.create(
-            model=self.openai_env.model, messages=messages, stream=True
-        )
+    chat_completion = await client.chat.completions.create(model=model, messages=messages)
 
-        chunks = [chunk.choices[0].delta.content or "" async for chunk in chat_completion if chunk.choices]
-        self.assertEqual("".join(chunks), "South Atlantic Ocean.")
+    assert chat_completion.choices[0].message.content == content
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A6dGYxfNeE9JSyv3LWSkGTOIXJvqy",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
-        self.assertEqual(span.events, ())
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: output_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert len(span.events) == 2
+    prompt_event, completion_event = span.events
+    assert prompt_event.name == "gen_ai.content.prompt"
+    assert dict(prompt_event.attributes) == {"gen_ai.prompt": json.dumps(messages)}
+    assert completion_event.name == "gen_ai.content.completion"
+    assert dict(completion_event.attributes) == {
+        "gen_ai.completion": ('[{"role": "assistant", "content": "' + content + '"}]')
+    }
 
-        (operation_duration_metric,) = self.get_sorted_metrics()
-        self.assertOperationDurationMetric(operation_duration_metric)
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=input_tokens,
+        output_data_point=output_tokens,
+    )
 
-    async def test_async_stream_with_capture_content(self):
-        # Redo the instrumentation dance to be affected by the environment variable
-        OpenAIInstrumentor().uninstrument()
-        with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
-            OpenAIInstrumentor().instrument()
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
 
-        chat_completion = await self.client.chat.completions.create(
-            model=self.openai_env.model, messages=messages, stream=True
-        )
+test_async_stream_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGqwO8cO97nJK1gMyVlzL9Mfyv7E",
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGqxYYCkiihSc05nBzHlYVwwUmzl",
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "The Falkland Islands are located on which ocean?",
+        "chatcmpl-325",
+        0.002600736916065216,
+    ),
+]
 
-        chunks = [chunk.choices[0].delta.content or "" async for chunk in chat_completion if chunk.choices]
-        self.assertEqual("".join(chunks), "South Atlantic Ocean.")
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+@pytest.mark.vcr()
+@pytest.mark.asyncio
+@pytest.mark.parametrize("provider_str,model,response_model,content,response_id,duration", test_async_stream_test_data)
+async def test_async_stream(
+    provider_str, model, response_model, content, response_id, duration, trace_exporter, metrics_reader, request
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_async_client()
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A6dGarmkMfJOnz2DWzymvkYpWQt00",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
-        self.assertEqual(len(span.events), 2)
-        prompt_event, completion_event = span.events
-        self.assertEqual(prompt_event.name, "gen_ai.content.prompt")
-        self.assertEqual(dict(prompt_event.attributes), {"gen_ai.prompt": json.dumps(messages)})
-        self.assertEqual(completion_event.name, "gen_ai.content.completion")
-        self.assertEqual(
-            dict(completion_event.attributes),
-            {"gen_ai.completion": ('[{"role": "assistant", "content": "South Atlantic Ocean."}]')},
-        )
+    chat_completion = await client.chat.completions.create(model=model, messages=messages, stream=True)
 
-    async def test_async_tools_with_capture_content(self):
-        # Redo the instrumentation dance to be affected by the environment variable
-        OpenAIInstrumentor().uninstrument()
-        with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
-            OpenAIInstrumentor().instrument()
+    chunks = [chunk.choices[0].delta.content or "" async for chunk in chat_completion if chunk.choices]
+    assert "".join(chunks) == content
 
-        tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_delivery_date",
-                    "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "order_id": {
-                                "type": "string",
-                                "description": "The customer's order ID.",
-                            },
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert span.events == ()
+
+    (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+
+
+test_async_stream_with_capture_content_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGqyZRrj9GUzDNw5te55gt1r7eus",
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5",
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "The Falkland Islands lie within which ocean?",
+        "chatcmpl-644",
+        0.002600736916065216,
+    ),
+]
+
+
+@pytest.mark.vcr()
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,duration",
+    test_async_stream_with_capture_content_test_data,
+)
+async def test_async_stream_with_capture_content(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_async_client()
+
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
+        OpenAIInstrumentor().instrument()
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
+
+    chat_completion = await client.chat.completions.create(model=model, messages=messages, stream=True)
+
+    chunks = [chunk.choices[0].delta.content or "" async for chunk in chat_completion if chunk.choices]
+    assert "".join(chunks) == content
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert len(span.events) == 2
+    prompt_event, completion_event = span.events
+    assert prompt_event.name == "gen_ai.content.prompt"
+    assert dict(prompt_event.attributes) == {"gen_ai.prompt": json.dumps(messages)}
+    assert completion_event.name == "gen_ai.content.completion"
+    assert dict(completion_event.attributes) == {
+        "gen_ai.completion": ('[{"role": "assistant", "content": "' + content + '"}]')
+    }
+
+    (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+
+
+# FIXME: ollama has empty tool_calls
+test_async_tools_with_capture_content_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-AEGr0SsAhppNLpPXpTtnmBiGGViQb",
+        140,
+        19,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini",
+        "South Atlantic Ocean",
+        "chatcmpl-AEGr1X6ieLFOD5hlXZBx2BL2BrSLe",
+        140,
+        19,
+        0.002889830619096756,
+    ),
+]
+
+
+@pytest.mark.vcr()
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
+    test_async_tools_with_capture_content_test_data,
+)
+async def test_async_tools_with_capture_content(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    input_tokens,
+    output_tokens,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_async_client()
+
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
+        OpenAIInstrumentor().instrument()
+
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_delivery_date",
+                "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "order_id": {
+                            "type": "string",
+                            "description": "The customer's order ID.",
                         },
-                        "required": ["order_id"],
-                        "additionalProperties": False,
                     },
+                    "required": ["order_id"],
+                    "additionalProperties": False,
                 },
-            }
-        ]
-
-        messages = [
-            {
-                "role": "system",
-                "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user.",
             },
-            {"role": "user", "content": "Hi, can you tell me the delivery date for my order?"},
-            {
-                "role": "assistant",
-                "content": "Hi there! I can help with that. Can you please provide your order ID?",
-            },
-            {"role": "user", "content": "i think it is order_12345"},
-        ]
+        }
+    ]
 
-        response = await self.client.chat.completions.create(
-            model=self.openai_env.model, messages=messages, tools=tools
-        )
-        tool_call = response.choices[0].message.tool_calls[0]
-        self.assertEqual(tool_call.function.name, "get_delivery_date")
-        self.assertEqual(json.loads(tool_call.function.arguments), {"order_id": "order_12345"})
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user.",
+        },
+        {"role": "user", "content": "Hi, can you tell me the delivery date for my order?"},
+        {
+            "role": "assistant",
+            "content": "Hi there! I can help with that. Can you please provide your order ID?",
+        },
+        {"role": "user", "content": "i think it is order_12345"},
+    ]
 
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
+    response = await client.chat.completions.create(model=model, messages=messages, tools=tools)
+    tool_call = response.choices[0].message.tool_calls[0]
+    assert tool_call.function.name == "get_delivery_date"
+    assert json.loads(tool_call.function.arguments) == {"order_id": "order_12345"}
 
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
 
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-A9CT8USSOYj6tJBMsrClMJdppNCf3",
-                GEN_AI_RESPONSE_MODEL: self.openai_env.response_model,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("tool_calls",),
-                GEN_AI_USAGE_INPUT_TOKENS: 140,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 19,
-                SERVER_ADDRESS: "api.openai.com",
-                SERVER_PORT: 443,
-            },
-        )
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
 
-        self.assertEqual(len(span.events), 2)
-        prompt_event, completion_event = span.events
-        self.assertEqual(prompt_event.name, "gen_ai.content.prompt")
-        self.assertEqual(dict(prompt_event.attributes), {"gen_ai.prompt": json.dumps(messages)})
-        self.assertEqual(completion_event.name, "gen_ai.content.completion")
-        self.assertEqual(
-            dict(completion_event.attributes),
-            {"gen_ai.completion": '[{"role": "assistant", "content": {"order_id": "order_12345"}}]'},
-        )
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("tool_calls",),
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: output_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
 
-    async def test_async_local(self):
-        client = openai.AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="unused", max_retries=1)
+    assert len(span.events) == 2
+    prompt_event, completion_event = span.events
+    assert prompt_event.name == "gen_ai.content.prompt"
+    assert dict(prompt_event.attributes) == {"gen_ai.prompt": json.dumps(messages)}
+    assert completion_event.name == "gen_ai.content.completion"
+    assert dict(completion_event.attributes) == {
+        "gen_ai.completion": '[{"role": "assistant", "content": {"order_id": "order_12345"}}]'
+    }
 
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
-
-        chat_completion = await client.chat.completions.create(model=LOCAL_MODEL, messages=messages)
-
-        self.assertEqual(chat_completion.choices[0].message.content, "The South Pole is the answer.")
-
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
-
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {LOCAL_MODEL}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.UNSET)
-
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: LOCAL_MODEL,
-                GEN_AI_SYSTEM: "openai",
-                GEN_AI_RESPONSE_ID: "chatcmpl-533",
-                GEN_AI_RESPONSE_MODEL: LOCAL_MODEL,
-                GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
-                GEN_AI_USAGE_INPUT_TOKENS: 52,
-                GEN_AI_USAGE_OUTPUT_TOKENS: 8,
-                SERVER_ADDRESS: "localhost",
-                SERVER_PORT: 11434,
-            },
-        )
-        self.assertEqual(span.events, ())
-
-    async def test_async_local_stream_error_handling(self):
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
-
-        client = openai.AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="unused", max_retries=1)
-        with mock.patch.object(openai._streaming.AsyncStream, "__anext__", side_effect=ValueError):
-            chat_completion = await client.chat.completions.create(model=LOCAL_MODEL, messages=messages, stream=True)
-            with self.assertRaises(ValueError):
-                [chunk.choices[0].delta.content async for chunk in chat_completion if chunk.choices]
-
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
-
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {LOCAL_MODEL}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.ERROR)
-
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                ERROR_TYPE: "ValueError",
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: LOCAL_MODEL,
-                GEN_AI_SYSTEM: "openai",
-                SERVER_ADDRESS: "localhost",
-                SERVER_PORT: 11434,
-            },
-        )
-        self.assertEqual(span.events, ())
-
-        (operation_duration_metric,) = self.get_sorted_metrics()
-        self.assertErrorOperationDurationMetric(
-            operation_duration_metric,
-            {"gen_ai.request.model": LOCAL_MODEL, "error.type": "ValueError", "server.port": 11434},
-            data_point=0.0032003200612962246,
-        )
-
-    async def test_async_local_connection_error(self):
-        client = openai.AsyncOpenAI(base_url="http://localhost:9999/v5", api_key="unused", max_retries=1)
-        messages = [
-            {
-                "role": "user",
-                "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
-            }
-        ]
-
-        with self.assertRaises(Exception):
-            await client.chat.completions.create(model=self.openai_env.model, messages=messages)
-
-        spans = self.get_finished_spans()
-        self.assertEqual(len(spans), 1)
-
-        span = spans[0]
-        self.assertEqual(span.name, f"chat {self.openai_env.model}")
-        self.assertEqual(span.kind, SpanKind.CLIENT)
-        self.assertEqual(span.status.status_code, StatusCode.ERROR)
-
-        self.assertEqual(
-            dict(span.attributes),
-            {
-                GEN_AI_OPERATION_NAME: "chat",
-                GEN_AI_REQUEST_MODEL: self.openai_env.model,
-                GEN_AI_SYSTEM: "openai",
-                ERROR_TYPE: "APIConnectionError",
-                SERVER_ADDRESS: "localhost",
-                SERVER_PORT: 9999,
-            },
-        )
-        self.assertEqual(span.events, ())
-
-        (operation_duration_metric,) = self.get_sorted_metrics()
-        self.assertErrorOperationDurationMetric(
-            operation_duration_metric,
-            {"error.type": "APIConnectionError"},
-            data_point=0.0072969673201441765,
-        )
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=input_tokens,
+        output_data_point=output_tokens,
+    )
