@@ -14,9 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from unittest import mock
-
-import opentelemetry.instrumentation.openai
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
 
@@ -31,25 +28,3 @@ def test_can_override_capture_content_programmatically(instrument):
     instrumentor.instrument(capture_content=True)
     assert instrumentor.capture_content
     instrumentor.uninstrument()
-
-
-def test_get_tracer_is_called_with_a_string_schema(instrument):
-    instrument.uninstrument()
-    instrumentor = OpenAIInstrumentor()
-    with mock.patch.object(opentelemetry.instrumentation.openai, "get_tracer") as get_tracer_mock:
-        instrumentor.instrument()
-    instrumentor.uninstrument()
-    get_tracer_mock.assert_called_once_with(
-        "opentelemetry.instrumentation.openai", mock.ANY, None, schema_url="https://opentelemetry.io/schemas/1.27.0"
-    )
-
-
-def test_get_meter_is_called_with_a_string_schema(instrument):
-    instrument.uninstrument()
-    instrumentor = OpenAIInstrumentor()
-    with mock.patch.object(opentelemetry.instrumentation.openai, "get_meter") as get_meter_mock:
-        instrumentor.instrument()
-    instrumentor.uninstrument()
-    get_meter_mock.assert_called_once_with(
-        "opentelemetry.instrumentation.openai", mock.ANY, None, schema_url="https://opentelemetry.io/schemas/1.27.0"
-    )

@@ -216,7 +216,10 @@ def vcr_cassette_name(request):
     # TODO: we can probably rebuild the name from the request
     # request.node.name format: test_basic[ollama_provider_chat_completions-Atlantic Ocean.-24-4-5]
     test_name = re.match(r"(\w+\[\w+)", request.node.name)
-    return f"{test_name.group()}]"
+    if test_name:
+        return f"{test_name.group()}]"
+    # if we don't use parametrization return the default one
+    return request.node.name
 
 
 class AzureProvider:
