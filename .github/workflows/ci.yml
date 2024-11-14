@@ -72,3 +72,9 @@ jobs:
       working-directory: ${{ env.working_dir }}
     - run: pytest
       working-directory: ${{ env.working_dir }}
+    - if: ${{ env[matrix.python-version] == '3.12' && !env[matrix.openai-version] }}
+      # Only run on latest python and openai client version because we are calling openai
+      run: pytest --integration-tests
+      working-directory: ${{ env.working_dir }}
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
