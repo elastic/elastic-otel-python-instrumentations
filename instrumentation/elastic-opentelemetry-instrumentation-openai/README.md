@@ -71,6 +71,12 @@ pip install -r dev-requirements.txt
 pytest
 ```
 
+To run integration tests doing real requests:
+
+```
+OPENAI_API_KEY=unused pytest --integration-tests
+```
+
 ## Refreshing HTTP payloads
 
 We use [VCR.py](https://vcrpy.readthedocs.io/en/latest/) to automatically record HTTP responses from

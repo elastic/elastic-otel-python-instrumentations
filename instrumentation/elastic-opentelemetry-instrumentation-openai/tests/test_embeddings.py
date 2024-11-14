@@ -35,7 +35,7 @@ from .conftest import (
     assert_operation_duration_metric,
     assert_token_usage_input_metric,
 )
-from .utils import get_sorted_metrics
+from .utils import MOCK_POSITIVE_FLOAT, get_sorted_metrics
 
 
 test_basic_test_data = [
@@ -69,7 +69,7 @@ def test_basic(provider_str, model, input_tokens, duration, trace_exporter, metr
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
         GEN_AI_RESPONSE_MODEL: model,
-        GEN_AI_USAGE_INPUT_TOKENS: 4,
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
         SERVER_ADDRESS: provider.server_address,
         SERVER_PORT: provider.server_port,
     }
@@ -118,7 +118,7 @@ def test_all_the_client_options(provider_str, model, input_tokens, duration, tra
         GEN_AI_SYSTEM: "openai",
         GEN_AI_RESPONSE_MODEL: model,
         GEN_AI_REQUEST_ENCODING_FORMAT: "float",
-        GEN_AI_USAGE_INPUT_TOKENS: 4,
+        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
         SERVER_ADDRESS: provider.server_address,
         SERVER_PORT: provider.server_port,
     }
@@ -133,6 +133,50 @@ def test_all_the_client_options(provider_str, model, input_tokens, duration, tra
         provider, operation_duration_metric, attributes=attributes, min_data_point=0.2263190783560276
     )
     assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=4)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("provider_str,model", [("openai_provider_embeddings", "text-embedding-3-small")])
+def test_all_the_client_options_integration(provider_str, model, trace_exporter, metrics_reader, request):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_client()
+
+    text = "South Atlantic Ocean."
+    response = client.embeddings.create(model=model, input=[text], encoding_format="float")
+
+    assert len(response.data) == 1
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"embeddings {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: provider.operation_name,
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_REQUEST_ENCODING_FORMAT: "float",
+        GEN_AI_USAGE_INPUT_TOKENS: response.usage.prompt_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert span.events == ()
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: model,
+    }
+    assert_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, min_data_point=MOCK_POSITIVE_FLOAT
+    )
+    assert_token_usage_input_metric(
+        provider, token_usage_metric, attributes=attributes, input_data_point=response.usage.prompt_tokens
+    )
 
 
 test_connection_error_data = [
@@ -284,6 +328,51 @@ async def test_async_all_the_client_options(
         provider, operation_duration_metric, attributes=attributes, min_data_point=duration
     )
     assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=input_tokens)
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+@pytest.mark.parametrize("provider_str,model", [("openai_provider_embeddings", "text-embedding-3-small")])
+async def test_async_all_the_client_options_integration(provider_str, model, trace_exporter, metrics_reader, request):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_async_client()
+
+    text = "South Atlantic Ocean."
+    response = await client.embeddings.create(model=model, input=[text], encoding_format="float")
+
+    assert len(response.data) == 1
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"embeddings {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: provider.operation_name,
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_REQUEST_ENCODING_FORMAT: "float",
+        GEN_AI_USAGE_INPUT_TOKENS: response.usage.prompt_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert span.events == ()
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: model,
+    }
+    assert_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, min_data_point=MOCK_POSITIVE_FLOAT
+    )
+    assert_token_usage_input_metric(
+        provider, token_usage_metric, attributes=attributes, input_data_point=response.usage.prompt_tokens
+    )
 
 
 test_async_connection_error_test_data = [

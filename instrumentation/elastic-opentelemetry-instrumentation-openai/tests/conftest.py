@@ -498,3 +498,26 @@ def assert_token_usage_metric(
             ),
         ],
     )
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--integration-tests",
+        action="store_true",
+        default=False,
+        help="run integrations tests doing real requests",
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "integration: mark integration tests")
+
+
+def pytest_collection_modifyitems(config, items):
+    run_integration_tests = bool(config.getoption("integration_tests"))
+    reason = "running integrations tests only" if run_integration_tests else "skipping integration tests"
+    skip_mark = pytest.mark.skip(reason=reason)
+    for item in items:
+        test_is_integration = "integration" in item.keywords
+        if run_integration_tests != test_is_integration:
+            item.add_marker(skip_mark)
