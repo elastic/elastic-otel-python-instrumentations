@@ -3312,3 +3312,32 @@ def test_with_model_not_found(
     assert_error_operation_duration_metric(
         provider, operation_duration_metric, attributes=attributes, data_point=duration
     )
+
+
+@pytest.mark.vcr()
+def test_exported_schema_version(
+    ollama_provider_chat_completions,
+    trace_exporter,
+    metrics_reader,
+):
+    client = ollama_provider_chat_completions.get_client()
+
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
+
+    client.chat.completions.create(model="qwen2.5:0.5b", messages=messages)
+
+    spans = trace_exporter.get_finished_spans()
+    (span,) = spans
+    assert span.instrumentation_scope.schema_url == "https://opentelemetry.io/schemas/1.27.0"
+
+    metrics_data = metrics_reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    for metrics in resource_metrics:
+        for scope_metrics in metrics.scope_metrics:
+            assert scope_metrics.schema_url == "https://opentelemetry.io/schemas/1.27.0"
