@@ -77,7 +77,8 @@ class StreamWrapper:
             _record_operation_duration_metric(self.operation_duration_metric, self.span, self.start_time)
             return
 
-        _set_span_attributes_from_response(self.span, self.response_id, self.model, self.choices, self.usage)
+        if self.span.is_recording():
+            _set_span_attributes_from_response(self.span, self.response_id, self.model, self.choices, self.usage)
 
         _record_operation_duration_metric(self.operation_duration_metric, self.span, self.start_time)
         if self.usage:
@@ -88,7 +89,7 @@ class StreamWrapper:
                 _send_log_events_from_stream_choices(
                     self.event_logger, choices=self.choices, span=self.span, attributes=self.event_attributes
                 )
-            else:
+            elif self.span.is_recording():
                 # same format as the prompt
                 completion = [_message_from_stream_choices(self.choices)]
                 try:
