@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import json
+import re
 from unittest import mock
 
 import openai
@@ -611,6 +612,7 @@ def test_connection_error(provider_str, model, duration, trace_exporter, metrics
         operation_duration_metric,
         attributes=attributes,
         data_point=duration,
+        value_delta=1.0,
     )
 
 
@@ -1569,4 +1571,161 @@ async def test_async_tools_with_capture_content(
         attributes=attributes,
         input_data_point=input_tokens,
         output_data_point=output_tokens,
+    )
+
+
+test_without_model_parameter_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "api.openai.com",
+        443,
+        5,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "test.openai.azure.com",
+        443,
+        5,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "localhost",
+        11434,
+        5,
+    ),
+]
+
+
+@pytest.mark.vcr()
+@pytest.mark.parametrize("provider_str,server_address,server_port,duration", test_without_model_parameter_test_data)
+def test_without_model_parameter(
+    provider_str,
+    server_address,
+    server_port,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+
+    client = provider.get_client()
+
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
+
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            "Missing required arguments; Expected either ('messages' and 'model') or ('messages', 'model' and 'stream') arguments to be given"
+        ),
+    ):
+        client.chat.completions.create(messages=messages)
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "chat"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.ERROR
+
+    assert dict(span.attributes) == {
+        ERROR_TYPE: "TypeError",
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_SYSTEM: "openai",
+        SERVER_ADDRESS: server_address,
+        SERVER_PORT: server_port,
+    }
+
+    (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
+    attributes = {"error.type": "TypeError", "server.address": server_address, "server.port": server_port}
+    assert_error_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, data_point=duration, value_delta=5
+    )
+
+
+test_with_model_not_found_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "api.openai.com",
+        443,
+        "The model `not-found-model` does not exist or you do not have access to it.",
+        0.00230291485786438,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "test.openai.azure.com",
+        443,
+        "The API deployment for this resource does not exist. If you created the deployment within the last 5 minutes, please wait a moment and try again.",
+        0.00230291485786438,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "localhost",
+        11434,
+        'model "not-found-model" not found, try pulling it first',
+        0.00230291485786438,
+    ),
+]
+
+
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,server_address,server_port,exception,duration", test_with_model_not_found_test_data
+)
+def test_with_model_not_found(
+    provider_str,
+    server_address,
+    server_port,
+    exception,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+
+    client = provider.get_client()
+
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
+
+    with pytest.raises(openai.NotFoundError, match="Error code: 404.*" + re.escape(exception)):
+        client.chat.completions.create(model="not-found-model", messages=messages)
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "chat not-found-model"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.ERROR
+
+    assert dict(span.attributes) == {
+        ERROR_TYPE: "NotFoundError",
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: "not-found-model",
+        GEN_AI_SYSTEM: "openai",
+        SERVER_ADDRESS: server_address,
+        SERVER_PORT: server_port,
+    }
+
+    (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
+    attributes = {
+        "gen_ai.request.model": "not-found-model",
+        "error.type": "NotFoundError",
+        "server.address": server_address,
+        "server.port": server_port,
+    }
+    assert_error_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, data_point=duration
     )

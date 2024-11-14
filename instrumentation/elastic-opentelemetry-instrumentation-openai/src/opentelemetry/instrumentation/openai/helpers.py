@@ -40,6 +40,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from opentelemetry.metrics import Histogram
 from opentelemetry.trace import Span
+from opentelemetry.util.types import Attributes
 
 if TYPE_CHECKING:
     from openai.types import CompletionUsage
@@ -125,9 +126,11 @@ def _attributes_from_client(client):
 def _get_span_attributes_from_wrapper(instance, kwargs):
     span_attributes = {
         GEN_AI_OPERATION_NAME: "chat",
-        GEN_AI_REQUEST_MODEL: kwargs["model"],
         GEN_AI_SYSTEM: "openai",
     }
+
+    if (request_model := kwargs.get("model")) is not None:
+        span_attributes[GEN_AI_REQUEST_MODEL] = request_model
 
     if client := getattr(instance, "_client", None):
         span_attributes.update(_attributes_from_client(client))
@@ -150,12 +153,23 @@ def _get_span_attributes_from_wrapper(instance, kwargs):
     return span_attributes
 
 
+def _span_name_from_span_attributes(attributes: Attributes) -> str:
+    request_model = attributes.get(GEN_AI_REQUEST_MODEL)
+    return (
+        f"{attributes[GEN_AI_OPERATION_NAME]} {request_model}"
+        if request_model
+        else f"{attributes[GEN_AI_OPERATION_NAME]}"
+    )
+
+
 def _get_embeddings_span_attributes_from_wrapper(instance, kwargs):
     span_attributes = {
         GEN_AI_OPERATION_NAME: "embeddings",
-        GEN_AI_REQUEST_MODEL: kwargs["model"],
         GEN_AI_SYSTEM: "openai",
     }
+
+    if (request_model := kwargs.get("model")) is not None:
+        span_attributes[GEN_AI_REQUEST_MODEL] = request_model
 
     if client := getattr(instance, "_client", None):
         span_attributes.update(_attributes_from_client(client))
