@@ -1,0 +1,95 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
+      ocean contains the falkland islands?"}], "model": "qwen2.5:0.5b", "stream":
+      true}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '155'
+      content-type:
+      - application/json
+      host:
+      - localhost:11434
+      user-agent:
+      - AsyncOpenAI/Python 1.50.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.50.0
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:11434/v1/chat/completions
+  response:
+    body:
+      string: 'data: {"id":"chatcmpl-644","object":"chat.completion.chunk","created":1727964741,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"The"},"finish_reason":null}]}
+
+
+        data: {"id":"chatcmpl-644","object":"chat.completion.chunk","created":1727964741,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
+        Falk"},"finish_reason":null}]}
+
+
+        data: {"id":"chatcmpl-644","object":"chat.completion.chunk","created":1727964741,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"land"},"finish_reason":null}]}
+
+
+        data: {"id":"chatcmpl-644","object":"chat.completion.chunk","created":1727964741,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
+        Islands"},"finish_reason":null}]}
+
+
+        data: {"id":"chatcmpl-644","object":"chat.completion.chunk","created":1727964741,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
+        lie"},"finish_reason":null}]}
+
+
+        data: {"id":"chatcmpl-644","object":"chat.completion.chunk","created":1727964741,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
+        within"},"finish_reason":null}]}
+
+
+        data: {"id":"chatcmpl-644","object":"chat.completion.chunk","created":1727964741,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
+        which"},"finish_reason":null}]}
+
+
+        data: {"id":"chatcmpl-644","object":"chat.completion.chunk","created":1727964741,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
+        ocean"},"finish_reason":null}]}
+
+
+        data: {"id":"chatcmpl-644","object":"chat.completion.chunk","created":1727964741,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"?"},"finish_reason":null}]}
+
+
+        data: {"id":"chatcmpl-644","object":"chat.completion.chunk","created":1727964741,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"stop"}]}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Thu, 03 Oct 2024 14:12:21 GMT
+      Set-Cookie: test_set_cookie
+      Transfer-Encoding:
+      - chunked
+      openai-organization: test_openai_org_key
+    status:
+      code: 200
+      message: OK
+version: 1

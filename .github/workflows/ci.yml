@@ -38,8 +38,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      py38: 3.8
-      py39: 3.9
+      py38: "3.8"
+      py39: "3.9"
       py310: "3.10"
       py311: "3.11"
       py312: "3.12"
@@ -55,7 +55,11 @@ jobs:
       with:
         python-version: ${{ env[matrix.python-version] }}
         architecture: "x64"
-    - run: pip install -r dev-requirements.txt
+    - if: ${{ env[matrix.python-version] == '3.8' || env[matrix.python-version] == '3.9' }}
+      run: pip install -r dev-requirements-3.9.txt
+      working-directory: ${{ matrix.working-dir }}
+    - if: ${{ env[matrix.python-version] != '3.8' && env[matrix.python-version] != '3.9' }}
+      run: pip install -r dev-requirements.txt
       working-directory: ${{ matrix.working-dir }}
     - run: pytest
       working-directory: ${{ matrix.working-dir }}

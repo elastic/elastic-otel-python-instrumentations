@@ -1,0 +1,92 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are a helpful customer
+      support assistant. Use the supplied tools to assist the user."}, {"role": "user",
+      "content": "Hi, can you tell me the delivery date for my order?"}, {"role":
+      "assistant", "content": "Hi there! I can help with that. Can you please provide
+      your order ID?"}, {"role": "user", "content": "i think it is order_12345"}],
+      "model": "gpt-4o-mini", "tools": [{"type": "function", "function": {"name":
+      "get_delivery_date", "description": "Get the delivery date for a customer''s
+      order. Call this whenever you need to know the delivery date, for example when
+      a customer asks ''Where is my package''", "parameters": {"type": "object", "properties":
+      {"order_id": {"type": "string", "description": "The customer''s order ID."}},
+      "required": ["order_id"], "additionalProperties": false}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - test_azure_api_key
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '842'
+      content-type:
+      - application/json
+      host:
+      - test.openai.azure.com
+      user-agent:
+      - AzureOpenAI/Python 1.50.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.50.0
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2023-03-15-preview
+  response:
+    body:
+      string: '{"choices":[{"finish_reason":"tool_calls","index":0,"message":{"content":null,"role":"assistant","tool_calls":[{"function":{"arguments":"{\"order_id\":\"order_12345\"}","name":"get_delivery_date"},"id":"call_k7neuKSnenJ2HHuw83I6xMuF","type":"function"}]}}],"created":1727962615,"id":"chatcmpl-AEGIh5ygWzdZJL7BvIVeFLmgDSdT7","model":"gpt-4o-mini","object":"chat.completion","system_fingerprint":"fp_878413d04d","usage":{"completion_tokens":19,"prompt_tokens":140,"total_tokens":159}}
+
+        '
+    headers:
+      Content-Length:
+      - '483'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 03 Oct 2024 13:36:55 GMT
+      Set-Cookie: test_set_cookie
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - f1bc4353-d74e-4ae7-b4ae-3bed4c405009
+      azureml-model-session:
+      - d012-20240925101712
+      openai-organization: test_openai_org_key
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-envoy-upstream-service-time:
+      - '292'
+      x-ms-client-request-id:
+      - f1bc4353-d74e-4ae7-b4ae-3bed4c405009
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - East US
+      x-ratelimit-remaining-requests:
+      - '909'
+      x-ratelimit-remaining-tokens:
+      - '90299'
+      x-request-id:
+      - 5a8a5280-4b43-48a7-8b03-f0089eadeb52
+    status:
+      code: 200
+      message: OK
+version: 1
