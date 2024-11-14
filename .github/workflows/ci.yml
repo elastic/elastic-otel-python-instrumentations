@@ -43,11 +43,15 @@ jobs:
       py310: "3.10"
       py311: "3.11"
       py312: "3.12"
+      # Baseline version of openai client we support
+      baseline: "1.2.0"
+      latest: ""
+      working_dir: "instrumentation/elastic-opentelemetry-instrumentation-openai"
     strategy:
       fail-fast: false
       matrix:
-        working-dir: ['instrumentation/elastic-opentelemetry-instrumentation-openai']
         python-version: [py38, py39, py310, py311, py312]
+        openai-version: [baseline, latest]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ env[matrix.python-version] }}
@@ -57,9 +61,14 @@ jobs:
         architecture: "x64"
     - if: ${{ env[matrix.python-version] == '3.8' || env[matrix.python-version] == '3.9' }}
       run: pip install -r dev-requirements-3.9.txt
-      working-directory: ${{ matrix.working-dir }}
+      working-directory: ${{ env.working_dir }}
     - if: ${{ env[matrix.python-version] != '3.8' && env[matrix.python-version] != '3.9' }}
       run: pip install -r dev-requirements.txt
-      working-directory: ${{ matrix.working-dir }}
+      working-directory: ${{ env.working_dir }}
+    - if: ${{ env[matrix.openai-version] }}
+      name: update openai to required version if not latest
+      run:
+        pip install openai==${{ env[matrix.openai-version] }}
+      working-directory: ${{ env.working_dir }}
     - run: pytest
-      working-directory: ${{ matrix.working-dir }}
+      working-directory: ${{ env.working_dir }}

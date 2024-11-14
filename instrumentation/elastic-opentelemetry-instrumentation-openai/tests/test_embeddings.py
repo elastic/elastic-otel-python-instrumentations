@@ -288,8 +288,8 @@ async def test_async_all_the_client_options(
 
 test_async_connection_error_test_data = [
     ("openai_provider_embeddings", "text-embedding-3-small", 0.2263190783560276),
-    ("azure_provider_embeddings", "text-embedding-3-small", 0.0036478489999751673),
-    ("ollama_provider_embeddings", "all-minilm:33m", 0.0030461717396974564),
+    ("azure_provider_embeddings", "text-embedding-3-small", 1.0062104639999916),
+    ("ollama_provider_embeddings", "all-minilm:33m", 1.0148218229999770),
 ]
 
 

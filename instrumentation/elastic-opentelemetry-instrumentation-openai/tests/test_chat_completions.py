@@ -48,6 +48,8 @@ from .conftest import (
 )
 from .utils import get_sorted_metrics, logrecords_from_logs
 
+OPENAI_VERSION = tuple([int(x) for x in openai.version.VERSION.split(".")])
+
 providers = ["openai_provider_chat_completions", "ollama_provider_chat_completions", "azure_provider_chat_completions"]
 
 
@@ -1288,7 +1290,7 @@ test_stream_with_include_usage_option_test_data = [
     ),
 ]
 
-
+@pytest.mark.skipif(OPENAI_VERSION < (1, 26, 0), reason="stream_options added in 1.26.0")
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
