@@ -16,12 +16,15 @@
 
 import json
 import logging
+from typing import Literal
 
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.openai.helpers import (
     _message_from_stream_choices,
     _record_token_usage_metrics,
     _record_operation_duration_metric,
     _set_span_attributes_from_response,
+    _send_log_events_from_stream_choices,
 )
 from opentelemetry.metrics import Histogram
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
@@ -30,6 +33,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from opentelemetry.trace import Span
 from opentelemetry.trace.status import StatusCode
+from opentelemetry.util.types import Attributes
 
 EVENT_GEN_AI_CONTENT_COMPLETION = "gen_ai.content.completion"
 
@@ -42,6 +46,9 @@ class StreamWrapper:
         stream,
         span: Span,
         capture_content: bool,
+        event_kind: Literal["log", "span"],
+        event_attributes: Attributes,
+        event_logger: EventLogger,
         start_time: float,
         token_usage_metric: Histogram,
         operation_duration_metric: Histogram,
@@ -49,6 +56,9 @@ class StreamWrapper:
         self.stream = stream
         self.span = span
         self.capture_content = capture_content
+        self.event_kind = event_kind
+        self.event_attributes = event_attributes
+        self.event_logger = event_logger
         self.token_usage_metric = token_usage_metric
         self.operation_duration_metric = operation_duration_metric
         self.start_time = start_time
@@ -74,14 +84,19 @@ class StreamWrapper:
             _record_token_usage_metrics(self.token_usage_metric, self.span, self.usage)
 
         if self.capture_content:
-            # same format as the prompt
-            completion = [_message_from_stream_choices(self.choices)]
-            try:
-                self.span.add_event(
-                    EVENT_GEN_AI_CONTENT_COMPLETION, attributes={GEN_AI_COMPLETION: json.dumps(completion)}
+            if self.event_kind == "log":
+                _send_log_events_from_stream_choices(
+                    self.event_logger, choices=self.choices, span=self.span, attributes=self.event_attributes
                 )
-            except TypeError:
-                logger.error(f"Failed to serialize {EVENT_GEN_AI_CONTENT_COMPLETION}")
+            else:
+                # same format as the prompt
+                completion = [_message_from_stream_choices(self.choices)]
+                try:
+                    self.span.add_event(
+                        EVENT_GEN_AI_CONTENT_COMPLETION, attributes={GEN_AI_COMPLETION: json.dumps(completion)}
+                    )
+                except TypeError:
+                    logger.error(f"Failed to serialize {EVENT_GEN_AI_CONTENT_COMPLETION}")
 
         self.span.end()
 

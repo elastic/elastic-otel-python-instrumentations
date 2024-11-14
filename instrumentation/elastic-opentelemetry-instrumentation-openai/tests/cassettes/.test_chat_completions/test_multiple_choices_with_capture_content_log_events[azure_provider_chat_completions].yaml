@@ -1,0 +1,85 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
+      ocean contains the falkland islands?"}], "model": "gpt-4o-mini", "n": 2}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - test_azure_api_key
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '146'
+      content-type:
+      - application/json
+      host:
+      - test.openai.azure.com
+      user-agent:
+      - AzureOpenAI/Python 1.50.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.50.0
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2023-03-15-preview
+  response:
+    body:
+      string: '{"choices":[{"finish_reason":"stop","index":0,"message":{"content":"South
+        Atlantic Ocean.","role":"assistant"}},{"finish_reason":"stop","index":1,"message":{"content":"South
+        Atlantic Ocean.","role":"assistant"}}],"created":1730200441,"id":"chatcmpl-ANeSfhGk22jizSPywSdR4MGCOdc76","model":"gpt-4o-mini","object":"chat.completion","system_fingerprint":"fp_d54531d9eb","usage":{"completion_tokens":8,"prompt_tokens":24,"total_tokens":32}}
+
+        '
+    headers:
+      Content-Length:
+      - '436'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 29 Oct 2024 11:14:01 GMT
+      Set-Cookie: test_set_cookie
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - f75b87aa-0c69-4819-bb46-4b18a3acc8b1
+      azureml-model-session:
+      - d034-20241024145218
+      openai-organization: test_openai_org_key
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-envoy-upstream-service-time:
+      - '121'
+      x-ms-client-request-id:
+      - f75b87aa-0c69-4819-bb46-4b18a3acc8b1
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - East US
+      x-ratelimit-remaining-requests:
+      - '909'
+      x-ratelimit-remaining-tokens:
+      - '89686'
+      x-request-id:
+      - c68236c0-ed69-4b12-944f-1bc002a4a85d
+    status:
+      code: 200
+      message: OK
+version: 1

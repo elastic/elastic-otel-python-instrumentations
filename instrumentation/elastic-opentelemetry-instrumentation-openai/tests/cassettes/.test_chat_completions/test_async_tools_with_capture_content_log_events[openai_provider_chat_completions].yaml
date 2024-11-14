@@ -1,0 +1,110 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are a helpful customer
+      support assistant. Use the supplied tools to assist the user."}, {"role": "user",
+      "content": "Hi, can you tell me the delivery date for my order?"}, {"role":
+      "assistant", "content": "Hi there! I can help with that. Can you please provide
+      your order ID?"}, {"role": "user", "content": "i think it is order_12345"}],
+      "model": "gpt-4o-mini", "tools": [{"type": "function", "function": {"name":
+      "get_delivery_date", "description": "Get the delivery date for a customer''s
+      order. Call this whenever you need to know the delivery date, for example when
+      a customer asks ''Where is my package''", "parameters": {"type": "object", "properties":
+      {"order_id": {"type": "string", "description": "The customer''s order ID."}},
+      "required": ["order_id"], "additionalProperties": false}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '842'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - AsyncOpenAI/Python 1.34.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.34.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: "{\n  \"id\": \"chatcmpl-AIEVOegIWRWjNVbjxs4iASh4SNKAj\",\n  \"object\":
+        \"chat.completion\",\n  \"created\": 1728909026,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n
+        \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
+        \"assistant\",\n        \"content\": null,\n        \"tool_calls\": [\n          {\n
+        \           \"id\": \"call_n4WJq7bu6UsgjdqeNYxRmGno\",\n            \"type\":
+        \"function\",\n            \"function\": {\n              \"name\": \"get_delivery_date\",\n
+        \             \"arguments\": \"{\\\"order_id\\\":\\\"order_12345\\\"}\"\n
+        \           }\n          }\n        ],\n        \"refusal\": null\n      },\n
+        \     \"logprobs\": null,\n      \"finish_reason\": \"tool_calls\"\n    }\n
+        \ ],\n  \"usage\": {\n    \"prompt_tokens\": 140,\n    \"completion_tokens\":
+        19,\n    \"total_tokens\": 159,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\":
+        0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\":
+        0\n    }\n  },\n  \"system_fingerprint\": \"fp_8552ec53e1\"\n}\n"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d2794a2f9a15252-MXP
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 14 Oct 2024 12:30:26 GMT
+      Server:
+      - cloudflare
+      Set-Cookie: test_set_cookie
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '918'
+      openai-organization: test_openai_org_key
+      openai-processing-ms:
+      - '757'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '200000'
+      x-ratelimit-remaining-requests:
+      - '9995'
+      x-ratelimit-remaining-tokens:
+      - '199921'
+      x-ratelimit-reset-requests:
+      - 37.186s
+      x-ratelimit-reset-tokens:
+      - 23ms
+      x-request-id:
+      - req_562b73aa01066c19e08aa19d847e33f7
+    status:
+      code: 200
+      message: OK
+version: 1

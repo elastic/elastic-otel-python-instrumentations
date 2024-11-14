@@ -1,0 +1,215 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are a helpful assistant
+      providing weather updates."}, {"role": "user", "content": "What is the weather
+      in New York City and London?"}], "model": "gpt-4o-mini", "tools": [{"type":
+      "function", "function": {"name": "get_weather", "strict": true, "parameters":
+      {"type": "object", "properties": {"location": {"type": "string"}}, "required":
+      ["location"], "additionalProperties": false}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '433'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.50.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.50.0
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: "{\n  \"id\": \"chatcmpl-ANiop2XcXbTSq8swBkuxNauL2ZCpp\",\n  \"object\":
+        \"chat.completion\",\n  \"created\": 1730217191,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n
+        \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
+        \"assistant\",\n        \"content\": null,\n        \"tool_calls\": [\n          {\n
+        \           \"id\": \"call_WUdxyJgUagWwal3Oq9ZevTO0\",\n            \"type\":
+        \"function\",\n            \"function\": {\n              \"name\": \"get_weather\",\n
+        \             \"arguments\": \"{\\\"location\\\": \\\"New York City\\\"}\"\n
+        \           }\n          },\n          {\n            \"id\": \"call_BAZEZMlsHRPFvG5yYPNIPFA8\",\n
+        \           \"type\": \"function\",\n            \"function\": {\n              \"name\":
+        \"get_weather\",\n              \"arguments\": \"{\\\"location\\\": \\\"London\\\"}\"\n
+        \           }\n          }\n        ],\n        \"refusal\": null\n      },\n
+        \     \"logprobs\": null,\n      \"finish_reason\": \"tool_calls\"\n    }\n
+        \ ],\n  \"usage\": {\n    \"prompt_tokens\": 57,\n    \"completion_tokens\":
+        46,\n    \"total_tokens\": 103,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\":
+        0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\":
+        0\n    }\n  },\n  \"system_fingerprint\": \"fp_f59a81427f\"\n}\n"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8da45642195e5261-MXP
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 29 Oct 2024 15:53:11 GMT
+      Server:
+      - cloudflare
+      Set-Cookie: test_set_cookie
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '1155'
+      openai-organization: test_openai_org_key
+      openai-processing-ms:
+      - '1027'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '200000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '199956'
+      x-ratelimit-reset-requests:
+      - 8.64s
+      x-ratelimit-reset-tokens:
+      - 13ms
+      x-request-id:
+      - req_9020588902482d8196158fcf8203a9ee
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are a helpful assistant
+      providing weather updates."}, {"role": "user", "content": "What is the weather
+      in New York City and London?"}, {"role": "assistant", "tool_calls": [{"id":
+      "call_WUdxyJgUagWwal3Oq9ZevTO0", "function": {"arguments": "{\"location\": \"New
+      York City\"}", "name": "get_weather"}, "type": "function"}, {"id": "call_BAZEZMlsHRPFvG5yYPNIPFA8",
+      "function": {"arguments": "{\"location\": \"London\"}", "name": "get_weather"},
+      "type": "function"}]}, {"role": "tool", "content": "25 degrees and sunny", "tool_call_id":
+      "call_WUdxyJgUagWwal3Oq9ZevTO0"}, {"role": "tool", "content": "15 degrees and
+      raining", "tool_call_id": "call_BAZEZMlsHRPFvG5yYPNIPFA8"}], "model": "gpt-4o-mini"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '742'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.50.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.50.0
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: "{\n  \"id\": \"chatcmpl-ANioqFAl6knUGNXUHM97w9fnolOUA\",\n  \"object\":
+        \"chat.completion\",\n  \"created\": 1730217192,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n
+        \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
+        \"assistant\",\n        \"content\": \"The current weather is as follows:\\n\\n-
+        **New York City**: 25 degrees and sunny\\n- **London**: 15 degrees and raining\",\n
+        \       \"refusal\": null\n      },\n      \"logprobs\": null,\n      \"finish_reason\":
+        \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 99,\n    \"completion_tokens\":
+        30,\n    \"total_tokens\": 129,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\":
+        0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\":
+        0\n    }\n  },\n  \"system_fingerprint\": \"fp_f59a81427f\"\n}\n"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8da45649ed485261-MXP
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 29 Oct 2024 15:53:13 GMT
+      Server:
+      - cloudflare
+      Set-Cookie: test_set_cookie
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '741'
+      openai-organization: test_openai_org_key
+      openai-processing-ms:
+      - '1119'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '200000'
+      x-ratelimit-remaining-requests:
+      - '9998'
+      x-ratelimit-remaining-tokens:
+      - '199942'
+      x-ratelimit-reset-requests:
+      - 16.076s
+      x-ratelimit-reset-tokens:
+      - 17ms
+      x-request-id:
+      - req_05dcf7d7979cddd2ca4d74b2ac762add
+    status:
+      code: 200
+      message: OK
+version: 1

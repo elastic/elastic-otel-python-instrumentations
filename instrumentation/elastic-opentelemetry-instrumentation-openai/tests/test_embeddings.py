@@ -80,7 +80,9 @@ def test_basic(provider_str, model, input_tokens, duration, trace_exporter, metr
         GEN_AI_RESPONSE_MODEL: model,
     }
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
-    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, min_data_point=duration
+    )
     assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=input_tokens)
 
 
@@ -128,15 +130,15 @@ def test_all_the_client_options(provider_str, model, input_tokens, duration, tra
         GEN_AI_RESPONSE_MODEL: model,
     }
     assert_operation_duration_metric(
-        provider, operation_duration_metric, attributes=attributes, data_point=0.2263190783560276
+        provider, operation_duration_metric, attributes=attributes, min_data_point=0.2263190783560276
     )
     assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=4)
 
 
 test_connection_error_data = [
-    ("openai_provider_embeddings", "text-embedding-3-small", 0.2263190783560276),
-    ("azure_provider_embeddings", "text-embedding-3-small", 0.0017870571464300156),
-    ("ollama_provider_embeddings", "all-minilm:33m", 0.0030461717396974564),
+    ("openai_provider_embeddings", "text-embedding-3-small", 0.460242404602468),
+    ("azure_provider_embeddings", "text-embedding-3-small", 0.4328950522467494),
+    ("ollama_provider_embeddings", "all-minilm:33m", 0.4006666960194707),
 ]
 
 
@@ -226,7 +228,9 @@ async def test_async_basic(provider_str, model, input_tokens, duration, trace_ex
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_RESPONSE_MODEL: model,
     }
-    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, min_data_point=duration
+    )
     assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=input_tokens)
 
 
@@ -276,7 +280,9 @@ async def test_async_all_the_client_options(
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_RESPONSE_MODEL: model,
     }
-    assert_operation_duration_metric(provider, operation_duration_metric, attributes=attributes, data_point=duration)
+    assert_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, min_data_point=duration
+    )
     assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=input_tokens)
 
 

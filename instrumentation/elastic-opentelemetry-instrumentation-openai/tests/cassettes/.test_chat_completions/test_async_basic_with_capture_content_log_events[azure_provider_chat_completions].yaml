@@ -1,0 +1,82 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
+      ocean contains the falkland islands?"}], "model": "gpt-4o-mini"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - test_azure_api_key
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '138'
+      content-type:
+      - application/json
+      host:
+      - test.openai.azure.com
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.34.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.34.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2023-03-15-preview
+  response:
+    body:
+      string: '{"choices":[{"finish_reason":"stop","index":0,"message":{"content":"South
+        Atlantic Ocean.","role":"assistant"}}],"created":1728909022,"id":"chatcmpl-AIEVKUfan2sD0ScQLHPSMYn7Fet3Y","model":"gpt-4o-mini","object":"chat.completion","system_fingerprint":"fp_878413d04d","usage":{"completion_tokens":4,"prompt_tokens":24,"total_tokens":28}}
+
+        '
+    headers:
+      Content-Length:
+      - '336'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 14 Oct 2024 12:30:21 GMT
+      Set-Cookie: test_set_cookie
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - aa7e6892-0666-4025-9c04-90d2a1f32987
+      azureml-model-session:
+      - d009-20240926131256
+      openai-organization: test_openai_org_key
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-envoy-upstream-service-time:
+      - '142'
+      x-ms-client-request-id:
+      - aa7e6892-0666-4025-9c04-90d2a1f32987
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - East US
+      x-ratelimit-remaining-requests:
+      - '906'
+      x-ratelimit-remaining-tokens:
+      - '88284'
+      x-request-id:
+      - ce524e90-581f-4d11-b86f-0e5f2b47f5fc
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -16,13 +16,22 @@
 
 import re
 import os
+from typing import Sequence, Union
 from urllib.parse import parse_qs, urlparse
 
 import openai
 import pytest
 from opentelemetry import metrics, trace
+from opentelemetry._logs import set_logger_provider
+from opentelemetry._events import set_event_logger_provider
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.metrics import Histogram
+from opentelemetry.sdk._events import EventLoggerProvider
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import (
+    InMemoryLogExporter,
+    SimpleLogRecordProcessor,
+)
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
     InMemoryMetricReader,
@@ -61,9 +70,24 @@ def metrics_reader():
     return memory_reader
 
 
+@pytest.fixture(scope="session")
+def logs_exporter():
+    exporter = InMemoryLogExporter()
+    logger_provider = LoggerProvider()
+    set_logger_provider(logger_provider)
+
+    logger_provider.add_log_record_processor(SimpleLogRecordProcessor(exporter))
+
+    event_logger_provider = EventLoggerProvider(logger_provider=logger_provider)
+    set_event_logger_provider(event_logger_provider)
+
+    return exporter
+
+
 @pytest.fixture(autouse=True)
-def clear_exporter(trace_exporter, metrics_reader):
+def clear_exporter(trace_exporter, metrics_reader, logs_exporter):
     trace_exporter.clear()
+    logs_exporter.clear()
 
 
 # TODO: should drop autouse and use it explicitly?
@@ -328,8 +352,15 @@ def ollama_provider_embeddings():
     return OllamaProvider.from_env(operation_name="embeddings")
 
 
-# data_point = 0.006543334107846022
-def assert_operation_duration_metric(provider, metric: Histogram, attributes: dict, data_point: float):
+def assert_operation_duration_metric(
+    provider,
+    metric: Histogram,
+    attributes: dict,
+    min_data_point: float,
+    max_data_point: float = None,
+    sum_data_point: float = None,
+    count: int = 1,
+):
     assert metric.name == "gen_ai.client.operation.duration"
     default_attributes = {
         "gen_ai.operation.name": provider.operation_name,
@@ -337,14 +368,24 @@ def assert_operation_duration_metric(provider, metric: Histogram, attributes: di
         "server.address": provider.server_address,
         "server.port": provider.server_port,
     }
+    # handle the simple cases of 1 or 2 data points in the histogram with just min_data_point
+    if max_data_point is None:
+        max_data_point = min_data_point
+    if sum_data_point is None:
+        if count == 1:
+            sum_data_point = min_data_point
+        elif count == 2:
+            sum_data_point = min_data_point + max_data_point
+        else:
+            raise ValueError("Missing sum_data_point with more than 2 values")
     assert_metric_expected(
         metric,
         [
             create_histogram_data_point(
-                count=1,
-                sum_data_point=data_point,
-                max_data_point=data_point,
-                min_data_point=data_point,
+                count=count,
+                sum_data_point=sum_data_point,
+                max_data_point=max_data_point,
+                min_data_point=min_data_point,
                 attributes={**default_attributes, **attributes},
             ),
         ],
@@ -378,31 +419,8 @@ def assert_error_operation_duration_metric(
     )
 
 
-def assert_token_usage_input_metric(provider, metric: Histogram, attributes: dict, input_data_point: int):
-    assert metric.name == "gen_ai.client.token.usage"
-    default_attributes = {
-        "gen_ai.operation.name": provider.operation_name,
-        "gen_ai.system": "openai",
-        "server.address": provider.server_address,
-        "server.port": provider.server_port,
-        "gen_ai.token.type": "input",
-    }
-    assert_metric_expected(
-        metric,
-        [
-            create_histogram_data_point(
-                count=1,
-                sum_data_point=input_data_point,
-                max_data_point=input_data_point,
-                min_data_point=input_data_point,
-                attributes={**default_attributes, **attributes},
-            ),
-        ],
-    )
-
-
-def assert_token_usage_metric(
-    provider, metric: Histogram, attributes: dict, input_data_point: int, output_data_point: int
+def assert_token_usage_input_metric(
+    provider, metric: Histogram, attributes: dict, input_data_point: int, count: int = 1
 ):
     assert metric.name == "gen_ai.client.token.usage"
     default_attributes = {
@@ -416,17 +434,63 @@ def assert_token_usage_metric(
         metric,
         [
             create_histogram_data_point(
-                count=1,
+                count=count,
                 sum_data_point=input_data_point,
                 max_data_point=input_data_point,
                 min_data_point=input_data_point,
+                attributes={**default_attributes, **attributes},
+            ),
+        ],
+    )
+
+
+def assert_token_usage_metric(
+    provider,
+    metric: Histogram,
+    attributes: dict,
+    input_data_point: Union[int, Sequence[int]],
+    output_data_point: Union[int, Sequence[int]],
+    count: int = 1,
+):
+    assert metric.name == "gen_ai.client.token.usage"
+    default_attributes = {
+        "gen_ai.operation.name": provider.operation_name,
+        "gen_ai.system": "openai",
+        "server.address": provider.server_address,
+        "server.port": provider.server_port,
+        "gen_ai.token.type": "input",
+    }
+
+    if count == 1:
+        assert isinstance(input_data_point, int)
+        assert isinstance(output_data_point, int)
+        sum_input = min_input = max_input = input_data_point
+        sum_output = min_output = max_output = output_data_point
+    else:
+        assert isinstance(input_data_point, Sequence)
+        assert isinstance(output_data_point, Sequence)
+        sum_input = sum(input_data_point)
+        min_input = min(input_data_point)
+        max_input = max(input_data_point)
+        sum_output = sum(output_data_point)
+        min_output = min(output_data_point)
+        max_output = max(output_data_point)
+
+    assert_metric_expected(
+        metric,
+        [
+            create_histogram_data_point(
+                count=count,
+                sum_data_point=sum_input,
+                max_data_point=max_input,
+                min_data_point=min_input,
                 attributes={**default_attributes, **attributes, "gen_ai.token.type": "input"},
             ),
             create_histogram_data_point(
-                count=1,
-                sum_data_point=output_data_point,
-                max_data_point=output_data_point,
-                min_data_point=output_data_point,
+                count=count,
+                sum_data_point=sum_output,
+                max_data_point=max_output,
+                min_data_point=min_output,
                 attributes={**default_attributes, **attributes, "gen_ai.token.type": "output"},
             ),
         ],

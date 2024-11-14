@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Sequence
+from typing import Mapping, Optional, Sequence
 
+from opentelemetry.sdk._logs._internal import LogData
 from opentelemetry.sdk.metrics._internal.point import Metric
 from opentelemetry.sdk.metrics.export import (
     InMemoryMetricReader,
@@ -21,6 +22,7 @@ from opentelemetry.sdk.metrics.export import (
     HistogramDataPoint,
     NumberDataPoint,
 )
+from opentelemetry.util.types import AttributeValue
 
 
 def get_sorted_metrics(memory_metrics_reader: InMemoryMetricReader):
@@ -117,3 +119,7 @@ def create_histogram_data_point(sum_data_point, count, max_data_point, min_data_
         bucket_counts=[],
         explicit_bounds=[],
     )
+
+
+def logrecords_from_logs(logs: Sequence[LogData]) -> Sequence[Mapping[str, AttributeValue]]:
+    return [log.log_record for log in logs]
