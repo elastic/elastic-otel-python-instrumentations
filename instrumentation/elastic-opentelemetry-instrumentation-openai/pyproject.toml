@@ -29,6 +29,7 @@ dependencies = [
     "opentelemetry-api ~= 1.28.1",
     "opentelemetry-instrumentation ~= 0.49b1",
     "opentelemetry-semantic-conventions ~= 0.49b1",
+    "wrapt >= 1.0.0, < 2.0.0",
 ]
 
 [project.readme]
@@ -42,7 +43,7 @@ Homepage = "https://github.com/elastic/elastic-otel-python-instrumentations"
 [project.optional-dependencies]
 dev = ["pytest", "pip-tools", "openai", "numpy", "opentelemetry-test-utils", "vcrpy", "pytest-asyncio", "pytest-vcr"]
 instruments = [
-  "openai >= 1.0.0",
+  "openai >= 1.2.0",
 ]
 
 [project.entry-points.opentelemetry_instrumentor]
