@@ -164,7 +164,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
                 if self.event_kind == "log":
                     _send_log_events_from_messages(self.event_logger, messages=messages, attributes=event_attributes)
-                else:
+                elif span.is_recording():
                     try:
                         span.add_event(EVENT_GEN_AI_CONTENT_PROMPT, attributes={GEN_AI_PROMPT: json.dumps(messages)})
                     except TypeError:
@@ -195,7 +195,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
             logger.debug(f"openai.resources.chat.completions.Completions.create result: {result}")
 
-            _set_span_attributes_from_response(span, result.id, result.model, result.choices, result.usage)
+            if span.is_recording():
+                _set_span_attributes_from_response(span, result.id, result.model, result.choices, result.usage)
 
             _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
@@ -205,7 +206,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     _send_log_events_from_choices(
                         self.event_logger, choices=result.choices, attributes=event_attributes
                     )
-                else:
+                elif span.is_recording():
                     # same format as the prompt
                     completion = [_message_from_choice(choice) for choice in result.choices]
                     try:
@@ -238,7 +239,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
                 if self.event_kind == "log":
                     _send_log_events_from_messages(self.event_logger, messages=messages, attributes=event_attributes)
-                else:
+                elif span.is_recording():
                     try:
                         span.add_event(EVENT_GEN_AI_CONTENT_PROMPT, attributes={GEN_AI_PROMPT: json.dumps(messages)})
                     except TypeError:
@@ -269,7 +270,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
             logger.debug(f"openai.resources.chat.completions.AsyncCompletions.create result: {result}")
 
-            _set_span_attributes_from_response(span, result.id, result.model, result.choices, result.usage)
+            if span.is_recording():
+                _set_span_attributes_from_response(span, result.id, result.model, result.choices, result.usage)
 
             _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
@@ -279,7 +281,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     _send_log_events_from_choices(
                         self.event_logger, choices=result.choices, attributes=event_attributes
                     )
-                else:
+                elif span.is_recording():
                     # same format as the prompt
                     completion = [_message_from_choice(choice) for choice in result.choices]
                     try:
@@ -314,7 +316,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
                 raise
 
-            _set_embeddings_span_attributes_from_response(span, result.model, result.usage)
+            if span.is_recording():
+                _set_embeddings_span_attributes_from_response(span, result.model, result.usage)
 
             _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
@@ -344,7 +347,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
                 raise
 
-            _set_embeddings_span_attributes_from_response(span, result.model, result.usage)
+            if span.is_recording():
+                _set_embeddings_span_attributes_from_response(span, result.model, result.usage)
 
             _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
