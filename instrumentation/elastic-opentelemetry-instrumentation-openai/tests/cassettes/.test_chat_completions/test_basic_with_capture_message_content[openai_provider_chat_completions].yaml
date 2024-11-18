@@ -49,9 +49,9 @@ interactions:
     body:
       string: |-
         {
-          "id": "chatcmpl-ASfaC6FMNUKWFqBJmf9rmRluWyRAF",
+          "id": "chatcmpl-ASfaDugIT60RnKtXL11x7yXKEn7WK",
           "object": "chat.completion",
-          "created": 1731396392,
+          "created": 1731396393,
           "model": "gpt-4o-mini-2024-07-18",
           "choices": [
             {
@@ -80,19 +80,19 @@ interactions:
               "rejected_prediction_tokens": 0
             }
           },
-          "system_fingerprint": "fp_9b78b61c52"
+          "system_fingerprint": "fp_0ba0d124f1"
         }
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8e14cb5db8012eb6-SIN
+      - 8e14cb6299a3ce22-SIN
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Tue, 12 Nov 2024 07:26:33 GMT
+      - Tue, 12 Nov 2024 07:26:34 GMT
       Server:
       - cloudflare
       Set-Cookie: test_set_cookie
@@ -108,7 +108,7 @@ interactions:
       - '771'
       openai-organization: test_openai_org_key
       openai-processing-ms:
-      - '386'
+      - '504'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -118,15 +118,15 @@ interactions:
       x-ratelimit-limit-tokens:
       - '200000'
       x-ratelimit-remaining-requests:
-      - '9993'
+      - '9992'
       x-ratelimit-remaining-tokens:
       - '199966'
       x-ratelimit-reset-requests:
-      - 54.04s
+      - 1m1.903s
       x-ratelimit-reset-tokens:
       - 10ms
       x-request-id:
-      - req_3e642cdb3e05072702a405418b9d3455
+      - req_e81f4f9516fa6a28cfe3a0141cfb12fb
     status:
       code: 200
       message: OK

@@ -83,7 +83,7 @@ interactions:
     body:
       string: |-
         {
-          "id": "chatcmpl-705",
+          "id": "chatcmpl-695",
           "object": "chat.completion",
           "created": 1731311780,
           "model": "qwen2.5:0.5b",
@@ -96,7 +96,7 @@ interactions:
                 "content": "",
                 "tool_calls": [
                   {
-                    "id": "call_u9zt4jf1",
+                    "id": "call_stzzh47r",
                     "type": "function",
                     "function": {
                       "name": "get_delivery_date",

@@ -100,15 +100,15 @@ interactions:
                       "arguments": "{\n  \"order_id\": \"order_12345\"\n}",
                       "name": "get_delivery_date"
                     },
-                    "id": "call_Lm5cpl4sJy5b1FfEjsnbbjlL",
+                    "id": "call_U0QYBadhpy4pBO6jYPm09KvZ",
                     "type": "function"
                   }
                 ]
               }
             }
           ],
-          "created": 1731466225,
-          "id": "chatcmpl-ASxkX3IDac2dYI6AB8L4iA7SJaNii",
+          "created": 1731466226,
+          "id": "chatcmpl-ASxkYrqUQVubUzovieQByym7sxgdm",
           "model": "gpt-4-32k",
           "object": "chat.completion",
           "prompt_filter_results": [
@@ -149,23 +149,23 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 13 Nov 2024 02:50:25 GMT
+      - Wed, 13 Nov 2024 02:50:27 GMT
       Set-Cookie: test_set_cookie
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       access-control-allow-origin:
       - '*'
       apim-request-id:
-      - d0d1d8a8-c031-48c8-b8f5-20fa4a9789ed
+      - cf22ccd0-88ac-4c8c-9165-cc19ab33cc5b
       azureml-model-session:
-      - d160-20241010151341
+      - d156-20241010120317
       openai-organization: test_openai_org_id
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-ms-client-request-id:
-      - d0d1d8a8-c031-48c8-b8f5-20fa4a9789ed
+      - cf22ccd0-88ac-4c8c-9165-cc19ab33cc5b
       x-ms-rai-invoked:
       - 'true'
       x-ms-region:
@@ -173,9 +173,9 @@ interactions:
       x-ratelimit-remaining-requests:
       - '71'
       x-ratelimit-remaining-tokens:
-      - '79580'
+      - '79564'
       x-request-id:
-      - 14c4426a-d72d-4c3c-aa90-5026d7d7e314
+      - dad29d09-1214-452a-8433-f0a62873e001
     status:
       code: 200
       message: OK

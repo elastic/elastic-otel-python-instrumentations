@@ -20,7 +20,7 @@ interactions:
             "content": "i think it is order_12345"
           }
         ],
-        "model": "gpt-4o-mini",
+        "model": "unused",
         "tools": [
           {
             "type": "function",
@@ -49,22 +49,24 @@ interactions:
       - application/json
       accept-encoding:
       - gzip, deflate
+      api-key:
+      - test_azure_api_key
       authorization:
       - Bearer test_openai_api_key
       connection:
       - keep-alive
       content-length:
-      - '842'
+      - '837'
       content-type:
       - application/json
       host:
-      - api.openai.com
+      - test.openai.azure.com
       user-agent:
-      - OpenAI/Python 1.54.3
+      - AsyncAzureOpenAI/Python 1.54.3
       x-stainless-arch:
       - arm64
       x-stainless-async:
-      - 'false'
+      - async:asyncio
       x-stainless-lang:
       - python
       x-stainless-os:
@@ -78,99 +80,102 @@ interactions:
       x-stainless-runtime-version:
       - 3.12.6
     method: POST
-    uri: https://api.openai.com/v1/chat/completions
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2024-08-01-preview
   response:
     body:
       string: |-
         {
-          "id": "chatcmpl-ASfaAdUvnmifbYTNRZYh0TbM7mmTu",
-          "object": "chat.completion",
-          "created": 1731396390,
-          "model": "gpt-4o-mini-2024-07-18",
           "choices": [
             {
+              "content_filter_results": {},
+              "finish_reason": "tool_calls",
               "index": 0,
+              "logprobs": null,
               "message": {
-                "role": "assistant",
                 "content": null,
+                "role": "assistant",
                 "tool_calls": [
                   {
-                    "id": "call_pWCLNanMRK7W7uEVHK8PzIKU",
-                    "type": "function",
                     "function": {
-                      "name": "get_delivery_date",
-                      "arguments": "{\"order_id\":\"order_12345\"}"
-                    }
+                      "arguments": "{\n  \"order_id\": \"order_12345\"\n}",
+                      "name": "get_delivery_date"
+                    },
+                    "id": "call_Lm5cpl4sJy5b1FfEjsnbbjlL",
+                    "type": "function"
                   }
-                ],
-                "refusal": null
-              },
-              "logprobs": null,
-              "finish_reason": "tool_calls"
+                ]
+              }
             }
           ],
-          "usage": {
-            "prompt_tokens": 140,
-            "completion_tokens": 19,
-            "total_tokens": 159,
-            "prompt_tokens_details": {
-              "cached_tokens": 0,
-              "audio_tokens": 0
-            },
-            "completion_tokens_details": {
-              "reasoning_tokens": 0,
-              "audio_tokens": 0,
-              "accepted_prediction_tokens": 0,
-              "rejected_prediction_tokens": 0
+          "created": 1731466225,
+          "id": "chatcmpl-ASxkX3IDac2dYI6AB8L4iA7SJaNii",
+          "model": "gpt-4-32k",
+          "object": "chat.completion",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
             }
-          },
-          "system_fingerprint": "fp_0ba0d124f1"
+          ],
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 20,
+            "prompt_tokens": 144,
+            "total_tokens": 164
+          }
         }
     headers:
-      CF-Cache-Status:
-      - DYNAMIC
-      CF-RAY:
-      - 8e14cb4f2fa381a1-SIN
-      Connection:
-      - keep-alive
+      Cache-Control:
+      - no-cache, must-revalidate
+      Content-Length:
+      - '780'
       Content-Type:
       - application/json
       Date:
-      - Tue, 12 Nov 2024 07:26:31 GMT
-      Server:
-      - cloudflare
+      - Wed, 13 Nov 2024 02:50:25 GMT
       Set-Cookie: test_set_cookie
-      Transfer-Encoding:
-      - chunked
-      X-Content-Type-Options:
-      - nosniff
-      access-control-expose-headers:
-      - X-Request-ID
-      alt-svc:
-      - h3=":443"; ma=86400
-      content-length:
-      - '1046'
-      openai-organization: test_openai_org_key
-      openai-processing-ms:
-      - '480'
-      openai-version:
-      - '2020-10-01'
-      strict-transport-security:
+      Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
-      x-ratelimit-limit-requests:
-      - '10000'
-      x-ratelimit-limit-tokens:
-      - '200000'
+      access-control-allow-origin:
+      - '*'
+      apim-request-id:
+      - d0d1d8a8-c031-48c8-b8f5-20fa4a9789ed
+      azureml-model-session:
+      - d160-20241010151341
+      openai-organization: test_openai_org_id
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - d0d1d8a8-c031-48c8-b8f5-20fa4a9789ed
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - Switzerland North
       x-ratelimit-remaining-requests:
-      - '9994'
+      - '71'
       x-ratelimit-remaining-tokens:
-      - '199921'
-      x-ratelimit-reset-requests:
-      - 47.726s
-      x-ratelimit-reset-tokens:
-      - 23ms
+      - '79580'
       x-request-id:
-      - req_ccdda6bf020fb93ddd72bcfc2385acc3
+      - 14c4426a-d72d-4c3c-aa90-5026d7d7e314
     status:
       code: 200
       message: OK

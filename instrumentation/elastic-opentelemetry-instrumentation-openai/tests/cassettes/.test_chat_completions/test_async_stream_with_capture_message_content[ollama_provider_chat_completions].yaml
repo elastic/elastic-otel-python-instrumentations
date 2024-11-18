@@ -49,19 +49,23 @@ interactions:
   response:
     body:
       string: |+
-        data: {"id":"chatcmpl-752","object":"chat.completion.chunk","created":1731311784,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"South"},"finish_reason":null}]}
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"The"},"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-752","object":"chat.completion.chunk","created":1731311784,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" America"},"finish_reason":null}]}
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" Falk"},"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-752","object":"chat.completion.chunk","created":1731311784,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"'s"},"finish_reason":null}]}
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"land"},"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-752","object":"chat.completion.chunk","created":1731311784,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" Atlantic"},"finish_reason":null}]}
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" Islands"},"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-752","object":"chat.completion.chunk","created":1731311784,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" Ocean"},"finish_reason":null}]}
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" belong"},"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-752","object":"chat.completion.chunk","created":1731311784,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"."},"finish_reason":null}]}
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" to"},"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-752","object":"chat.completion.chunk","created":1731311784,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"stop"}]}
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" Argentina"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"."},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"stop"}]}
 
         data: [DONE]
 
@@ -69,7 +73,7 @@ interactions:
       Content-Type:
       - text/event-stream
       Date:
-      - Mon, 11 Nov 2024 07:56:24 GMT
+      - Mon, 11 Nov 2024 08:39:05 GMT
       Set-Cookie: test_set_cookie
       Transfer-Encoding:
       - chunked

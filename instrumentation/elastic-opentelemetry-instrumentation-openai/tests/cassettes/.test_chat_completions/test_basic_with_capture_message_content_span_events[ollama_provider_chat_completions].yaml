@@ -26,11 +26,11 @@ interactions:
       host:
       - localhost:11434
       user-agent:
-      - AsyncOpenAI/Python 1.50.2
+      - OpenAI/Python 1.50.2
       x-stainless-arch:
       - arm64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
@@ -49,9 +49,9 @@ interactions:
     body:
       string: |-
         {
-          "id": "chatcmpl-295",
+          "id": "chatcmpl-433",
           "object": "chat.completion",
-          "created": 1731311784,
+          "created": 1731311782,
           "model": "qwen2.5:0.5b",
           "system_fingerprint": "fp_ollama",
           "choices": [
@@ -59,24 +59,24 @@ interactions:
               "index": 0,
               "message": {
                 "role": "assistant",
-                "content": "The Falkland Islands are located in which ocean?"
+                "content": "The Atlantic Ocean."
               },
               "finish_reason": "stop"
             }
           ],
           "usage": {
             "prompt_tokens": 46,
-            "completion_tokens": 11,
-            "total_tokens": 57
+            "completion_tokens": 5,
+            "total_tokens": 51
           }
         }
     headers:
       Content-Length:
-      - '335'
+      - '305'
       Content-Type:
       - application/json
       Date:
-      - Mon, 11 Nov 2024 07:56:24 GMT
+      - Mon, 11 Nov 2024 07:56:22 GMT
       Set-Cookie: test_set_cookie
       openai-organization: test_openai_org_key
     status:

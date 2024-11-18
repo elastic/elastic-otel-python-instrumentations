@@ -53,13 +53,13 @@ interactions:
       string: |+
         data: {"choices":[],"created":0,"id":"","model":"","object":"","prompt_filter_results":[{"prompt_index":0,"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}}}]}
 
-        data: {"choices":[{"content_filter_results":{},"delta":{"content":"","role":"assistant"},"finish_reason":null,"index":0,"logprobs":null}],"created":1731468911,"id":"chatcmpl-ASyRrEoGtgeeLRtFd7mM1CePrJUac","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
+        data: {"choices":[{"content_filter_results":{},"delta":{"content":"","role":"assistant"},"finish_reason":null,"index":0,"logprobs":null}],"created":1731466223,"id":"chatcmpl-ASxkVWhWg2yeY7IV8yr6Lywa7fke4","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
 
-        data: {"choices":[{"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"delta":{"content":"Atlantic"},"finish_reason":null,"index":0,"logprobs":null}],"created":1731468911,"id":"chatcmpl-ASyRrEoGtgeeLRtFd7mM1CePrJUac","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
+        data: {"choices":[{"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"delta":{"content":"Atlantic"},"finish_reason":null,"index":0,"logprobs":null}],"created":1731466223,"id":"chatcmpl-ASxkVWhWg2yeY7IV8yr6Lywa7fke4","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
 
-        data: {"choices":[{"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"delta":{"content":" Ocean"},"finish_reason":null,"index":0,"logprobs":null}],"created":1731468911,"id":"chatcmpl-ASyRrEoGtgeeLRtFd7mM1CePrJUac","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
+        data: {"choices":[{"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"delta":{"content":" Ocean"},"finish_reason":null,"index":0,"logprobs":null}],"created":1731466223,"id":"chatcmpl-ASxkVWhWg2yeY7IV8yr6Lywa7fke4","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
 
-        data: {"choices":[{"content_filter_results":{},"delta":{},"finish_reason":"stop","index":0,"logprobs":null}],"created":1731468911,"id":"chatcmpl-ASyRrEoGtgeeLRtFd7mM1CePrJUac","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
+        data: {"choices":[{"content_filter_results":{},"delta":{},"finish_reason":"stop","index":0,"logprobs":null}],"created":1731466223,"id":"chatcmpl-ASxkVWhWg2yeY7IV8yr6Lywa7fke4","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
 
         data: [DONE]
 
@@ -69,7 +69,7 @@ interactions:
       Content-Type:
       - text/event-stream
       Date:
-      - Wed, 13 Nov 2024 03:35:11 GMT
+      - Wed, 13 Nov 2024 02:50:23 GMT
       Set-Cookie: test_set_cookie
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
@@ -78,7 +78,7 @@ interactions:
       access-control-allow-origin:
       - '*'
       apim-request-id:
-      - 950795c5-f4c5-4a49-8f90-df12358f7c8a
+      - 32da387e-289d-4876-8d37-adc936ab09da
       azureml-model-session:
       - d156-20241010120317
       openai-organization: test_openai_org_id
@@ -87,17 +87,17 @@ interactions:
       x-content-type-options:
       - nosniff
       x-ms-client-request-id:
-      - 950795c5-f4c5-4a49-8f90-df12358f7c8a
+      - 32da387e-289d-4876-8d37-adc936ab09da
       x-ms-rai-invoked:
       - 'true'
       x-ms-region:
       - Switzerland North
       x-ratelimit-remaining-requests:
-      - '79'
+      - '71'
       x-ratelimit-remaining-tokens:
-      - '79984'
+      - '79612'
       x-request-id:
-      - 9b878e38-8cfd-434d-8e04-71ba2e5bb8e0
+      - 132f6f5c-067a-47e2-bc7d-79aa543876b4
     status:
       code: 200
       message: OK

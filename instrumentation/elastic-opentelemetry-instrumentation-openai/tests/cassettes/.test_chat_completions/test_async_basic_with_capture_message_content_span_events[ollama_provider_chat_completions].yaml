@@ -49,7 +49,7 @@ interactions:
     body:
       string: |-
         {
-          "id": "chatcmpl-295",
+          "id": "chatcmpl-816",
           "object": "chat.completion",
           "created": 1731311784,
           "model": "qwen2.5:0.5b",
@@ -59,20 +59,20 @@ interactions:
               "index": 0,
               "message": {
                 "role": "assistant",
-                "content": "The Falkland Islands are located in which ocean?"
+                "content": "Antarctica ocean."
               },
               "finish_reason": "stop"
             }
           ],
           "usage": {
             "prompt_tokens": 46,
-            "completion_tokens": 11,
-            "total_tokens": 57
+            "completion_tokens": 6,
+            "total_tokens": 52
           }
         }
     headers:
       Content-Length:
-      - '335'
+      - '303'
       Content-Type:
       - application/json
       Date:

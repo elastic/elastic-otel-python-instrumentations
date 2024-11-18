@@ -49,7 +49,7 @@ interactions:
     body:
       string: |-
         {
-          "id": "chatcmpl-433",
+          "id": "chatcmpl-913",
           "object": "chat.completion",
           "created": 1731311782,
           "model": "qwen2.5:0.5b",
@@ -59,20 +59,20 @@ interactions:
               "index": 0,
               "message": {
                 "role": "assistant",
-                "content": "The Atlantic Ocean."
+                "content": "Atlantic Ocean"
               },
               "finish_reason": "stop"
             }
           ],
           "usage": {
             "prompt_tokens": 46,
-            "completion_tokens": 5,
-            "total_tokens": 51
+            "completion_tokens": 3,
+            "total_tokens": 49
           }
         }
     headers:
       Content-Length:
-      - '305'
+      - '300'
       Content-Type:
       - application/json
       Date:

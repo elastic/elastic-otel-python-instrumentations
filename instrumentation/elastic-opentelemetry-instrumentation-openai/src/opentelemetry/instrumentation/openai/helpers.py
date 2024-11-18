@@ -158,7 +158,6 @@ def _get_span_attributes_from_wrapper(instance, kwargs) -> Attributes:
         GEN_AI_SYSTEM: "openai",
     }
 
-    # on some azure clients the model was not mandatory
     if (request_model := kwargs.get("model")) is not None:
         span_attributes[GEN_AI_REQUEST_MODEL] = request_model
 

@@ -317,7 +317,7 @@ test_function_calling_with_tools_test_data = [
 ]
 
 
-test_multiple_choices_capture_message_content_log_events_test_data = [
+test_multiple_choices_capture_message_content_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -345,9 +345,9 @@ test_multiple_choices_capture_message_content_log_events_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
-    test_multiple_choices_capture_message_content_log_events_test_data,
+    test_multiple_choices_capture_message_content_test_data,
 )
-def test_multiple_choices_with_capture_message_content_log_events(
+def test_multiple_choices_with_capture_message_content(
     provider_str,
     model,
     response_model,
@@ -367,9 +367,7 @@ def test_multiple_choices_with_capture_message_content_log_events(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
 
     messages = [
@@ -531,7 +529,7 @@ def test_function_calling_with_tools(
     )
 
 
-test_tools_with_capture_message_content_test_data = [
+test_tools_with_capture_message_content_span_events_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -571,9 +569,9 @@ test_tools_with_capture_message_content_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,function_call_id,input_tokens,output_tokens,duration",
-    test_tools_with_capture_message_content_test_data,
+    test_tools_with_capture_message_content_span_events_test_data,
 )
-def test_tools_with_capture_message_content(
+def test_tools_with_capture_message_content_span_events(
     provider_str,
     model,
     response_model,
@@ -592,7 +590,10 @@ def test_tools_with_capture_message_content(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+    with mock.patch.dict(
+        "os.environ",
+        {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "span"},
+    ):
         OpenAIInstrumentor().instrument()
 
     tools = [
@@ -680,7 +681,7 @@ def test_tools_with_capture_message_content(
     )
 
 
-test_tools_with_capture_message_content_log_events_test_data = [
+test_tools_with_capture_message_content_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -720,9 +721,9 @@ test_tools_with_capture_message_content_log_events_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,function_call_id,input_tokens,output_tokens,duration",
-    test_tools_with_capture_message_content_log_events_test_data,
+    test_tools_with_capture_message_content_test_data,
 )
-def test_tools_with_capture_message_content_log_events(
+def test_tools_with_capture_message_content(
     provider_str,
     model,
     response_model,
@@ -742,9 +743,7 @@ def test_tools_with_capture_message_content_log_events(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
 
     tools = [
@@ -856,7 +855,7 @@ def test_tools_with_capture_message_content_log_events(
         ),
     ],
 )
-def test_tools_with_capture_message_content_log_events_integration(
+def test_tools_with_capture_message_content_integration(
     provider_str,
     model,
     response_model,
@@ -870,9 +869,7 @@ def test_tools_with_capture_message_content_log_events_integration(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
 
     tools = [
@@ -1038,7 +1035,7 @@ def test_connection_error(provider_str, model, duration, trace_exporter, metrics
     )
 
 
-test_basic_with_capture_message_content_test_data = [
+test_basic_with_capture_message_content_span_events_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -1075,9 +1072,9 @@ test_basic_with_capture_message_content_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
-    test_basic_with_capture_message_content_test_data,
+    test_basic_with_capture_message_content_span_events_test_data,
 )
-def test_basic_with_capture_message_content(
+def test_basic_with_capture_message_content_span_events(
     provider_str,
     model,
     response_model,
@@ -1095,7 +1092,10 @@ def test_basic_with_capture_message_content(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+    with mock.patch.dict(
+        "os.environ",
+        {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "span"},
+    ):
         OpenAIInstrumentor().instrument()
 
     messages = [
@@ -1167,7 +1167,7 @@ def test_basic_with_capture_message_content(
         )
     ],
 )
-def test_basic_with_capture_message_content_integration(
+def test_basic_with_capture_message_content_span_events_integration(
     provider_str,
     model,
     response_model,
@@ -1179,7 +1179,10 @@ def test_basic_with_capture_message_content_integration(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+    with mock.patch.dict(
+        "os.environ",
+        {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "span"},
+    ):
         OpenAIInstrumentor().instrument()
 
     client = provider.get_client()
@@ -1242,7 +1245,7 @@ def test_basic_with_capture_message_content_integration(
     )
 
 
-test_basic_with_capture_message_content_log_events_test_data = [
+test_basic_with_capture_message_content_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -1279,9 +1282,9 @@ test_basic_with_capture_message_content_log_events_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
-    test_basic_with_capture_message_content_log_events_test_data,
+    test_basic_with_capture_message_content_test_data,
 )
-def test_basic_with_capture_message_content_log_events(
+def test_basic_with_capture_message_content(
     provider_str,
     model,
     response_model,
@@ -1300,9 +1303,7 @@ def test_basic_with_capture_message_content_log_events(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
 
     messages = [
@@ -1553,7 +1554,7 @@ def test_stream_with_include_usage_option(
         )
     ],
 )
-def test_stream_with_include_usage_option_and_capture_message_content_integration(
+def test_stream_with_include_usage_option_and_capture_message_content_span_events_integration(
     provider_str,
     model,
     response_model,
@@ -1565,7 +1566,10 @@ def test_stream_with_include_usage_option_and_capture_message_content_integratio
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+    with mock.patch.dict(
+        "os.environ",
+        {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "span"},
+    ):
         OpenAIInstrumentor().instrument()
 
     client = provider.get_client()
@@ -1633,7 +1637,7 @@ def test_stream_with_include_usage_option_and_capture_message_content_integratio
     )
 
 
-test_stream_with_tools_and_capture_message_content_test_data = [
+test_stream_with_tools_and_capture_message_content_span_events_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -1680,9 +1684,9 @@ test_stream_with_tools_and_capture_message_content_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,completion_content,response_id,finish_reason,duration",
-    test_stream_with_tools_and_capture_message_content_test_data,
+    test_stream_with_tools_and_capture_message_content_span_events_test_data,
 )
-def test_stream_with_tools_and_capture_message_content(
+def test_stream_with_tools_and_capture_message_content_span_events(
     provider_str,
     model,
     response_model,
@@ -1700,7 +1704,10 @@ def test_stream_with_tools_and_capture_message_content(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+    with mock.patch.dict(
+        "os.environ",
+        {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "span"},
+    ):
         OpenAIInstrumentor().instrument()
 
     tools = [
@@ -1778,7 +1785,7 @@ def test_stream_with_tools_and_capture_message_content(
     )
 
 
-test_stream_with_tools_and_capture_message_content_log_events_test_data = [
+test_stream_with_tools_and_capture_message_content_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -1820,9 +1827,9 @@ test_stream_with_tools_and_capture_message_content_log_events_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,completion_content,response_id,finish_reason,function_call_id,duration",
-    test_stream_with_tools_and_capture_message_content_log_events_test_data,
+    test_stream_with_tools_and_capture_message_content_test_data,
 )
-def test_stream_with_tools_and_capture_message_content_log_events(
+def test_stream_with_tools_and_capture_message_content(
     provider_str,
     model,
     response_model,
@@ -1842,9 +1849,7 @@ def test_stream_with_tools_and_capture_message_content_log_events(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
 
     tools = [
@@ -1947,7 +1952,7 @@ def test_stream_with_tools_and_capture_message_content_log_events(
 
 # Azure is not tested because only gpt-4o version 2024-08-06 supports structured output:
 # openai.BadRequestError: Error code: 400 - {'error': {'message': 'Structured output is not allowed.', 'type': 'invalid_request_error', 'param': None, 'code': None}}
-test_stream_with_parallel_tools_and_capture_message_content_test_data = [
+test_stream_with_parallel_tools_and_capture_message_content_span_events_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -1983,9 +1988,9 @@ test_stream_with_parallel_tools_and_capture_message_content_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,completion_content,response_id,finish_reason,duration",
-    test_stream_with_parallel_tools_and_capture_message_content_test_data,
+    test_stream_with_parallel_tools_and_capture_message_content_span_events_test_data,
 )
-def test_stream_with_parallel_tools_and_capture_message_content(
+def test_stream_with_parallel_tools_and_capture_message_content_span_events(
     provider_str,
     model,
     response_model,
@@ -2003,7 +2008,10 @@ def test_stream_with_parallel_tools_and_capture_message_content(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+    with mock.patch.dict(
+        "os.environ",
+        {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "span"},
+    ):
         OpenAIInstrumentor().instrument()
 
     tools = [
@@ -2073,7 +2081,7 @@ def test_stream_with_parallel_tools_and_capture_message_content(
     )
 
 
-test_stream_with_parallel_tools_and_capture_message_content_log_events_test_data = [
+test_stream_with_parallel_tools_and_capture_message_content_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -2111,9 +2119,9 @@ test_stream_with_parallel_tools_and_capture_message_content_log_events_test_data
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,completion_content,response_id,finish_reason,duration",
-    test_stream_with_parallel_tools_and_capture_message_content_log_events_test_data,
+    test_stream_with_parallel_tools_and_capture_message_content_test_data,
 )
-def test_stream_with_parallel_tools_and_capture_message_content_log_events(
+def test_stream_with_parallel_tools_and_capture_message_content(
     provider_str,
     model,
     response_model,
@@ -2132,9 +2140,7 @@ def test_stream_with_parallel_tools_and_capture_message_content_log_events(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
 
     tools = [
@@ -2222,7 +2228,7 @@ def test_stream_with_parallel_tools_and_capture_message_content_log_events(
     )
 
 
-test_tools_with_followup_and_capture_message_content_log_events_test_data = [
+test_tools_with_followup_and_capture_message_content_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -2240,9 +2246,9 @@ test_tools_with_followup_and_capture_message_content_log_events_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,completion_content,finish_reason,duration",
-    test_tools_with_followup_and_capture_message_content_log_events_test_data,
+    test_tools_with_followup_and_capture_message_content_test_data,
 )
-def test_tools_with_followup_and_capture_message_content_log_events(
+def test_tools_with_followup_and_capture_message_content(
     provider_str,
     model,
     response_model,
@@ -2260,9 +2266,7 @@ def test_tools_with_followup_and_capture_message_content_log_events(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
 
     tools = [
@@ -2524,7 +2528,7 @@ async def test_async_basic(
     )
 
 
-test_async_basic_with_capture_message_content_test_data = [
+test_async_basic_with_capture_message_content_span_events_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -2562,9 +2566,9 @@ test_async_basic_with_capture_message_content_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
-    test_async_basic_with_capture_message_content_test_data,
+    test_async_basic_with_capture_message_content_span_events_test_data,
 )
-async def test_async_basic_with_capture_message_content(
+async def test_async_basic_with_capture_message_content_span_events(
     provider_str,
     model,
     response_model,
@@ -2582,7 +2586,10 @@ async def test_async_basic_with_capture_message_content(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+    with mock.patch.dict(
+        "os.environ",
+        {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "span"},
+    ):
         OpenAIInstrumentor().instrument()
 
     messages = [
@@ -2642,7 +2649,7 @@ async def test_async_basic_with_capture_message_content(
     )
 
 
-test_async_basic_with_capture_message_content_log_events_test_data = [
+test_async_basic_with_capture_message_content_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -2680,9 +2687,9 @@ test_async_basic_with_capture_message_content_log_events_test_data = [
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
-    test_async_basic_with_capture_message_content_log_events_test_data,
+    test_async_basic_with_capture_message_content_test_data,
 )
-async def test_async_basic_with_capture_message_content_log_events(
+async def test_async_basic_with_capture_message_content(
     provider_str,
     model,
     response_model,
@@ -2701,9 +2708,7 @@ async def test_async_basic_with_capture_message_content_log_events(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
 
     messages = [
@@ -2776,7 +2781,7 @@ async def test_async_basic_with_capture_message_content_log_events(
         ),
     ],
 )
-async def test_async_basic_with_capture_message_content_log_events_integration(
+async def test_async_basic_with_capture_message_content_integration(
     provider_str,
     model,
     response_model,
@@ -2790,9 +2795,7 @@ async def test_async_basic_with_capture_message_content_log_events_integration(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
 
     messages = [
@@ -2932,7 +2935,7 @@ async def test_async_stream(
     )
 
 
-test_async_stream_with_capture_message_content_test_data = [
+test_async_stream_with_capture_message_content_span_events_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -2964,9 +2967,9 @@ test_async_stream_with_capture_message_content_test_data = [
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,duration",
-    test_async_stream_with_capture_message_content_test_data,
+    test_async_stream_with_capture_message_content_span_events_test_data,
 )
-async def test_async_stream_with_capture_message_content(
+async def test_async_stream_with_capture_message_content_span_events(
     provider_str,
     model,
     response_model,
@@ -2982,7 +2985,10 @@ async def test_async_stream_with_capture_message_content(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+    with mock.patch.dict(
+        "os.environ",
+        {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "span"},
+    ):
         OpenAIInstrumentor().instrument()
     messages = [
         {
@@ -3033,7 +3039,7 @@ async def test_async_stream_with_capture_message_content(
     )
 
 
-test_async_stream_with_capture_message_content_log_events_test_data = [
+test_async_stream_with_capture_message_content_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -3065,9 +3071,9 @@ test_async_stream_with_capture_message_content_log_events_test_data = [
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,duration",
-    test_async_stream_with_capture_message_content_log_events_test_data,
+    test_async_stream_with_capture_message_content_test_data,
 )
-async def test_async_stream_with_capture_message_content_log_events(
+async def test_async_stream_with_capture_message_content(
     provider_str,
     model,
     response_model,
@@ -3084,9 +3090,7 @@ async def test_async_stream_with_capture_message_content_log_events(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
     messages = [
         {
@@ -3144,7 +3148,7 @@ async def test_async_stream_with_capture_message_content_log_events(
 
 
 # FIXME: ollama has empty tool_calls
-test_async_tools_with_capture_message_content_test_data = [
+test_async_tools_with_capture_message_content_span_events_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -3172,9 +3176,9 @@ test_async_tools_with_capture_message_content_test_data = [
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "provider_str,model,response_model,response_id,function_call_id,input_tokens,output_tokens,duration",
-    test_async_tools_with_capture_message_content_test_data,
+    test_async_tools_with_capture_message_content_span_events_test_data,
 )
-async def test_async_tools_with_capture_message_content(
+async def test_async_tools_with_capture_message_content_span_events(
     provider_str,
     model,
     response_model,
@@ -3192,7 +3196,10 @@ async def test_async_tools_with_capture_message_content(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+    with mock.patch.dict(
+        "os.environ",
+        {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "span"},
+    ):
         OpenAIInstrumentor().instrument()
 
     tools = [
@@ -3282,7 +3289,7 @@ async def test_async_tools_with_capture_message_content(
 
 
 # FIXME: ollama has empty tool_calls
-test_async_tools_with_capture_message_content_log_events_test_data = [
+test_async_tools_with_capture_message_content_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
@@ -3312,9 +3319,9 @@ test_async_tools_with_capture_message_content_log_events_test_data = [
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "provider_str,model,response_model,response_id,function_call_id,choice_content,input_tokens,output_tokens,duration",
-    test_async_tools_with_capture_message_content_log_events_test_data,
+    test_async_tools_with_capture_message_content_test_data,
 )
-async def test_async_tools_with_capture_message_content_log_events(
+async def test_async_tools_with_capture_message_content(
     provider_str,
     model,
     response_model,
@@ -3334,9 +3341,7 @@ async def test_async_tools_with_capture_message_content_log_events(
 
     # Redo the instrumentation dance to be affected by the environment variable
     OpenAIInstrumentor().uninstrument()
-    with mock.patch.dict(
-        "os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
-    ):
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
         OpenAIInstrumentor().instrument()
 
     tools = [
@@ -3590,14 +3595,14 @@ def test_exported_schema_version(
 
     spans = trace_exporter.get_finished_spans()
     (span,) = spans
-    assert span.instrumentation_scope.schema_url == "https://opentelemetry.io/schemas/1.27.0"
+    assert span.instrumentation_scope.schema_url == "https://opentelemetry.io/schemas/1.28.0"
 
     metrics_data = metrics_reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
 
     for metrics in resource_metrics:
         for scope_metrics in metrics.scope_metrics:
-            assert scope_metrics.schema_url == "https://opentelemetry.io/schemas/1.27.0"
+            assert scope_metrics.schema_url == "https://opentelemetry.io/schemas/1.28.0"
 
 
 @dataclass

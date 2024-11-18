@@ -80,8 +80,8 @@ interactions:
               }
             }
           ],
-          "created": 1731466210,
-          "id": "chatcmpl-ASxkIgV0VKpWeEuyJHsem9UEl4fAt",
+          "created": 1731466211,
+          "id": "chatcmpl-ASxkJuCwyegZk4W2awEhTKyCzstRr",
           "model": "gpt-4-32k",
           "object": "chat.completion",
           "prompt_filter_results": [
@@ -122,14 +122,14 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 13 Nov 2024 02:50:10 GMT
+      - Wed, 13 Nov 2024 02:50:11 GMT
       Set-Cookie: test_set_cookie
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       access-control-allow-origin:
       - '*'
       apim-request-id:
-      - 47b7e79e-0daf-4994-83c4-a9d0217af3b7
+      - 2e550e5e-cd45-45db-bec2-e97407157e0b
       azureml-model-session:
       - d161-20241010160330
       openai-organization: test_openai_org_id
@@ -138,17 +138,17 @@ interactions:
       x-content-type-options:
       - nosniff
       x-ms-client-request-id:
-      - 47b7e79e-0daf-4994-83c4-a9d0217af3b7
+      - 2e550e5e-cd45-45db-bec2-e97407157e0b
       x-ms-rai-invoked:
       - 'true'
       x-ms-region:
       - Switzerland North
       x-ratelimit-remaining-requests:
-      - '73'
+      - '72'
       x-ratelimit-remaining-tokens:
-      - '79788'
+      - '79772'
       x-request-id:
-      - 3d6bc529-270c-4ee1-b864-752625329806
+      - 5e997357-cafa-48b1-ad07-54ea52e08894
     status:
       code: 200
       message: OK
