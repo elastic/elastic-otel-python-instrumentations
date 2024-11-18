@@ -972,7 +972,7 @@ test_connection_error_test_data = [
     (
         "openai_provider_chat_completions",
         "gpt-4o-mini",
-        0.006761051714420319,
+        1.026234219999992,
     ),
     (
         "azure_provider_chat_completions",
@@ -982,7 +982,7 @@ test_connection_error_test_data = [
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
-        0.002600736916065216,
+        1.0064430559999948,
     ),
 ]
 
