@@ -45,7 +45,7 @@ class StreamWrapper:
         self,
         stream,
         span: Span,
-        capture_content: bool,
+        capture_message_content: bool,
         event_kind: Literal["log", "span"],
         event_attributes: Attributes,
         event_logger: EventLogger,
@@ -55,7 +55,7 @@ class StreamWrapper:
     ):
         self.stream = stream
         self.span = span
-        self.capture_content = capture_content
+        self.capture_message_content = capture_message_content
         self.event_kind = event_kind
         self.event_attributes = event_attributes
         self.event_logger = event_logger
@@ -84,7 +84,7 @@ class StreamWrapper:
         if self.usage:
             _record_token_usage_metrics(self.token_usage_metric, self.span, self.usage)
 
-        if self.capture_content:
+        if self.capture_message_content:
             if self.event_kind == "log":
                 _send_log_events_from_stream_choices(
                     self.event_logger, choices=self.choices, span=self.span, attributes=self.event_attributes
