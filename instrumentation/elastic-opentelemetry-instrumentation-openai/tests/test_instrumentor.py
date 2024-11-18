@@ -17,14 +17,14 @@
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
 
-def test_capture_content_false_by_default(instrument):
+def test_capture_message_content_false_by_default(instrument):
     instrument.uninstrument()
-    assert not instrument.capture_content
+    assert not instrument.capture_message_content
 
 
-def test_can_override_capture_content_programmatically(instrument):
+def test_can_override_capture_message_content_programmatically(instrument):
     instrument.uninstrument()
     instrumentor = OpenAIInstrumentor()
-    instrumentor.instrument(capture_content=True)
-    assert instrumentor.capture_content
+    instrumentor.instrument(capture_message_content=True)
+    assert instrumentor.capture_message_content
     instrumentor.uninstrument()

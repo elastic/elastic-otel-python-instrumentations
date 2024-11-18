@@ -26,8 +26,8 @@ from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.openai.environment_variables import (
-    ELASTIC_OTEL_GENAI_CAPTURE_CONTENT,
     ELASTIC_OTEL_GENAI_EVENTS,
+    OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
 )
 from opentelemetry.instrumentation.openai.helpers import (
     _get_embeddings_span_attributes_from_wrapper,
@@ -78,10 +78,13 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 ``tracer_provider``: a TracerProvider, defaults to global
                 ``meter_provider``: a MeterProvider, defaults to global
                 ``event_logger_provider``: a EventLoggerProvider, defaults to global
-                ``capture_content``: to enable content capturing, defaults to False
+                ``capture_message_content``: to enable content capturing, defaults to False
         """
-        capture_content = "true" if kwargs.get("capture_content") else "false"
-        self.capture_content = os.environ.get(ELASTIC_OTEL_GENAI_CAPTURE_CONTENT, capture_content).lower() == "true"
+        capture_message_content = "true" if kwargs.get("capture_message_content") else "false"
+        self.capture_message_content = (
+            os.environ.get(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, capture_message_content).lower()
+            == "true"
+        )
 
         # we support 3 values for deciding how to send events:
         # - "latest" to match latest semconv, as 1.27.0 it's span
@@ -135,7 +138,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         )
 
     def _uninstrument(self, **kwargs):
-        # unwrap only supports uninstrementing real module references so we
+        # unwrap only supports uninstrumenting real module references so we
         # import here.
         import openai
 
@@ -159,7 +162,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             end_on_exit=False,
         ) as span:
             # TODO: more fine grained depending on the message.role?
-            if self.capture_content:
+            if self.capture_message_content:
                 messages = kwargs.get("messages", [])
 
                 if self.event_kind == "log":
@@ -184,7 +187,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 return StreamWrapper(
                     stream=result,
                     span=span,
-                    capture_content=self.capture_content,
+                    capture_message_content=self.capture_message_content,
                     event_kind=self.event_kind,
                     event_attributes=event_attributes,
                     event_logger=self.event_logger,
@@ -201,7 +204,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
 
-            if self.capture_content:
+            if self.capture_message_content:
                 if self.event_kind == "log":
                     _send_log_events_from_choices(
                         self.event_logger, choices=result.choices, attributes=event_attributes
@@ -234,7 +237,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             # this is important to avoid having the span closed before ending the stream
             end_on_exit=False,
         ) as span:
-            if self.capture_content:
+            if self.capture_message_content:
                 messages = kwargs.get("messages", [])
 
                 if self.event_kind == "log":
@@ -259,7 +262,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 return StreamWrapper(
                     stream=result,
                     span=span,
-                    capture_content=self.capture_content,
+                    capture_message_content=self.capture_message_content,
                     event_kind=self.event_kind,
                     event_attributes=event_attributes,
                     event_logger=self.event_logger,
@@ -276,7 +279,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
 
-            if self.capture_content:
+            if self.capture_message_content:
                 if self.event_kind == "log":
                     _send_log_events_from_choices(
                         self.event_logger, choices=result.choices, attributes=event_attributes
