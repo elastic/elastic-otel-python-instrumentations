@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import re
 import os
 from typing import Sequence, Union
@@ -21,6 +22,7 @@ from urllib.parse import parse_qs, urlparse
 
 import openai
 import pytest
+import yaml
 from opentelemetry import metrics, trace
 from opentelemetry._logs import set_logger_provider
 from opentelemetry._events import set_event_logger_provider
@@ -102,7 +104,7 @@ def instrument():
 
 
 OPENAI_API_KEY = "test_openai_api_key"
-OPENAI_ORG_ID = "test_openai_org_key"
+OPENAI_ORG_ID = "test_openai_org_id"
 OPENAI_PROJECT_ID = "test_openai_project_id"
 
 
@@ -123,7 +125,7 @@ def default_openai_env(monkeypatch):
 AZURE_ENDPOINT = "https://test.openai.azure.com"
 AZURE_DEPLOYMENT_NAME = "test-azure-deployment"
 AZURE_API_KEY = "test_azure_api_key"
-AZURE_CHAT_COMPLETIONS_API_VERSION = "2023-03-15-preview"
+AZURE_CHAT_COMPLETIONS_API_VERSION = "2024-08-01-preview"
 AZURE_CHAT_COMPLETIONS_DEPLOYMENT_URL = f"{AZURE_ENDPOINT}/openai/deployments/{AZURE_DEPLOYMENT_NAME}/chat/completions?api-version={AZURE_CHAT_COMPLETIONS_API_VERSION}"
 AZURE_EMBEDDINGS_API_VERSION = "2023-05-15"
 AZURE_EMBEDDINGS_DEPLOYMENT_URL = (
@@ -166,7 +168,7 @@ def vcr_config():
             ("authorization", "Bearer " + OPENAI_API_KEY),
             ("openai-organization", OPENAI_ORG_ID),
             ("openai-project", OPENAI_PROJECT_ID),
-            ("cookie", None),
+            ("cookie", "test_cookie"),
         ],
         "before_record_request": scrub_request_url,
         "before_record_response": scrub_response_headers,
@@ -223,14 +225,15 @@ def vcr_cassette_name(request):
 
 
 class AzureProvider:
-    def __init__(self, api_key, endpoint, api_version, operation_name):
+    def __init__(self, api_key, endpoint, deployment, api_version, operation_name):
         self.api_key = api_key
         self.endpoint = endpoint
+        self.deployment = deployment
         self.api_version = api_version
 
         self.operation_name = operation_name
 
-        self.server_address = "test.openai.azure.com"
+        self.server_address = urlparse(endpoint).hostname
         self.server_port = 443
 
     @classmethod
@@ -246,12 +249,12 @@ class AzureProvider:
 
         parsed_url = urlparse(deployment_url)
         endpoint = f"https://{parsed_url.hostname}"
-        parsed_qs = parse_qs(parsed_url.query)
-        # query string entries are lists
-        api_version = parsed_qs["api-version"][0]
+        deployment = re.search(r"/deployments/([^/]+)", parsed_url.path).group(1)
+        api_version = parse_qs(parsed_url.query)["api-version"][0]
         return cls(
             api_key=api_key,
             endpoint=endpoint,
+            deployment=deployment,
             api_version=api_version,
             operation_name=operation_name,
         )
@@ -260,15 +263,16 @@ class AzureProvider:
         return {
             "api_key": self.api_key,
             "azure_endpoint": self.endpoint,
+            "azure_deployment": self.deployment,
             "api_version": self.api_version,
             "max_retries": 1,
         }
 
-    def get_client(self):
-        return openai.AzureOpenAI(**self._get_client_kwargs())
+    def get_client(self, **kwargs):
+        return openai.AzureOpenAI(**{**self._get_client_kwargs(), **kwargs})
 
-    def get_async_client(self):
-        return openai.AsyncAzureOpenAI(**self._get_client_kwargs())
+    def get_async_client(self, **kwargs):
+        return openai.AsyncAzureOpenAI(**{**self._get_client_kwargs(), **kwargs})
 
 
 class OpenAIProvider:
@@ -291,11 +295,11 @@ class OpenAIProvider:
             "max_retries": 1,
         }
 
-    def get_client(self):
-        return openai.OpenAI(**self._get_client_kwargs())
+    def get_client(self, **kwargs):
+        return openai.OpenAI(**{**self._get_client_kwargs(), **kwargs})
 
-    def get_async_client(self):
-        return openai.AsyncOpenAI(**self._get_client_kwargs())
+    def get_async_client(self, **kwargs):
+        return openai.AsyncOpenAI(**{**self._get_client_kwargs(), **kwargs})
 
 
 class OllamaProvider:
@@ -318,11 +322,11 @@ class OllamaProvider:
             "max_retries": 1,
         }
 
-    def get_client(self):
-        return openai.OpenAI(**self._get_client_kwargs())
+    def get_client(self, **kwargs):
+        return openai.OpenAI(**{**self._get_client_kwargs(), **kwargs})
 
-    def get_async_client(self):
-        return openai.AsyncOpenAI(**self._get_client_kwargs())
+    def get_async_client(self, **kwargs):
+        return openai.AsyncOpenAI(**{**self._get_client_kwargs(), **kwargs})
 
 
 @pytest.fixture
@@ -521,3 +525,68 @@ def pytest_collection_modifyitems(config, items):
         test_is_integration = "integration" in item.keywords
         if run_integration_tests != test_is_integration:
             item.add_marker(skip_mark)
+
+
+class LiteralBlockScalar(str):
+    """Formats the string as a literal block scalar, preserving whitespace and
+    without interpreting escape characters"""
+
+
+def literal_block_scalar_presenter(dumper, data):
+    """Represents a scalar string as a literal block, via '|' syntax"""
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+
+
+yaml.add_representer(LiteralBlockScalar, literal_block_scalar_presenter)
+
+
+def process_string_value(string_value):
+    """Pretty-prints JSON or returns long strings as a LiteralBlockScalar"""
+    try:
+        json_data = json.loads(string_value)
+        return LiteralBlockScalar(json.dumps(json_data, indent=2))
+    except (ValueError, TypeError):
+        if len(string_value) > 80:
+            return LiteralBlockScalar(string_value)
+    return string_value
+
+
+def convert_body_to_literal(data):
+    """Searches the data for body strings, attempting to pretty-print JSON"""
+    if isinstance(data, dict):
+        for key, value in data.items():
+            # Handle response body case (e.g., response.body.string)
+            if key == "body" and isinstance(value, dict) and "string" in value:
+                value["string"] = process_string_value(value["string"])
+
+            # Handle request body case (e.g., request.body)
+            elif key == "body" and isinstance(value, str):
+                data[key] = process_string_value(value)
+
+            else:
+                convert_body_to_literal(value)
+
+    elif isinstance(data, list):
+        for idx, choice in enumerate(data):
+            data[idx] = convert_body_to_literal(choice)
+
+    return data
+
+
+class PrettyPrintJSONBody:
+    """This makes request and response body recordings more readable."""
+
+    @staticmethod
+    def serialize(cassette_dict):
+        cassette_dict = convert_body_to_literal(cassette_dict)
+        return yaml.dump(cassette_dict, default_flow_style=False, allow_unicode=True)
+
+    @staticmethod
+    def deserialize(cassette_string):
+        return yaml.load(cassette_string, Loader=yaml.Loader)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def fixture_vcr(vcr):
+    vcr.register_serializer("yaml", PrettyPrintJSONBody)
+    return vcr

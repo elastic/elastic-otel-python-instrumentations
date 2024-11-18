@@ -1,16 +1,49 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "system", "content": "You are a helpful customer
-      support assistant. Use the supplied tools to assist the user."}, {"role": "user",
-      "content": "Hi, can you tell me the delivery date for my order?"}, {"role":
-      "assistant", "content": "Hi there! I can help with that. Can you please provide
-      your order ID?"}, {"role": "user", "content": "i think it is order_12345"}],
-      "model": "gpt-4o-mini", "tools": [{"type": "function", "function": {"name":
-      "get_delivery_date", "description": "Get the delivery date for a customer''s
-      order. Call this whenever you need to know the delivery date, for example when
-      a customer asks ''Where is my package''", "parameters": {"type": "object", "properties":
-      {"order_id": {"type": "string", "description": "The customer''s order ID."}},
-      "required": ["order_id"], "additionalProperties": false}}}]}'
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user."
+          },
+          {
+            "role": "user",
+            "content": "Hi, can you tell me the delivery date for my order?"
+          },
+          {
+            "role": "assistant",
+            "content": "Hi there! I can help with that. Can you please provide your order ID?"
+          },
+          {
+            "role": "user",
+            "content": "i think it is order_12345"
+          }
+        ],
+        "model": "gpt-4o-mini",
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_delivery_date",
+              "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string",
+                    "description": "The customer's order ID."
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ]
+      }
     headers:
       accept:
       - application/json
@@ -27,51 +60,83 @@ interactions:
       host:
       - api.openai.com
       user-agent:
-      - AsyncOpenAI/Python 1.50.0
+      - AsyncOpenAI/Python 1.54.3
       x-stainless-arch:
-      - x64
+      - arm64
       x-stainless-async:
       - async:asyncio
       x-stainless-lang:
       - python
       x-stainless-os:
-      - Linux
+      - MacOS
       x-stainless-package-version:
-      - 1.50.0
+      - 1.54.3
       x-stainless-retry-count:
       - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.10.12
+      - 3.12.6
     method: POST
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\n  \"id\": \"chatcmpl-AEGr0SsAhppNLpPXpTtnmBiGGViQb\",\n  \"object\":
-        \"chat.completion\",\n  \"created\": 1727964742,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n
-        \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
-        \"assistant\",\n        \"content\": null,\n        \"tool_calls\": [\n          {\n
-        \           \"id\": \"call_vZtzXVh5oO3k1IpFfuRejWHv\",\n            \"type\":
-        \"function\",\n            \"function\": {\n              \"name\": \"get_delivery_date\",\n
-        \             \"arguments\": \"{\\\"order_id\\\":\\\"order_12345\\\"}\"\n
-        \           }\n          }\n        ],\n        \"refusal\": null\n      },\n
-        \     \"logprobs\": null,\n      \"finish_reason\": \"tool_calls\"\n    }\n
-        \ ],\n  \"usage\": {\n    \"prompt_tokens\": 140,\n    \"completion_tokens\":
-        19,\n    \"total_tokens\": 159,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\":
-        0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\":
-        0\n    }\n  },\n  \"system_fingerprint\": \"fp_f85bea6784\"\n}\n"
+      string: |-
+        {
+          "id": "chatcmpl-ASfaRyXEFFt9GzMooIy1bDXqjYnWV",
+          "object": "chat.completion",
+          "created": 1731396407,
+          "model": "gpt-4o-mini-2024-07-18",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "call_fW4XFpzxFZ7Rfj5dsDcZTezg",
+                    "type": "function",
+                    "function": {
+                      "name": "get_delivery_date",
+                      "arguments": "{\"order_id\":\"order_12345\"}"
+                    }
+                  }
+                ],
+                "refusal": null
+              },
+              "logprobs": null,
+              "finish_reason": "tool_calls"
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 140,
+            "completion_tokens": 19,
+            "total_tokens": 159,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "system_fingerprint": "fp_0ba0d124f1"
+        }
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8ccd86d4bed9839d-MXP
+      - 8e14cbb9deeb49d2-SIN
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Thu, 03 Oct 2024 14:12:22 GMT
+      - Tue, 12 Nov 2024 07:26:48 GMT
       Server:
       - cloudflare
       Set-Cookie: test_set_cookie
@@ -81,11 +146,13 @@ interactions:
       - nosniff
       access-control-expose-headers:
       - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
       content-length:
-      - '918'
+      - '1046'
       openai-organization: test_openai_org_key
       openai-processing-ms:
-      - '830'
+      - '711'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -95,15 +162,15 @@ interactions:
       x-ratelimit-limit-tokens:
       - '200000'
       x-ratelimit-remaining-requests:
-      - '9995'
+      - '9979'
       x-ratelimit-remaining-tokens:
       - '199921'
       x-ratelimit-reset-requests:
-      - 35.224s
+      - 2m57.53s
       x-ratelimit-reset-tokens:
       - 23ms
       x-request-id:
-      - req_f20e0904b378e200a663a40c99bad07b
+      - req_fb7b2d2cbb3f604371ed39bd6692351b
     status:
       code: 200
       message: OK

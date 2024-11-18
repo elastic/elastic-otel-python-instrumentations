@@ -1,16 +1,49 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "system", "content": "You are a helpful customer
-      support assistant. Use the supplied tools to assist the user."}, {"role": "user",
-      "content": "Hi, can you tell me the delivery date for my order?"}, {"role":
-      "assistant", "content": "Hi there! I can help with that. Can you please provide
-      your order ID?"}, {"role": "user", "content": "i think it is order_12345"}],
-      "model": "gpt-4o-mini", "tools": [{"type": "function", "function": {"name":
-      "get_delivery_date", "description": "Get the delivery date for a customer''s
-      order. Call this whenever you need to know the delivery date, for example when
-      a customer asks ''Where is my package''", "parameters": {"type": "object", "properties":
-      {"order_id": {"type": "string", "description": "The customer''s order ID."}},
-      "required": ["order_id"], "additionalProperties": false}}}]}'
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user."
+          },
+          {
+            "role": "user",
+            "content": "Hi, can you tell me the delivery date for my order?"
+          },
+          {
+            "role": "assistant",
+            "content": "Hi there! I can help with that. Can you please provide your order ID?"
+          },
+          {
+            "role": "user",
+            "content": "i think it is order_12345"
+          }
+        ],
+        "model": "unused",
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_delivery_date",
+              "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string",
+                    "description": "The customer's order ID."
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ]
+      }
     headers:
       accept:
       - application/json
@@ -23,67 +56,126 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '842'
+      - '837'
       content-type:
       - application/json
       host:
       - test.openai.azure.com
       user-agent:
-      - AsyncAzureOpenAI/Python 1.34.0
+      - AsyncAzureOpenAI/Python 1.54.3
       x-stainless-arch:
-      - x64
+      - arm64
       x-stainless-async:
       - async:asyncio
       x-stainless-lang:
       - python
       x-stainless-os:
-      - Linux
+      - MacOS
       x-stainless-package-version:
-      - 1.34.0
+      - 1.54.3
+      x-stainless-retry-count:
+      - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.10.12
+      - 3.12.6
     method: POST
-    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2023-03-15-preview
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2024-08-01-preview
   response:
     body:
-      string: '{"choices":[{"finish_reason":"tool_calls","index":0,"message":{"content":null,"role":"assistant","tool_calls":[{"function":{"arguments":"{\"order_id\":\"order_12345\"}","name":"get_delivery_date"},"id":"call_uO2RgeshT5Xmbwg778qN14d5","type":"function"}]}}],"created":1728909027,"id":"chatcmpl-AIEVPAAgrPcEpkQHXamdD9JpNNPep","model":"gpt-4o-mini","object":"chat.completion","system_fingerprint":"fp_878413d04d","usage":{"completion_tokens":19,"prompt_tokens":140,"total_tokens":159}}
-
-        '
+      string: |-
+        {
+          "choices": [
+            {
+              "content_filter_results": {},
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\n  \"order_id\": \"order_12345\"\n}",
+                      "name": "get_delivery_date"
+                    },
+                    "id": "call_U0QYBadhpy4pBO6jYPm09KvZ",
+                    "type": "function"
+                  }
+                ]
+              }
+            }
+          ],
+          "created": 1731466226,
+          "id": "chatcmpl-ASxkYrqUQVubUzovieQByym7sxgdm",
+          "model": "gpt-4-32k",
+          "object": "chat.completion",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 20,
+            "prompt_tokens": 144,
+            "total_tokens": 164
+          }
+        }
     headers:
+      Cache-Control:
+      - no-cache, must-revalidate
       Content-Length:
-      - '483'
+      - '780'
       Content-Type:
       - application/json
       Date:
-      - Mon, 14 Oct 2024 12:30:27 GMT
+      - Wed, 13 Nov 2024 02:50:27 GMT
       Set-Cookie: test_set_cookie
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
+      access-control-allow-origin:
+      - '*'
       apim-request-id:
-      - 5a2ef9fb-86d6-4f22-830a-509cf6ffa56a
+      - cf22ccd0-88ac-4c8c-9165-cc19ab33cc5b
       azureml-model-session:
-      - d010-20240925083720
-      openai-organization: test_openai_org_key
+      - d156-20241010120317
+      openai-organization: test_openai_org_id
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '270'
       x-ms-client-request-id:
-      - 5a2ef9fb-86d6-4f22-830a-509cf6ffa56a
+      - cf22ccd0-88ac-4c8c-9165-cc19ab33cc5b
       x-ms-rai-invoked:
       - 'true'
       x-ms-region:
-      - East US
+      - Switzerland North
       x-ratelimit-remaining-requests:
-      - '904'
+      - '71'
       x-ratelimit-remaining-tokens:
-      - '86926'
+      - '79564'
       x-request-id:
-      - dc8bd70f-cf73-4c46-95ce-3ea309c22f45
+      - dad29d09-1214-452a-8433-f0a62873e001
     status:
       code: 200
       message: OK

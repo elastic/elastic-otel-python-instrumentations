@@ -40,7 +40,7 @@ from .utils import MOCK_POSITIVE_FLOAT, get_sorted_metrics
 
 test_basic_test_data = [
     ("openai_provider_embeddings", "text-embedding-3-small", 4, 0.2263190783560276),
-    ("azure_provider_embeddings", "text-embedding-3-small", 4, 0.0017870571464300156),
+    ("azure_provider_embeddings", "ada", 4, 0.0017870571464300156),
     ("ollama_provider_embeddings", "all-minilm:33m", 4, 0.0030461717396974564),
 ]
 
@@ -88,8 +88,8 @@ def test_basic(provider_str, model, input_tokens, duration, trace_exporter, metr
 
 test_all_the_client_options_test_data = [
     ("openai_provider_embeddings", "text-embedding-3-small", 4, 0.2263190783560276),
-    ("azure_provider_embeddings", "text-embedding-3-small", 4, 0.0017870571464300156),
-    ("ollama_provider_embeddings", "all-minilm:33m", 4, 0.0030461717396974564),
+    ("azure_provider_embeddings", "ada", 4, 0.2263190783560276),
+    ("ollama_provider_embeddings", "all-minilm:33m", 4, 0.2263190783560276),
 ]
 
 
@@ -130,9 +130,9 @@ def test_all_the_client_options(provider_str, model, input_tokens, duration, tra
         GEN_AI_RESPONSE_MODEL: model,
     }
     assert_operation_duration_metric(
-        provider, operation_duration_metric, attributes=attributes, min_data_point=0.2263190783560276
+        provider, operation_duration_metric, attributes=attributes, min_data_point=duration
     )
-    assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=4)
+    assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=input_tokens)
 
 
 @pytest.mark.integration
@@ -181,7 +181,7 @@ def test_all_the_client_options_integration(provider_str, model, trace_exporter,
 
 test_connection_error_data = [
     ("openai_provider_embeddings", "text-embedding-3-small", 0.460242404602468),
-    ("azure_provider_embeddings", "text-embedding-3-small", 0.4328950522467494),
+    ("azure_provider_embeddings", "ada", 0.4328950522467494),
     ("ollama_provider_embeddings", "all-minilm:33m", 0.4006666960194707),
 ]
 
@@ -191,7 +191,7 @@ test_connection_error_data = [
 def test_connection_error(provider_str, model, duration, trace_exporter, metrics_reader, request):
     provider = request.getfixturevalue(provider_str)
 
-    client = openai.Client(base_url="http://localhost:9999/v5", api_key="unused", max_retries=1)
+    client = openai.Client(base_url="http://localhost:9999/v5", api_key="ada", max_retries=1)
     text = "South Atlantic Ocean."
 
     with pytest.raises(Exception):
@@ -231,7 +231,7 @@ def test_connection_error(provider_str, model, duration, trace_exporter, metrics
 
 test_async_basic_test_data = [
     ("openai_provider_embeddings", "text-embedding-3-small", 4, 0.2263190783560276),
-    ("azure_provider_embeddings", "text-embedding-3-small", 4, 0.0017870571464300156),
+    ("azure_provider_embeddings", "ada", 4, 0.0017870571464300156),
     ("ollama_provider_embeddings", "all-minilm:33m", 4, 0.0030461717396974564),
 ]
 
@@ -280,7 +280,7 @@ async def test_async_basic(provider_str, model, input_tokens, duration, trace_ex
 
 test_async_all_the_client_options_test_data = [
     ("openai_provider_embeddings", "text-embedding-3-small", 4, 0.2263190783560276),
-    ("azure_provider_embeddings", "text-embedding-3-small", 4, 0.0017870571464300156),
+    ("azure_provider_embeddings", "ada", 4, 0.0017870571464300156),
     ("ollama_provider_embeddings", "all-minilm:33m", 4, 0.0030461717396974564),
 ]
 
@@ -377,8 +377,8 @@ async def test_async_all_the_client_options_integration(provider_str, model, tra
 
 test_async_connection_error_test_data = [
     ("openai_provider_embeddings", "text-embedding-3-small", 0.2263190783560276),
-    ("azure_provider_embeddings", "text-embedding-3-small", 1.0062104639999916),
-    ("ollama_provider_embeddings", "all-minilm:33m", 1.0148218229999770),
+    ("azure_provider_embeddings", "ada", 0.8369011571630836),
+    ("ollama_provider_embeddings", "all-minilm:33m", 0.0030461717396974564),
 ]
 
 
@@ -428,17 +428,15 @@ async def test_async_connection_error(provider_str, model, duration, trace_expor
 
 
 test_without_model_parameter_test_data = [
-    ("openai_provider_embeddings", "api.openai.com", 443, 4.2263190783560276),
-    ("azure_provider_embeddings", "test.openai.azure.com", 443, 4.0017870571464300156),
-    ("ollama_provider_embeddings", "localhost", 11434, 4.10461717396974564),
+    ("openai_provider_embeddings", 4.2263190783560276),
+    ("azure_provider_embeddings", 4.0017870571464300156),
+    ("ollama_provider_embeddings", 4.10461717396974564),
 ]
 
 
 @pytest.mark.vcr()
-@pytest.mark.parametrize("provider_str,server_address,server_port,duration", test_without_model_parameter_test_data)
-def test_without_model_parameter(
-    provider_str, server_address, server_port, duration, trace_exporter, metrics_reader, request
-):
+@pytest.mark.parametrize("provider_str,duration", test_without_model_parameter_test_data)
+def test_without_model_parameter(provider_str, duration, trace_exporter, metrics_reader, request):
     provider = request.getfixturevalue(provider_str)
     client = provider.get_client()
 
@@ -458,14 +456,14 @@ def test_without_model_parameter(
         ERROR_TYPE: "TypeError",
         GEN_AI_OPERATION_NAME: "embeddings",
         GEN_AI_SYSTEM: "openai",
-        SERVER_ADDRESS: server_address,
-        SERVER_PORT: server_port,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
     }
 
     attributes = {
         "error.type": "TypeError",
-        "server.address": server_address,
-        "server.port": server_port,
+        "server.address": provider.server_address,
+        "server.port": provider.server_port,
         "gen_ai.operation.name": "embeddings",
     }
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
@@ -477,24 +475,13 @@ def test_without_model_parameter(
 test_model_not_found_test_data = [
     (
         "openai_provider_embeddings",
-        "api.openai.com",
-        443,
         openai.NotFoundError,
         "The model `not-found-model` does not exist or you do not have access to it.",
         0.05915193818509579,
     ),
-    (
-        "azure_provider_embeddings",
-        "test.openai.azure.com",
-        443,
-        openai.NotFoundError,
-        "The API deployment for this resource does not exist",
-        0.0015850383788347244,
-    ),
+    # Azure ignores the model parameter, so doesn't return a not found error.
     (
         "ollama_provider_embeddings",
-        "localhost",
-        11434,
         openai.NotFoundError,
         'model "not-found-model" not found, try pulling it first',
         0.087132233195006854,
@@ -503,13 +490,9 @@ test_model_not_found_test_data = [
 
 
 @pytest.mark.vcr()
-@pytest.mark.parametrize(
-    "provider_str,server_address,server_port,exception,exception_message,duration", test_model_not_found_test_data
-)
+@pytest.mark.parametrize("provider_str,exception,exception_message,duration", test_model_not_found_test_data)
 def test_model_not_found(
     provider_str,
-    server_address,
-    server_port,
     exception,
     exception_message,
     duration,
@@ -518,7 +501,8 @@ def test_model_not_found(
     request,
 ):
     provider = request.getfixturevalue(provider_str)
-    client = provider.get_client()
+    # force a timeout to don't slow down tests
+    client = provider.get_client(timeout=1)
 
     text = "South Atlantic Ocean."
     with pytest.raises(exception, match=re.escape(exception_message)):
@@ -537,14 +521,14 @@ def test_model_not_found(
         GEN_AI_OPERATION_NAME: "embeddings",
         GEN_AI_REQUEST_MODEL: "not-found-model",
         GEN_AI_SYSTEM: "openai",
-        SERVER_ADDRESS: server_address,
-        SERVER_PORT: server_port,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
     }
 
     attributes = {
         "error.type": exception.__qualname__,
-        "server.address": server_address,
-        "server.port": server_port,
+        "server.address": provider.server_address,
+        "server.port": provider.server_port,
         "gen_ai.operation.name": "embeddings",
         "gen_ai.request.model": "not-found-model",
     }

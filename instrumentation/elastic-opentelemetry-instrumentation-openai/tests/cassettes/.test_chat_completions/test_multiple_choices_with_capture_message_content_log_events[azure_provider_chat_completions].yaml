@@ -1,7 +1,16 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
-      ocean contains the falkland islands?"}], "model": "gpt-4o-mini", "n": 2}'
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?"
+          }
+        ],
+        "model": "unused",
+        "n": 2
+      }
     headers:
       accept:
       - application/json
@@ -14,71 +23,160 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '146'
+      - '141'
       content-type:
       - application/json
       host:
       - test.openai.azure.com
       user-agent:
-      - AzureOpenAI/Python 1.50.0
+      - AzureOpenAI/Python 1.54.3
       x-stainless-arch:
-      - x64
+      - arm64
       x-stainless-async:
       - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
-      - Linux
+      - MacOS
       x-stainless-package-version:
-      - 1.50.0
+      - 1.54.3
       x-stainless-retry-count:
       - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.10.12
+      - 3.12.6
     method: POST
-    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2023-03-15-preview
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2024-08-01-preview
   response:
     body:
-      string: '{"choices":[{"finish_reason":"stop","index":0,"message":{"content":"South
-        Atlantic Ocean.","role":"assistant"}},{"finish_reason":"stop","index":1,"message":{"content":"South
-        Atlantic Ocean.","role":"assistant"}}],"created":1730200441,"id":"chatcmpl-ANeSfhGk22jizSPywSdR4MGCOdc76","model":"gpt-4o-mini","object":"chat.completion","system_fingerprint":"fp_d54531d9eb","usage":{"completion_tokens":8,"prompt_tokens":24,"total_tokens":32}}
-
-        '
+      string: |-
+        {
+          "choices": [
+            {
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": "Atlantic Ocean",
+                "role": "assistant"
+              }
+            },
+            {
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              },
+              "finish_reason": "stop",
+              "index": 1,
+              "logprobs": null,
+              "message": {
+                "content": "Atlantic Ocean",
+                "role": "assistant"
+              }
+            }
+          ],
+          "created": 1731466204,
+          "id": "chatcmpl-ASxkC12M7RgRDgP5GjnYlUwEWQEDo",
+          "model": "gpt-4-32k",
+          "object": "chat.completion",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 4,
+            "prompt_tokens": 24,
+            "total_tokens": 28
+          }
+        }
     headers:
+      Cache-Control:
+      - no-cache, must-revalidate
       Content-Length:
-      - '436'
+      - '1128'
       Content-Type:
       - application/json
       Date:
-      - Tue, 29 Oct 2024 11:14:01 GMT
+      - Wed, 13 Nov 2024 02:50:03 GMT
       Set-Cookie: test_set_cookie
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
+      access-control-allow-origin:
+      - '*'
       apim-request-id:
-      - f75b87aa-0c69-4819-bb46-4b18a3acc8b1
+      - 30e4b1c2-2a66-474f-9158-8043d27f11a2
       azureml-model-session:
-      - d034-20241024145218
-      openai-organization: test_openai_org_key
+      - d156-20241010120317
+      openai-organization: test_openai_org_id
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '121'
       x-ms-client-request-id:
-      - f75b87aa-0c69-4819-bb46-4b18a3acc8b1
+      - 30e4b1c2-2a66-474f-9158-8043d27f11a2
       x-ms-rai-invoked:
       - 'true'
       x-ms-region:
-      - East US
+      - Switzerland North
       x-ratelimit-remaining-requests:
-      - '909'
+      - '77'
       x-ratelimit-remaining-tokens:
-      - '89686'
+      - '79852'
       x-request-id:
-      - c68236c0-ed69-4b12-944f-1bc002a4a85d
+      - 63e3a77f-5291-4257-ba2e-26049d2da567
     status:
       code: 200
       message: OK

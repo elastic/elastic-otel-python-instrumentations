@@ -1,7 +1,15 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
-      ocean contains the falkland islands?"}], "model": "qwen2.5:0.5b"}'
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?"
+          }
+        ],
+        "model": "qwen2.5:0.5b"
+      }
     headers:
       accept:
       - application/json
@@ -18,36 +26,57 @@ interactions:
       host:
       - localhost:11434
       user-agent:
-      - OpenAI/Python 1.34.0
+      - OpenAI/Python 1.50.2
       x-stainless-arch:
-      - x64
+      - arm64
       x-stainless-async:
       - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
-      - Linux
+      - MacOS
       x-stainless-package-version:
-      - 1.34.0
+      - 1.50.2
+      x-stainless-retry-count:
+      - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.10.12
+      - 3.12.6
     method: POST
     uri: http://localhost:11434/v1/chat/completions
   response:
     body:
-      string: '{"id":"chatcmpl-694","object":"chat.completion","created":1728909017,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"message":{"role":"assistant","content":"Atlantic
-        Ocean"},"finish_reason":"stop"}],"usage":{"prompt_tokens":46,"completion_tokens":3,"total_tokens":49}}
-
-        '
+      string: |-
+        {
+          "id": "chatcmpl-913",
+          "object": "chat.completion",
+          "created": 1731311782,
+          "model": "qwen2.5:0.5b",
+          "system_fingerprint": "fp_ollama",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "Atlantic Ocean"
+              },
+              "finish_reason": "stop"
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 46,
+            "completion_tokens": 3,
+            "total_tokens": 49
+          }
+        }
     headers:
       Content-Length:
       - '300'
       Content-Type:
       - application/json
       Date:
-      - Mon, 14 Oct 2024 12:30:17 GMT
+      - Mon, 11 Nov 2024 07:56:22 GMT
       Set-Cookie: test_set_cookie
       openai-organization: test_openai_org_key
     status:
