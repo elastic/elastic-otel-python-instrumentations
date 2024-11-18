@@ -20,7 +20,7 @@ interactions:
             "content": "i think it is order_12345"
           }
         ],
-        "model": "gpt-4o-mini",
+        "model": "qwen2.5:0.5b",
         "tools": [
           {
             "type": "function",
@@ -54,13 +54,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '842'
+      - '843'
       content-type:
       - application/json
       host:
-      - api.openai.com
+      - localhost:11434
       user-agent:
-      - OpenAI/Python 1.54.3
+      - OpenAI/Python 1.50.2
       x-stainless-arch:
       - arm64
       x-stainless-async:
@@ -70,7 +70,7 @@ interactions:
       x-stainless-os:
       - MacOS
       x-stainless-package-version:
-      - 1.54.3
+      - 1.50.2
       x-stainless-retry-count:
       - '0'
       x-stainless-runtime:
@@ -78,99 +78,51 @@ interactions:
       x-stainless-runtime-version:
       - 3.12.6
     method: POST
-    uri: https://api.openai.com/v1/chat/completions
+    uri: http://localhost:11434/v1/chat/completions
   response:
     body:
       string: |-
         {
-          "id": "chatcmpl-ASfaAdUvnmifbYTNRZYh0TbM7mmTu",
+          "id": "chatcmpl-705",
           "object": "chat.completion",
-          "created": 1731396390,
-          "model": "gpt-4o-mini-2024-07-18",
+          "created": 1731311780,
+          "model": "qwen2.5:0.5b",
+          "system_fingerprint": "fp_ollama",
           "choices": [
             {
               "index": 0,
               "message": {
                 "role": "assistant",
-                "content": null,
+                "content": "",
                 "tool_calls": [
                   {
-                    "id": "call_pWCLNanMRK7W7uEVHK8PzIKU",
+                    "id": "call_u9zt4jf1",
                     "type": "function",
                     "function": {
                       "name": "get_delivery_date",
                       "arguments": "{\"order_id\":\"order_12345\"}"
                     }
                   }
-                ],
-                "refusal": null
+                ]
               },
-              "logprobs": null,
               "finish_reason": "tool_calls"
             }
           ],
           "usage": {
-            "prompt_tokens": 140,
-            "completion_tokens": 19,
-            "total_tokens": 159,
-            "prompt_tokens_details": {
-              "cached_tokens": 0,
-              "audio_tokens": 0
-            },
-            "completion_tokens_details": {
-              "reasoning_tokens": 0,
-              "audio_tokens": 0,
-              "accepted_prediction_tokens": 0,
-              "rejected_prediction_tokens": 0
-            }
-          },
-          "system_fingerprint": "fp_0ba0d124f1"
+            "prompt_tokens": 241,
+            "completion_tokens": 28,
+            "total_tokens": 269
+          }
         }
     headers:
-      CF-Cache-Status:
-      - DYNAMIC
-      CF-RAY:
-      - 8e14cb4f2fa381a1-SIN
-      Connection:
-      - keep-alive
+      Content-Length:
+      - '436'
       Content-Type:
       - application/json
       Date:
-      - Tue, 12 Nov 2024 07:26:31 GMT
-      Server:
-      - cloudflare
+      - Mon, 11 Nov 2024 07:56:20 GMT
       Set-Cookie: test_set_cookie
-      Transfer-Encoding:
-      - chunked
-      X-Content-Type-Options:
-      - nosniff
-      access-control-expose-headers:
-      - X-Request-ID
-      alt-svc:
-      - h3=":443"; ma=86400
-      content-length:
-      - '1046'
       openai-organization: test_openai_org_key
-      openai-processing-ms:
-      - '480'
-      openai-version:
-      - '2020-10-01'
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains; preload
-      x-ratelimit-limit-requests:
-      - '10000'
-      x-ratelimit-limit-tokens:
-      - '200000'
-      x-ratelimit-remaining-requests:
-      - '9994'
-      x-ratelimit-remaining-tokens:
-      - '199921'
-      x-ratelimit-reset-requests:
-      - 47.726s
-      x-ratelimit-reset-tokens:
-      - 23ms
-      x-request-id:
-      - req_ccdda6bf020fb93ddd72bcfc2385acc3
     status:
       code: 200
       message: OK

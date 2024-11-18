@@ -49,17 +49,17 @@ interactions:
   response:
     body:
       string: |+
-        data: {"id":"chatcmpl-ASfaQS4L6eLFljyu9h8zZRbp2hf5j","object":"chat.completion.chunk","created":1731396406,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_9b78b61c52","choices":[{"index":0,"delta":{"role":"assistant","content":"","refusal":null},"logprobs":null,"finish_reason":null}]}
+        data: {"id":"chatcmpl-ASfaPHhHlSFtYDMa1S0QSWewTPhuS","object":"chat.completion.chunk","created":1731396405,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{"role":"assistant","content":"","refusal":null},"logprobs":null,"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-ASfaQS4L6eLFljyu9h8zZRbp2hf5j","object":"chat.completion.chunk","created":1731396406,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_9b78b61c52","choices":[{"index":0,"delta":{"content":"South"},"logprobs":null,"finish_reason":null}]}
+        data: {"id":"chatcmpl-ASfaPHhHlSFtYDMa1S0QSWewTPhuS","object":"chat.completion.chunk","created":1731396405,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{"content":"South"},"logprobs":null,"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-ASfaQS4L6eLFljyu9h8zZRbp2hf5j","object":"chat.completion.chunk","created":1731396406,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_9b78b61c52","choices":[{"index":0,"delta":{"content":" Atlantic"},"logprobs":null,"finish_reason":null}]}
+        data: {"id":"chatcmpl-ASfaPHhHlSFtYDMa1S0QSWewTPhuS","object":"chat.completion.chunk","created":1731396405,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{"content":" Atlantic"},"logprobs":null,"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-ASfaQS4L6eLFljyu9h8zZRbp2hf5j","object":"chat.completion.chunk","created":1731396406,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_9b78b61c52","choices":[{"index":0,"delta":{"content":" Ocean"},"logprobs":null,"finish_reason":null}]}
+        data: {"id":"chatcmpl-ASfaPHhHlSFtYDMa1S0QSWewTPhuS","object":"chat.completion.chunk","created":1731396405,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{"content":" Ocean"},"logprobs":null,"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-ASfaQS4L6eLFljyu9h8zZRbp2hf5j","object":"chat.completion.chunk","created":1731396406,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_9b78b61c52","choices":[{"index":0,"delta":{"content":"."},"logprobs":null,"finish_reason":null}]}
+        data: {"id":"chatcmpl-ASfaPHhHlSFtYDMa1S0QSWewTPhuS","object":"chat.completion.chunk","created":1731396405,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{"content":"."},"logprobs":null,"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-ASfaQS4L6eLFljyu9h8zZRbp2hf5j","object":"chat.completion.chunk","created":1731396406,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_9b78b61c52","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"stop"}]}
+        data: {"id":"chatcmpl-ASfaPHhHlSFtYDMa1S0QSWewTPhuS","object":"chat.completion.chunk","created":1731396405,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"stop"}]}
 
         data: [DONE]
 
@@ -67,13 +67,13 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8e14cbb39856833c-SIN
+      - 8e14cbaf8f6d49b4-SIN
       Connection:
       - keep-alive
       Content-Type:
       - text/event-stream; charset=utf-8
       Date:
-      - Tue, 12 Nov 2024 07:26:47 GMT
+      - Tue, 12 Nov 2024 07:26:46 GMT
       Server:
       - cloudflare
       Set-Cookie: test_set_cookie
@@ -87,7 +87,7 @@ interactions:
       - h3=":443"; ma=86400
       openai-organization: test_openai_org_key
       openai-processing-ms:
-      - '543'
+      - '203'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -97,15 +97,15 @@ interactions:
       x-ratelimit-limit-tokens:
       - '200000'
       x-ratelimit-remaining-requests:
-      - '9980'
+      - '9981'
       x-ratelimit-remaining-tokens:
       - '199966'
       x-ratelimit-reset-requests:
-      - 2m49.899s
+      - 2m41.915s
       x-ratelimit-reset-tokens:
       - 10ms
       x-request-id:
-      - req_85a0e7015e1b6b6b1b7536fdc4c967b4
+      - req_cdcc4e2158d7bd20d7769f8ed24a54a1
     status:
       code: 200
       message: OK

@@ -4,45 +4,11 @@ interactions:
       {
         "messages": [
           {
-            "role": "system",
-            "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user."
-          },
-          {
             "role": "user",
-            "content": "Hi, can you tell me the delivery date for my order?"
-          },
-          {
-            "role": "assistant",
-            "content": "Hi there! I can help with that. Can you please provide your order ID?"
-          },
-          {
-            "role": "user",
-            "content": "i think it is order_12345"
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?"
           }
         ],
-        "model": "gpt-4o-mini",
-        "tools": [
-          {
-            "type": "function",
-            "function": {
-              "name": "get_delivery_date",
-              "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
-              "parameters": {
-                "type": "object",
-                "properties": {
-                  "order_id": {
-                    "type": "string",
-                    "description": "The customer's order ID."
-                  }
-                },
-                "required": [
-                  "order_id"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        ]
+        "model": "gpt-4o-mini"
       }
     headers:
       accept:
@@ -54,17 +20,17 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '842'
+      - '138'
       content-type:
       - application/json
       host:
       - api.openai.com
       user-agent:
-      - OpenAI/Python 1.54.3
+      - AsyncOpenAI/Python 1.54.3
       x-stainless-arch:
       - arm64
       x-stainless-async:
-      - 'false'
+      - async:asyncio
       x-stainless-lang:
       - python
       x-stainless-os:
@@ -83,36 +49,26 @@ interactions:
     body:
       string: |-
         {
-          "id": "chatcmpl-ASfaAdUvnmifbYTNRZYh0TbM7mmTu",
+          "id": "chatcmpl-ASfaOHHT6qOYpFc5M7uzSkgfXnnpJ",
           "object": "chat.completion",
-          "created": 1731396390,
+          "created": 1731396404,
           "model": "gpt-4o-mini-2024-07-18",
           "choices": [
             {
               "index": 0,
               "message": {
                 "role": "assistant",
-                "content": null,
-                "tool_calls": [
-                  {
-                    "id": "call_pWCLNanMRK7W7uEVHK8PzIKU",
-                    "type": "function",
-                    "function": {
-                      "name": "get_delivery_date",
-                      "arguments": "{\"order_id\":\"order_12345\"}"
-                    }
-                  }
-                ],
+                "content": "South Atlantic Ocean.",
                 "refusal": null
               },
               "logprobs": null,
-              "finish_reason": "tool_calls"
+              "finish_reason": "stop"
             }
           ],
           "usage": {
-            "prompt_tokens": 140,
-            "completion_tokens": 19,
-            "total_tokens": 159,
+            "prompt_tokens": 24,
+            "completion_tokens": 4,
+            "total_tokens": 28,
             "prompt_tokens_details": {
               "cached_tokens": 0,
               "audio_tokens": 0
@@ -130,13 +86,13 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8e14cb4f2fa381a1-SIN
+      - 8e14cba439f0ce22-SIN
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Tue, 12 Nov 2024 07:26:31 GMT
+      - Tue, 12 Nov 2024 07:26:44 GMT
       Server:
       - cloudflare
       Set-Cookie: test_set_cookie
@@ -149,10 +105,10 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       content-length:
-      - '1046'
+      - '771'
       openai-organization: test_openai_org_key
       openai-processing-ms:
-      - '480'
+      - '213'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -162,15 +118,15 @@ interactions:
       x-ratelimit-limit-tokens:
       - '200000'
       x-ratelimit-remaining-requests:
-      - '9994'
+      - '9984'
       x-ratelimit-remaining-tokens:
-      - '199921'
+      - '199966'
       x-ratelimit-reset-requests:
-      - 47.726s
+      - 2m17.802s
       x-ratelimit-reset-tokens:
-      - 23ms
+      - 10ms
       x-request-id:
-      - req_ccdda6bf020fb93ddd72bcfc2385acc3
+      - req_e6b1a7306539cbcad166c1907ae46d4f
     status:
       code: 200
       message: OK

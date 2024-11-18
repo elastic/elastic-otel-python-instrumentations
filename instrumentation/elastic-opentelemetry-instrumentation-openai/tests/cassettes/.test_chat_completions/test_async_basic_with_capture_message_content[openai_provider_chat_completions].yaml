@@ -49,7 +49,7 @@ interactions:
     body:
       string: |-
         {
-          "id": "chatcmpl-ASfaOHHT6qOYpFc5M7uzSkgfXnnpJ",
+          "id": "chatcmpl-ASfaOykfLmr5qdUddSbFIDNGReNRJ",
           "object": "chat.completion",
           "created": 1731396404,
           "model": "gpt-4o-mini-2024-07-18",
@@ -86,7 +86,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8e14cba439f0ce22-SIN
+      - 8e14cba7eed66bbd-SIN
       Connection:
       - keep-alive
       Content-Type:
@@ -108,7 +108,7 @@ interactions:
       - '771'
       openai-organization: test_openai_org_key
       openai-processing-ms:
-      - '213'
+      - '249'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -118,15 +118,15 @@ interactions:
       x-ratelimit-limit-tokens:
       - '200000'
       x-ratelimit-remaining-requests:
-      - '9984'
+      - '9983'
       x-ratelimit-remaining-tokens:
       - '199966'
       x-ratelimit-reset-requests:
-      - 2m17.802s
+      - 2m25.844s
       x-ratelimit-reset-tokens:
       - 10ms
       x-request-id:
-      - req_e6b1a7306539cbcad166c1907ae46d4f
+      - req_3bef9643428bce1d1e43d476d8ef1c43
     status:
       code: 200
       message: OK

@@ -1,0 +1,156 @@
+interactions:
+- request:
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user."
+          },
+          {
+            "role": "user",
+            "content": "Hi, can you tell me the delivery date for my order?"
+          },
+          {
+            "role": "assistant",
+            "content": "Hi there! I can help with that. Can you please provide your order ID?"
+          },
+          {
+            "role": "user",
+            "content": "i think it is order_12345"
+          }
+        ],
+        "model": "qwen2.5:0.5b",
+        "stream": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_delivery_date",
+              "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string",
+                    "description": "The customer's order ID."
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ]
+      }
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '859'
+      content-type:
+      - application/json
+      host:
+      - localhost:11434
+      user-agent:
+      - OpenAI/Python 1.50.2
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.50.2
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.6
+    method: POST
+    uri: http://localhost:11434/v1/chat/completions
+  response:
+    body:
+      string: |+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"\u003ctool_call\u003e"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"\n"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"{\""},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"name"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"\":"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" \""},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"get"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"_delivery"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"_date"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"\","},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" \""},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"arguments"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"\":"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" {\""},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"order"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"_id"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"\":"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" \""},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"order"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"_"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"1"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"2"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"3"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"4"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"5"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"\"}}\n"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"\u003c/tool_call\u003e"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-268","object":"chat.completion.chunk","created":1731311782,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+    headers:
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Mon, 11 Nov 2024 07:56:22 GMT
+      Set-Cookie: test_set_cookie
+      Transfer-Encoding:
+      - chunked
+      openai-organization: test_openai_org_key
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -24,11 +24,11 @@ This instrumentation supports *0-code* / *autoinstrumentation*:
 ```
 opentelemetry-instrument python use_openai.py
 
-# You can record more information about prompts as span events by enabling content capture.
+# You can record more information about prompts as log events by enabling content capture.
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true opentelemetry-instrument python use_openai.py
 
-# You can record more information about prompts as log events by enabling content capture.
-OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true ELASTIC_OTEL_GENAI_EVENTS=log opentelemetry-instrument python use_openai.py
+# You can record more information about prompts as span events by enabling content capture.
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true ELASTIC_OTEL_GENAI_EVENTS=span opentelemetry-instrument python use_openai.py
 ```
 
 Or manual instrumentation:

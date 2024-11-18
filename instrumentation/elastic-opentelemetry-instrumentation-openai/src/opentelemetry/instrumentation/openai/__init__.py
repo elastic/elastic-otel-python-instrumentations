@@ -87,25 +87,25 @@ class OpenAIInstrumentor(BaseInstrumentor):
         )
 
         # we support 3 values for deciding how to send events:
-        # - "latest" to match latest semconv, as 1.27.0 it's span
-        # - "log" to send log events
-        # - "span" to send span events (default)
+        # - "latest" to match latest semconv, as 1.28.0 it's log
+        # - "log" to send log events (default)
+        # - "span" to send span events
         genai_events = os.environ.get(ELASTIC_OTEL_GENAI_EVENTS, "latest").lower()
-        self.event_kind = "log" if genai_events == "log" else "span"
+        self.event_kind = "span" if genai_events == "span" else "log"
 
         tracer_provider = kwargs.get("tracer_provider")
         self.tracer = get_tracer(
             __name__,
             __version__,
             tracer_provider,
-            schema_url=Schemas.V1_27_0.value,
+            schema_url=Schemas.V1_28_0.value,
         )
         meter_provider = kwargs.get("meter_provider")
         self.meter = get_meter(
             __name__,
             __version__,
             meter_provider,
-            schema_url=Schemas.V1_27_0.value,
+            schema_url=Schemas.V1_28_0.value,
         )
         event_logger_provider = kwargs.get("event_logger_provider")
         self.event_logger = get_event_logger(__name__, event_logger_provider)
