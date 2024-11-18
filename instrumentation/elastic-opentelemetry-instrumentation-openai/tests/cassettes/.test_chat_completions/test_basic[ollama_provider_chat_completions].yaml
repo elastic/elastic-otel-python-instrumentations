@@ -1,7 +1,15 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
-      ocean contains the falkland islands?"}], "model": "qwen2.5:0.5b"}'
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?"
+          }
+        ],
+        "model": "qwen2.5:0.5b"
+      }
     headers:
       accept:
       - application/json
@@ -18,38 +26,57 @@ interactions:
       host:
       - localhost:11434
       user-agent:
-      - OpenAI/Python 1.50.0
+      - OpenAI/Python 1.50.2
       x-stainless-arch:
-      - x64
+      - arm64
       x-stainless-async:
       - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
-      - Linux
+      - MacOS
       x-stainless-package-version:
-      - 1.50.0
+      - 1.50.2
       x-stainless-retry-count:
       - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.10.12
+      - 3.12.6
     method: POST
     uri: http://localhost:11434/v1/chat/completions
   response:
     body:
-      string: '{"id":"chatcmpl-645","object":"chat.completion","created":1727957194,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"message":{"role":"assistant","content":"The
-        Falklands Islands are located in the oceans south of South America."},"finish_reason":"stop"}],"usage":{"prompt_tokens":46,"completion_tokens":15,"total_tokens":61}}
-
-        '
+      string: |-
+        {
+          "id": "chatcmpl-126",
+          "object": "chat.completion",
+          "created": 1731311779,
+          "model": "qwen2.5:0.5b",
+          "system_fingerprint": "fp_ollama",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "The Atlantic Ocean."
+              },
+              "finish_reason": "stop"
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 46,
+            "completion_tokens": 5,
+            "total_tokens": 51
+          }
+        }
     headers:
       Content-Length:
-      - '358'
+      - '305'
       Content-Type:
       - application/json
       Date:
-      - Thu, 03 Oct 2024 12:06:34 GMT
+      - Mon, 11 Nov 2024 07:56:19 GMT
       Set-Cookie: test_set_cookie
       openai-organization: test_openai_org_key
     status:

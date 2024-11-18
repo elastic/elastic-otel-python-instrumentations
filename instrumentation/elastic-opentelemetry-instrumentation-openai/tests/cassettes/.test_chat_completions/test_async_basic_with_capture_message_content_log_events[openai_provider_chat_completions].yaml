@@ -1,7 +1,15 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
-      ocean contains the falkland islands?"}], "model": "gpt-4o-mini"}'
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?"
+          }
+        ],
+        "model": "gpt-4o-mini"
+      }
     headers:
       accept:
       - application/json
@@ -18,45 +26,73 @@ interactions:
       host:
       - api.openai.com
       user-agent:
-      - AsyncOpenAI/Python 1.34.0
+      - AsyncOpenAI/Python 1.54.3
       x-stainless-arch:
-      - x64
+      - arm64
       x-stainless-async:
       - async:asyncio
       x-stainless-lang:
       - python
       x-stainless-os:
-      - Linux
+      - MacOS
       x-stainless-package-version:
-      - 1.34.0
+      - 1.54.3
+      x-stainless-retry-count:
+      - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.10.12
+      - 3.12.6
     method: POST
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\n  \"id\": \"chatcmpl-AIEVJxmbMtOSyVurjk73oqE0uQhAX\",\n  \"object\":
-        \"chat.completion\",\n  \"created\": 1728909021,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n
-        \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
-        \"assistant\",\n        \"content\": \"South Atlantic Ocean.\",\n        \"refusal\":
-        null\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n
-        \   }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 24,\n    \"completion_tokens\":
-        4,\n    \"total_tokens\": 28,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\":
-        0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\":
-        0\n    }\n  },\n  \"system_fingerprint\": \"fp_e2bde53e6e\"\n}\n"
+      string: |-
+        {
+          "id": "chatcmpl-ASfaOykfLmr5qdUddSbFIDNGReNRJ",
+          "object": "chat.completion",
+          "created": 1731396404,
+          "model": "gpt-4o-mini-2024-07-18",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "South Atlantic Ocean.",
+                "refusal": null
+              },
+              "logprobs": null,
+              "finish_reason": "stop"
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 24,
+            "completion_tokens": 4,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "system_fingerprint": "fp_0ba0d124f1"
+        }
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8d279486aaf1bae7-MXP
+      - 8e14cba7eed66bbd-SIN
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Mon, 14 Oct 2024 12:30:21 GMT
+      - Tue, 12 Nov 2024 07:26:44 GMT
       Server:
       - cloudflare
       Set-Cookie: test_set_cookie
@@ -69,10 +105,10 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       content-length:
-      - '643'
+      - '771'
       openai-organization: test_openai_org_key
       openai-processing-ms:
-      - '575'
+      - '249'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -82,15 +118,15 @@ interactions:
       x-ratelimit-limit-tokens:
       - '200000'
       x-ratelimit-remaining-requests:
-      - '9997'
+      - '9983'
       x-ratelimit-remaining-tokens:
       - '199966'
       x-ratelimit-reset-requests:
-      - 24.489s
+      - 2m25.844s
       x-ratelimit-reset-tokens:
       - 10ms
       x-request-id:
-      - req_ffe4e6ff8b66c569921f76182eab65cd
+      - req_3bef9643428bce1d1e43d476d8ef1c43
     status:
       code: 200
       message: OK

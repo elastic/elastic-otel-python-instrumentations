@@ -1,7 +1,16 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
-      ocean contains the falkland islands?"}], "model": "gpt-4o-mini", "stream": true}'
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?"
+          }
+        ],
+        "model": "unused",
+        "stream": true
+      }
     headers:
       accept:
       - application/json
@@ -14,88 +23,81 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '154'
+      - '149'
       content-type:
       - application/json
       host:
       - test.openai.azure.com
       user-agent:
-      - AsyncAzureOpenAI/Python 1.50.0
+      - AsyncAzureOpenAI/Python 1.54.3
       x-stainless-arch:
-      - x64
+      - arm64
       x-stainless-async:
       - async:asyncio
       x-stainless-lang:
       - python
       x-stainless-os:
-      - Linux
+      - MacOS
       x-stainless-package-version:
-      - 1.50.0
+      - 1.54.3
       x-stainless-retry-count:
       - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.10.12
+      - 3.12.6
     method: POST
-    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2023-03-15-preview
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2024-08-01-preview
   response:
     body:
-      string: 'data: {"choices":[{"delta":{"role":"assistant"},"finish_reason":null,"index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+      string: |+
+        data: {"choices":[],"created":0,"id":"","model":"","object":"","prompt_filter_results":[{"prompt_index":0,"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}}}]}
 
+        data: {"choices":[{"content_filter_results":{},"delta":{"content":"","role":"assistant"},"finish_reason":null,"index":0,"logprobs":null}],"created":1731466223,"id":"chatcmpl-ASxkVWhWg2yeY7IV8yr6Lywa7fke4","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
 
-        data: {"choices":[{"delta":{"content":"South"},"finish_reason":null,"index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
+        data: {"choices":[{"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"delta":{"content":"Atlantic"},"finish_reason":null,"index":0,"logprobs":null}],"created":1731466223,"id":"chatcmpl-ASxkVWhWg2yeY7IV8yr6Lywa7fke4","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
 
+        data: {"choices":[{"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"delta":{"content":" Ocean"},"finish_reason":null,"index":0,"logprobs":null}],"created":1731466223,"id":"chatcmpl-ASxkVWhWg2yeY7IV8yr6Lywa7fke4","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
 
-        data: {"choices":[{"delta":{"content":" Atlantic"},"finish_reason":null,"index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
-
-
-        data: {"choices":[{"delta":{"content":" Ocean"},"finish_reason":null,"index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
-
-
-        data: {"choices":[{"delta":{"content":"."},"finish_reason":null,"index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
-
-
-        data: {"choices":[{"delta":{},"finish_reason":"stop","index":0}],"created":1727964741,"id":"chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5","model":"gpt-4o-mini","object":"chat.completion.chunk","system_fingerprint":"fp_878413d04d"}
-
+        data: {"choices":[{"content_filter_results":{},"delta":{},"finish_reason":"stop","index":0,"logprobs":null}],"created":1731466223,"id":"chatcmpl-ASxkVWhWg2yeY7IV8yr6Lywa7fke4","model":"gpt-4-32k","object":"chat.completion.chunk","system_fingerprint":null}
 
         data: [DONE]
 
-
-        '
     headers:
+      Cache-Control:
+      - no-cache, must-revalidate
       Content-Type:
-      - text/event-stream; charset=utf-8
+      - text/event-stream
       Date:
-      - Thu, 03 Oct 2024 14:12:21 GMT
+      - Wed, 13 Nov 2024 02:50:23 GMT
       Set-Cookie: test_set_cookie
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
       - chunked
+      access-control-allow-origin:
+      - '*'
       apim-request-id:
-      - b43f4547-c4fd-4fa5-ac31-8c1c1ac95f13
+      - 32da387e-289d-4876-8d37-adc936ab09da
       azureml-model-session:
-      - d008-20240925051300
-      openai-organization: test_openai_org_key
+      - d156-20241010120317
+      openai-organization: test_openai_org_id
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '155'
       x-ms-client-request-id:
-      - b43f4547-c4fd-4fa5-ac31-8c1c1ac95f13
+      - 32da387e-289d-4876-8d37-adc936ab09da
       x-ms-rai-invoked:
       - 'true'
       x-ms-region:
-      - East US
+      - Switzerland North
       x-ratelimit-remaining-requests:
-      - '906'
+      - '71'
       x-ratelimit-remaining-tokens:
-      - '88372'
+      - '79612'
       x-request-id:
-      - e9c64286-f767-46a7-b0b4-cb7876d451a0
+      - 132f6f5c-067a-47e2-bc7d-79aa543876b4
     status:
       code: 200
       message: OK

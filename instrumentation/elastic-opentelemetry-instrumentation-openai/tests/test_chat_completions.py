@@ -16,10 +16,14 @@
 
 import json
 import re
+from dataclasses import dataclass
+from typing import List
 from unittest import mock
 
 import openai
 import pytest
+from opentelemetry._events import Event
+from opentelemetry._logs import LogRecord
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
@@ -60,29 +64,29 @@ test_basic_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEEtEV5mndU1WYBSLgvTpAIKAoYeu",
+        "chatcmpl-ASfa6PzPwTdpKRmM5equ6f0yxNbkr",
         24,
         4,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean",
-        "chatcmpl-AEEtFi8N27MCQoHr62DvUowImjwEc",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkAADVoG0VU3xx1Q0D1afSVpqLQ",
         24,
-        3,
+        2,
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "The Falklands Islands are located in the oceans south of South America.",
-        "chatcmpl-645",
+        "The Atlantic Ocean.",
+        "chatcmpl-126",
         46,
-        15,
+        5,
         0.002600736916065216,
     ),
 ]
@@ -165,29 +169,29 @@ test_all_the_client_options_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEGEFRHEOGpX0H3Nx84zgOEbJ8g6Y",
+        "chatcmpl-ASfa7XMQNQ9K4GKZSSrBU3zSmIyx5",
         24,
         4,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-AEGHLLqYkgJxUgLgX8RCLeL85irQR",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkBZGOa53uXX1Ciygl77IrF8PbB",
         24,
-        4,
+        2,
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "The Great British Oceanic Peninsula.",
-        "chatcmpl-398",
+        "The Falklands Islands are located in Atlantic Oceans.",
+        "chatcmpl-46",
         46,
-        8,
+        12,
         0.002600736916065216,
     ),
 ]
@@ -285,19 +289,19 @@ test_function_calling_with_tools_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEGIgPL1ReEL2yG6M4MrD3Uw960Bu",
+        "chatcmpl-ASfa8hgDJKumHgFlD27gZDNSC8HzZ",
         140,
         19,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
+        "unused",
+        "gpt-4-32k",
         "South Atlantic Ocean",
-        "chatcmpl-AEGIh5ygWzdZJL7BvIVeFLmgDSdT7",
-        140,
-        19,
+        "chatcmpl-ASxkDInQTANJ57p0VfUCuAISgNbW8",
+        144,
+        20,
         0.002889830619096756,
     ),
     (
@@ -305,7 +309,7 @@ test_function_calling_with_tools_test_data = [
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
         "The Falklands Islands are located in the oceans south of South America.",
-        "chatcmpl-363",
+        "chatcmpl-641",
         241,
         28,
         0.002600736916065216,
@@ -319,19 +323,19 @@ test_multiple_choices_capture_message_content_log_events_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-ANeSeH4fwAhE7sU211OIx0aI6K16o",
+        "chatcmpl-ASfa8r4rkn4OQSmqDqjdHf2UtP4Gn",
         24,
         8,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-ANeSfhGk22jizSPywSdR4MGCOdc76",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkC12M7RgRDgP5GjnYlUwEWQEDo",
         24,
-        8,
+        4,
         0.002889830619096756,
     ),
     # ollama does not support n>1
@@ -406,27 +410,9 @@ def test_multiple_choices_with_capture_message_content_log_events(
     user_message, choice, second_choice = log_records
     assert user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
     assert user_message.body == {"content": "Answer in up to 3 words: Which ocean contains the falkland islands?"}
-    assert choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
-    expected_body = {
-        "finish_reason": "stop",
-        "index": 0,
-        "message": {
-            "content": content,
-        },
-    }
-    assert dict(choice.body) == expected_body
-
-    assert second_choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
-
-    second_expected_body = {
-        "finish_reason": "stop",
-        "index": 1,
-        "message": {
-            "content": content,
-        },
-    }
-    assert dict(second_choice.body) == second_expected_body
+    assert_stop_log_record(choice, content)
+    assert_stop_log_record(second_choice, content, 1)
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -551,21 +537,21 @@ test_tools_with_capture_message_content_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEGM5OhimYEMDsRq20IQCBx4vzf2Z",
-        "call_yU31CceO4OliQuZgPdsSPRXT",
+        "chatcmpl-ASfa9bDXRwPIhzm7t58LNXJLZnBgC",
+        "call_QerODwH75OIstmsLXRkCOy4X",
         140,
         19,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
+        "unused",
+        "gpt-4-32k",
         "South Atlantic Ocean",
-        "chatcmpl-AEGM6niNxWuulOpOMXNelXUZqF443",
-        "call_EOPkr9g0pp71Wt6LEteCHWkZ",
-        140,
-        19,
+        "chatcmpl-ASxkERPeCSyiDvA8jyN5dhIpAYryd",
+        "call_hR2GEOnGJhmLsHHsMgfLuICf",
+        144,
+        20,
         0.002889830619096756,
     ),
     (
@@ -573,8 +559,8 @@ test_tools_with_capture_message_content_test_data = [
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
         "The Falklands Islands are located in the oceans south of South America.",
-        "chatcmpl-556",
-        "call_sr2j6oa1",
+        "chatcmpl-705",
+        "call_u9zt4jf1",
         241,
         28,
         0.002600736916065216,
@@ -673,13 +659,10 @@ def test_tools_with_capture_message_content(
     prompt_event, completion_event = span.events
     assert prompt_event.name == "gen_ai.content.prompt"
     assert dict(prompt_event.attributes) == {"gen_ai.prompt": json.dumps(messages)}
-    assert completion_event.name == "gen_ai.content.completion"
-    assert dict(completion_event.attributes) == {
-        "gen_ai.completion": '[{"role": "assistant", "content": "", "tool_calls": [{"id": "'
-        + function_call_id
-        + '", "type": "function", "function": {"name": "get_delivery_date", "arguments": "{\\"order_id\\":\\"order_12345\\"}"}}]}]'
-    }
 
+    assert_tool_call_event(
+        completion_event, [ToolCall(function_call_id, "get_delivery_date", '{"order_id": "order_12345"}')]
+    )
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
         GEN_AI_REQUEST_MODEL: model,
@@ -703,21 +686,21 @@ test_tools_with_capture_message_content_log_events_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AIEV9MTVUJ4HtPJm6pro1FgWlWQ2g",
-        "call_jQEwfwLUeVLVsxWaz8N0c8Yp",
+        "chatcmpl-ASfaAdUvnmifbYTNRZYh0TbM7mmTu",
+        "call_pWCLNanMRK7W7uEVHK8PzIKU",
         140,
         19,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
+        "unused",
+        "gpt-4-32k",
         "South Atlantic Ocean",
-        "chatcmpl-AIEVA7wwx1Cxy8O31zWDnxgUETAeN",
-        "call_Xyr5OWcqhvuW62vUx3sPPruH",
-        140,
-        19,
+        "chatcmpl-ASxkGiNWw960EEmcHpv6CgIyP6tHy",
+        "call_hR2GEOnGJhmLsHHsMgfLuICf",
+        144,
+        20,
         0.002889830619096756,
     ),
     (
@@ -725,8 +708,8 @@ test_tools_with_capture_message_content_log_events_test_data = [
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
         "The Falklands Islands are located in the oceans south of South America.",
-        "chatcmpl-339",
-        "call_3h40tlh2",
+        "chatcmpl-695",
+        "call_stzzh47r",
         241,
         28,
         0.002600736916065216,
@@ -840,22 +823,10 @@ def test_tools_with_capture_message_content_log_events(
     }
     assert second_user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
     assert second_user_message.body == {"content": "i think it is order_12345"}
-    assert choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
-    expected_body = {
-        "finish_reason": "tool_calls",
-        "index": 0,
-        "message": {
-            "tool_calls": [
-                {
-                    "function": {"arguments": '{"order_id":"order_12345"}', "name": "get_delivery_date"},
-                    "id": function_call_id,
-                    "type": "function",
-                },
-            ],
-        },
-    }
-    assert dict(choice.body) == expected_body
+    assert_tool_call_log_record(
+        choice, [ToolCall(function_call_id, "get_delivery_date", '{"order_id": "order_12345"}')]
+    )
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -980,22 +951,8 @@ def test_tools_with_capture_message_content_log_events_integration(
     }
     assert second_user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
     assert second_user_message.body == {"content": "i think it is order_12345"}
-    assert choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
-    expected_body = {
-        "finish_reason": "tool_calls",
-        "index": 0,
-        "message": {
-            "tool_calls": [
-                {
-                    "function": {"arguments": '{"order_id":"order_12345"}', "name": "get_delivery_date"},
-                    "id": tool_call.id,
-                    "type": "function",
-                },
-            ],
-        },
-    }
-    assert dict(choice.body) == expected_body
+    assert_tool_call_log_record(choice, [ToolCall(tool_call.id, "get_delivery_date", '{"order_id": "order_12345"}')])
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -1022,7 +979,7 @@ test_connection_error_test_data = [
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
+        "unused",
         0.971050308085978,
     ),
     (
@@ -1087,29 +1044,29 @@ test_basic_with_capture_message_content_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEFu3fjzje87q8tfrYWpazqelNIfW",
+        "chatcmpl-ASfaC6FMNUKWFqBJmf9rmRluWyRAF",
         24,
         4,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "Atlantic Ocean.",
-        "chatcmpl-AEFu4REQubxeCCkrv6wgeJ4VdN6o5",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkIgV0VKpWeEuyJHsem9UEl4fAt",
         24,
-        3,
+        2,
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "The Atlantic Ocean contains the Falkland Islands.",
-        "chatcmpl-976",
+        "The Atlantic Ocean.",
+        "chatcmpl-433",
         46,
-        10,
+        5,
         0.002600736916065216,
     ),
 ]
@@ -1290,20 +1247,20 @@ test_basic_with_capture_message_content_log_events_test_data = [
         "openai_provider_chat_completions",
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
-        "Atlantic Ocean.",
-        "chatcmpl-AIEVEddriZ8trWDORY6MdqNgqRkDX",
+        "South Atlantic Ocean.",
+        "chatcmpl-ASfaDugIT60RnKtXL11x7yXKEn7WK",
         24,
-        3,
+        4,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-AIEVEmwAmuw8qGX1PViCfm0kTe9O8",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkJuCwyegZk4W2awEhTKyCzstRr",
         24,
-        4,
+        2,
         0.002889830619096756,
     ),
     (
@@ -1311,7 +1268,7 @@ test_basic_with_capture_message_content_log_events_test_data = [
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
         "Atlantic Ocean",
-        "chatcmpl-694",
+        "chatcmpl-913",
         46,
         3,
         0.002600736916065216,
@@ -1386,16 +1343,8 @@ def test_basic_with_capture_message_content_log_events(
     user_message, choice = log_records
     assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
     assert dict(user_message.body) == {"content": "Answer in up to 3 words: Which ocean contains the falkland islands?"}
-    assert dict(choice.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
-    expected_body = {
-        "finish_reason": "stop",
-        "index": 0,
-        "message": {
-            "content": content,
-        },
-    }
-    assert dict(choice.body) == expected_body
+    assert_stop_log_record(choice, content)
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -1420,23 +1369,23 @@ test_stream_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEGTAvX2YSIO9EQwMleHTB91Cgn4G",
+        "chatcmpl-ASfaENPdLwpR8Jo5gHFiIL9tuklHK",
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-AEGTBkVVthwTc3DgRp6RGKJxyY1pE",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkK7GCpziJMmUFp08jG5xb3Rr9K",
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "The Falkland Islands, also known as the Argentinian Islands or British South America Land (BSAL), is an archipelago of several small islands and peninsulas located off the coast of Argentina. It contains nine uninhabited Falkland Islands, plus a mix of uninhabitable territory and other small features that are not considered part of the Falkland Islands' current administrative divisions.",
-        "chatcmpl-415",
+        "Atlantic Sea.",
+        "chatcmpl-702",
         0.002600736916065216,
     ),
 ]
@@ -1499,19 +1448,19 @@ test_stream_with_include_usage_option_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEGTE6nGqR4tbVuy6CPSHnXIF2eqy",
+        "chatcmpl-ASfaFZizr7oebXDx3CgQuBnXD01Xp",
         24,
         4,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-AEGTFYMyoBBDm4Qz37Lc8bekb2QOO",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkLviKAQt414bmMPfpr2DfNYgKt",
         24,
-        4,
+        2,
         0.002889830619096756,
     ),
 ]
@@ -1691,21 +1640,21 @@ test_stream_with_tools_and_capture_message_content_test_data = [
         "gpt-4o-mini-2024-07-18",
         "",
         {
-            "gen_ai.completion": '[{"role": "assistant", "content": "", "tool_calls": [{"function": {"arguments": "{\\"order_id\\":\\"order_12345\\"}", "name": "get_delivery_date"}, "id": "call_Hb0tFTds0zHfckULpnZ4t8XL", "type": "function"}]}]'
+            "gen_ai.completion": '[{"role": "assistant", "content": "", "tool_calls": [{"function": {"arguments": "{\\"order_id\\":\\"order_12345\\"}", "name": "get_delivery_date"}, "id": "call_RlWXV8zAJhzxsh6JqMHY0HbV", "type": "function"}]}]'
         },
-        "chatcmpl-AEGTFZ2zBPeLJlZ1EA10ZEDA12VfO",
+        "chatcmpl-ASfaFeOMsHtr0F6UH3Q1faiZxSeMX",
         "tool_calls",
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
+        "unused",
+        "gpt-4-32k",
         "",
         {
-            "gen_ai.completion": '[{"role": "assistant", "content": "", "tool_calls": [{"function": {"arguments": "{\\"order_id\\":\\"order_12345\\"}", "name": "get_delivery_date"}, "id": "call_96LHcDPBXtgIxgxbFvuJjTYU", "type": "function"}]}]'
+            "gen_ai.completion": '[{"role": "assistant", "content": "", "tool_calls": [{"function": {"arguments": "{\\n  \\"order_id\\": \\"order_12345\\"\\n}", "name": "get_delivery_date"}, "id": "call_hR2GEOnGJhmLsHHsMgfLuICf", "type": "function"}]}]'
         },
-        "chatcmpl-AEGTHbbvqBK2BE52I8GByDCM2dypS",
+        "chatcmpl-ASxkMa2HB9hyfwSNjCqVUwX2txxqr",
         "tool_calls",
         0.002889830619096756,
     ),
@@ -1721,7 +1670,7 @@ test_stream_with_tools_and_capture_message_content_test_data = [
             )
             + "}]"
         },
-        "chatcmpl-598",
+        "chatcmpl-268",
         "stop",
         0.002600736916065216,
     ),
@@ -1836,20 +1785,20 @@ test_stream_with_tools_and_capture_message_content_log_events_test_data = [
         "gpt-4o-mini-2024-07-18",
         "",
         '{"order_id": "order_12345"}',
-        "chatcmpl-AIEVFr8IGqjRC2wxrGU3tcRjNbGKf",
+        "chatcmpl-ASfaGWIziiqvP4PoufIFi3K2p2caY",
         "tool_calls",
-        "call_BQ6tpzuq28epoO6jzUNSdG6r",
+        "call_oEbEusT5nkkAiGgypUSDwK7k",
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
+        "unused",
+        "gpt-4-32k",
         "",
         '{"order_id": "order_12345"}',
-        "chatcmpl-AIEVHRdUM6ip3Uolr8CcrlGhchugq",
+        "chatcmpl-ASxkOzfrRK9uiquPJ2AH90npzayEy",
         "tool_calls",
-        "call_XNHRbrreMnt9ReHJfNH30mom",
+        "call_U0QYBadhpy4pBO6jYPm09KvZ",
         0.002889830619096756,
     ),
     (
@@ -1860,7 +1809,7 @@ test_stream_with_tools_and_capture_message_content_log_events_test_data = [
         json.dumps(
             '<tool_call>\n{"name": "get_delivery_date", "arguments": {"order_id": "order_12345"}}\n</tool_call>'
         ),
-        "chatcmpl-436",
+        "chatcmpl-749",
         "stop",
         "ciao",
         0.002600736916065216,
@@ -1975,28 +1924,11 @@ def test_stream_with_tools_and_capture_message_content_log_events(
     assert choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
     if finish_reason == "tool_calls":
-        expected_body = {
-            "finish_reason": finish_reason,
-            "index": 0,
-            "message": {
-                "tool_calls": [
-                    {
-                        "function": {"arguments": '{"order_id":"order_12345"}', "name": "get_delivery_date"},
-                        "id": function_call_id,
-                        "type": "function",
-                    },
-                ]
-            },
-        }
+        assert_tool_call_log_record(
+            choice, [ToolCall(function_call_id, "get_delivery_date", '{"order_id": "order_12345"}')]
+        )
     else:
-        expected_body = {
-            "finish_reason": finish_reason,
-            "index": 0,
-            "message": {
-                "content": content,
-            },
-        }
-    assert dict(choice.body) == expected_body
+        assert_stop_log_record(choice, content)
 
     span_ctx = span.get_span_context()
     assert choice.trace_id == span_ctx.trace_id
@@ -2022,9 +1954,9 @@ test_stream_with_parallel_tools_and_capture_message_content_test_data = [
         "gpt-4o-mini-2024-07-18",
         "",
         {
-            "gen_ai.completion": '[{"role": "assistant", "content": "", "tool_calls": [{"function": {"arguments": "{\\"location\\": \\"New York\\"}", "name": "get_weather"}, "id": "call_uDsEOSTauJkgNI8ciF0AvU0X", "type": "function"}, {"function": {"arguments": "{\\"location\\": \\"London\\"}", "name": "get_weather"}, "id": "call_If8zqvcIX9JYzEYJ02dlpoBX", "type": "function"}]}]'
+            "gen_ai.completion": '[{"role": "assistant", "content": "", "tool_calls": [{"function": {"arguments": "{\\"location\\": \\"New York City\\"}", "name": "get_weather"}, "id": "call_awpPik83NVMEmnWIARc49DVf", "type": "function"}, {"function": {"arguments": "{\\"location\\": \\"London\\"}", "name": "get_weather"}, "id": "call_LPkfKwdcq3Tqg06fTFVIDcV5", "type": "function"}]}]'
         },
-        "chatcmpl-AGooCqGLiGVX21z77Wlic8pSD93XP",
+        "chatcmpl-ASfaHUbWaDoK0qGijDZO8PwY9efB7",
         "tool_calls",
         0.006761051714420319,
     ),
@@ -2032,11 +1964,16 @@ test_stream_with_parallel_tools_and_capture_message_content_test_data = [
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        'To provide you with the most current information about the weather, I need to know which cities you are interested in. Could we please specify the name of each city? For instance, both "New York", "London" or individual names like "New York City".',
+        """<tool_call>
+{"name": "get_weather", "arguments": {"location": "New York City"}}
+</tool_call>
+<tool_call>
+{"name": "get_weather", "arguments": {"location": "London"}}
+</tool_call>""",
         {
-            "gen_ai.completion": '[{"role": "assistant", "content": "To provide you with the most current information about the weather, I need to know which cities you are interested in. Could we please specify the name of each city? For instance, both \\"New York\\", \\"London\\" or individual names like \\"New York City\\"."}]'
+            "gen_ai.completion": '[{"role": "assistant", "content": "<tool_call>\\n{\\"name\\": \\"get_weather\\", \\"arguments\\": {\\"location\\": \\"New York City\\"}}\\n</tool_call>\\n<tool_call>\\n{\\"name\\": \\"get_weather\\", \\"arguments\\": {\\"location\\": \\"London\\"}}\\n</tool_call>"}]'
         },
-        "chatcmpl-142",
+        "chatcmpl-918",
         "stop",
         0.002600736916065216,
     ),
@@ -2136,8 +2073,6 @@ def test_stream_with_parallel_tools_and_capture_message_content(
     )
 
 
-# Azure is not tested because only gpt-4o version 2024-08-06 supports structured output:
-# openai.BadRequestError: Error code: 400 - {'error': {'message': 'Structured output is not allowed.', 'type': 'invalid_request_error', 'param': None, 'code': None}}
 test_stream_with_parallel_tools_and_capture_message_content_log_events_test_data = [
     (
         "openai_provider_chat_completions",
@@ -2145,25 +2080,28 @@ test_stream_with_parallel_tools_and_capture_message_content_log_events_test_data
         "gpt-4o-mini-2024-07-18",
         "",
         json.dumps(""),
-        "chatcmpl-AICov4avW9uwU1rfxlUzPKGG5BiCs",
+        "chatcmpl-ASfaJQVIzX3LUZllbc5hR0NnEzs0b",
         "tool_calls",
         0.006761051714420319,
     ),
+    # Azure is not tested because gpt-4-32k does not support parallel tool calls
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "<tool_call>\n"
-        + json.dumps({"name": "get_weather", "arguments": {"location": "New York, NY"}}, indent=2)
-        + "\n</tool_call>\n<tool_call>\n"
-        + json.dumps({"name": "get_weather", "arguments": {"location": "London, UK"}}, indent=2)
-        + "\n</tool_call>",
-        '{"message": {"content":"<tool_call>\n'
-        + json.dumps({"name": "get_weather", "arguments": {"location": "New York, NY"}}, indent=2)
-        + "\n</tool_call>\n<tool_call>\n"
-        + json.dumps({"name": "get_weather", "arguments": {"location": "London, UK"}}, indent=2)
-        + "\n</tool_call>",
-        "chatcmpl-986",
+        """<tool_call>
+{"name": "get_weather", "arguments": {"location": "New York City, New York"}}
+</tool_call>
+<tool_call>
+{"name": "get_weather", "arguments": {"location": "London, United Kingdom"}}
+</tool_call>""",
+        """{"message": {"content":"<tool_call>
+{"name": "get_weather", "arguments": {"location": "New York City, New York"}}
+</tool_call>
+<tool_call>
+{"name": "get_weather", "arguments": {"location": "London, United Kingdom"}}
+</tool_call>"}}""",
+        "chatcmpl-563",
         "stop",
         0.002600736916065216,
     ),
@@ -2257,36 +2195,17 @@ def test_stream_with_parallel_tools_and_capture_message_content_log_events(
     assert system_message.body == {"content": "You are a helpful assistant providing weather updates."}
     assert user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
     assert user_message.body == {"content": "What is the weather in New York City and London?"}
-    assert choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
     if finish_reason == "tool_calls":
-        expected_body = {
-            "finish_reason": finish_reason,
-            "index": 0,
-            "message": {
-                "tool_calls": [
-                    {
-                        "function": {"arguments": '{"location": "New York City"}', "name": "get_weather"},
-                        "id": "call_m8FzMvtVd3wjksWMeRCWkPDK",
-                        "type": "function",
-                    },
-                    {
-                        "function": {"arguments": '{"location": "London"}', "name": "get_weather"},
-                        "id": "call_4WcXUPtB1wlKUy1lOrguqAtC",
-                        "type": "function",
-                    },
-                ]
-            },
-        }
+        assert_tool_call_log_record(
+            choice,
+            [
+                ToolCall("call_9nzwliy6hCnTQuvkNdULIFkr", "get_weather", '{"location": "New York City"}'),
+                ToolCall("call_3WjOCSgcSXK5YPOuP6GMwncg", "get_weather", '{"location": "London"}'),
+            ],
+        )
     else:
-        expected_body = {
-            "finish_reason": finish_reason,
-            "index": 0,
-            "message": {
-                "content": content,
-            },
-        }
-    assert dict(choice.body) == expected_body
+        assert_stop_log_record(choice, content)
 
     span_ctx = span.get_span_context()
     assert choice.trace_id == span_ctx.trace_id
@@ -2313,15 +2232,7 @@ test_tools_with_followup_and_capture_message_content_log_events_test_data = [
         "tool_calls",
         0.007433261722326279,
     ),
-    (
-        "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        None,
-        json.dumps(""),
-        "tool_calls",
-        0.003254897892475128,
-    ),
+    # Azure is not tested because gpt-4-32k does not support parallel tool calls
     # ollama does not return tool calls
 ]
 
@@ -2384,8 +2295,8 @@ def test_tools_with_followup_and_capture_message_content_log_events(
 
     assert first_response.choices[0].message.content == content
 
-    first_reponse_message = first_response.choices[0].message
-    if hasattr(first_reponse_message, "to_dict"):
+    first_response_message = first_response.choices[0].message
+    if hasattr(first_response_message, "to_dict"):
         previous_message = first_response.choices[0].message.to_dict()
     else:
         # old pydantic from old openai client
@@ -2457,27 +2368,20 @@ def test_tools_with_followup_and_capture_message_content_log_events(
     assert system_message.body == {"content": "You are a helpful assistant providing weather updates."}
     assert user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
     assert user_message.body == {"content": "What is the weather in New York City and London?"}
-    assert choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
-    expected_body = {
-        "finish_reason": finish_reason,
-        "index": 0,
-        "message": {
-            "tool_calls": [
-                {
-                    "function": {"arguments": '{"location": "New York City"}', "name": "get_weather"},
-                    "id": previous_message["tool_calls"][0]["id"],
-                    "type": "function",
-                },
-                {
-                    "function": {"arguments": '{"location": "London"}', "name": "get_weather"},
-                    "id": previous_message["tool_calls"][1]["id"],
-                    "type": "function",
-                },
-            ]
-        },
-    }
-    assert dict(choice.body) == expected_body
+    assert_tool_call_log_record(
+        choice,
+        [
+            ToolCall(
+                id=previous_message["tool_calls"][0]["id"],
+                name="get_weather",
+                arguments_json='{"location": "New York City"}',
+            ),
+            ToolCall(
+                id=previous_message["tool_calls"][1]["id"], name="get_weather", arguments_json='{"location": "London"}'
+            ),
+        ],
+    )
 
     # second call events
     system_message, user_message, assistant_message, first_tool, second_tool, choice = log_records[3:]
@@ -2493,12 +2397,8 @@ def test_tools_with_followup_and_capture_message_content_log_events(
     assert second_tool.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.tool.message"}
     second_tool_response = previous_message["tool_calls"][1]
     assert second_tool.body == {"content": "15 degrees and raining", "id": second_tool_response["id"]}
-    assert choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
-    assert choice.body == {
-        "index": 0,
-        "finish_reason": "stop",
-        "message": {"content": second_response.choices[0].message.content},
-    }
+
+    assert_stop_log_record(choice, second_response.choices[0].message.content)
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -2524,29 +2424,29 @@ test_async_basic_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEGqstM7lJ74sLzKJxMyhZZJixowh",
+        "chatcmpl-ASfaN2cUXcaAFQ7uFS83Kuvc0iKdp",
         24,
         4,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-AEGqs0IFKsicvFYSaiyWFpZVr6OHe",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkRs5B2H6Nyi9F1xV78yBVkiBbi",
         24,
-        4,
+        2,
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "Atlantic Ocean",
-        "chatcmpl-425",
+        "The Falkland Islands belong to Argentina.",
+        "chatcmpl-95",
         46,
-        3,
+        9,
         0.002600736916065216,
     ),
 ]
@@ -2630,29 +2530,29 @@ test_async_basic_with_capture_message_content_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEGquKdflabT1q3yPFXFggu0hn6Cg",
+        "chatcmpl-ASfaOHHT6qOYpFc5M7uzSkgfXnnpJ",
         24,
         4,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-AEGqv0J1RJgG477zKEayzIFWtBfoN",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASySeHu4TgKtlulOVp4LU8yTNRvoM",
         24,
-        4,
+        2,
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "Antarctica",
-        "chatcmpl-280",
+        "Antarctica ocean.",
+        "chatcmpl-816",
         46,
-        4,
+        6,
         0.002600736916065216,
     ),
 ]
@@ -2748,29 +2648,29 @@ test_async_basic_with_capture_message_content_log_events_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AIEVJxmbMtOSyVurjk73oqE0uQhAX",
+        "chatcmpl-ASfaOykfLmr5qdUddSbFIDNGReNRJ",
         24,
         4,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-AIEVKUfan2sD0ScQLHPSMYn7Fet3Y",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkTeNjqCBy25d2g18faeBtc66GG",
         24,
-        4,
+        2,
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "The Falkland Islands are located within the southern waters of the South Atlantic Ocean.",
-        "chatcmpl-472",
+        "The Falkland Islands are located in which ocean?",
+        "chatcmpl-295",
         46,
-        17,
+        11,
         0.002600736916065216,
     ),
 ]
@@ -2844,16 +2744,8 @@ async def test_async_basic_with_capture_message_content_log_events(
     user_message, choice = log_records
     assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
     assert dict(user_message.body) == {"content": "Answer in up to 3 words: Which ocean contains the falkland islands?"}
-    assert dict(choice.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
-    expected_body = {
-        "finish_reason": "stop",
-        "index": 0,
-        "message": {
-            "content": content,
-        },
-    }
-    assert dict(choice.body) == expected_body
+    assert_stop_log_record(choice, content)
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -2941,16 +2833,8 @@ async def test_async_basic_with_capture_message_content_log_events_integration(
     user_message, choice = log_records
     assert user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
     assert user_message.body == {"content": "Answer in up to 3 words: Which ocean contains the falkland islands?"}
-    assert choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
-    expected_body = {
-        "finish_reason": "stop",
-        "index": 0,
-        "message": {
-            "content": content,
-        },
-    }
-    assert dict(choice.body) == expected_body
+    assert_stop_log_record(choice, content)
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -2975,23 +2859,23 @@ test_async_stream_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEGqwO8cO97nJK1gMyVlzL9Mfyv7E",
+        "chatcmpl-ASfaPgUOEfxcTVUSEfUINfcFkVQ8x",
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-AEGqxYYCkiihSc05nBzHlYVwwUmzl",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkU7Rz5UnZqCWoV86xfgDVgc719",
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "The Falkland Islands are located on which ocean?",
-        "chatcmpl-325",
+        "The Southern Ocean.",
+        "chatcmpl-232",
         0.002600736916065216,
     ),
 ]
@@ -3054,23 +2938,23 @@ test_async_stream_with_capture_message_content_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AEGqyZRrj9GUzDNw5te55gt1r7eus",
+        "chatcmpl-ASfaPHhHlSFtYDMa1S0QSWewTPhuS",
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-AEGqzfynQK4iCO7EXRy3kGXYyuxF5",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASxkVWhWg2yeY7IV8yr6Lywa7fke4",
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "The Falkland Islands lie within which ocean?",
-        "chatcmpl-644",
+        "South America's Atlantic Ocean.",
+        "chatcmpl-752",
         0.002600736916065216,
     ),
 ]
@@ -3155,23 +3039,23 @@ test_async_stream_with_capture_message_content_log_events_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-AIEVLVduixLA39qqzjDIfJ2u2dPcJ",
+        "chatcmpl-ASfaQS4L6eLFljyu9h8zZRbp2hf5j",
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "South Atlantic Ocean.",
-        "chatcmpl-AIEVNaNWKhuoMnRJtcPUJNjbAz9Ib",
+        "unused",
+        "gpt-4-32k",
+        "Atlantic Ocean",
+        "chatcmpl-ASyRrEoGtgeeLRtFd7mM1CePrJUac",
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "The Falkland Islands contain the South Atlantic Ocean.",
-        "chatcmpl-466",
+        "The Falkland Islands belong to Argentina.",
+        "chatcmpl-465",
         0.002600736916065216,
     ),
 ]
@@ -3241,16 +3125,8 @@ async def test_async_stream_with_capture_message_content_log_events(
     user_message, choice = log_records
     assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
     assert dict(user_message.body) == {"content": "Answer in up to 3 words: Which ocean contains the falkland islands?"}
-    assert dict(choice.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
-    expected_body = {
-        "finish_reason": "stop",
-        "index": 0,
-        "message": {
-            "content": content,
-        },
-    }
-    assert dict(choice.body) == expected_body
+    assert_stop_log_record(choice, content)
 
     span_ctx = span.get_span_context()
     assert choice.trace_id == span_ctx.trace_id
@@ -3273,20 +3149,20 @@ test_async_tools_with_capture_message_content_test_data = [
         "openai_provider_chat_completions",
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
-        "chatcmpl-AEGr0SsAhppNLpPXpTtnmBiGGViQb",
-        "call_vZtzXVh5oO3k1IpFfuRejWHv",
+        "chatcmpl-ASfaRyXEFFt9GzMooIy1bDXqjYnWV",
+        "call_fW4XFpzxFZ7Rfj5dsDcZTezg",
         140,
         19,
         0.006761051714420319,
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "chatcmpl-AEGr1X6ieLFOD5hlXZBx2BL2BrSLe",
-        "call_46cgdzJzy50oQJwWeUVWIwC3",
-        140,
-        19,
+        "unused",
+        "gpt-4-32k",
+        "chatcmpl-ASxkX3IDac2dYI6AB8L4iA7SJaNii",
+        "call_Lm5cpl4sJy5b1FfEjsnbbjlL",
+        144,
+        20,
         0.002889830619096756,
     ),
 ]
@@ -3383,12 +3259,10 @@ async def test_async_tools_with_capture_message_content(
     prompt_event, completion_event = span.events
     assert prompt_event.name == "gen_ai.content.prompt"
     assert dict(prompt_event.attributes) == {"gen_ai.prompt": json.dumps(messages)}
-    assert completion_event.name == "gen_ai.content.completion"
-    assert dict(completion_event.attributes) == {
-        "gen_ai.completion": '[{"role": "assistant", "content": "", "tool_calls": [{"id": "'
-        + function_call_id
-        + '", "type": "function", "function": {"name": "get_delivery_date", "arguments": "{\\"order_id\\":\\"order_12345\\"}"}}]}]'
-    }
+
+    assert_tool_call_event(
+        completion_event, [ToolCall(function_call_id, "get_delivery_date", '{"order_id": "order_12345"}')]
+    )
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -3413,8 +3287,8 @@ test_async_tools_with_capture_message_content_log_events_test_data = [
         "openai_provider_chat_completions",
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
-        "chatcmpl-AIEVOegIWRWjNVbjxs4iASh4SNKAj",
-        "call_n4WJq7bu6UsgjdqeNYxRmGno",
+        "chatcmpl-ASfaSKFvgQzcktnJhUZmtGmdoKwkW",
+        "call_TZeQV35RVjT4iAuUXs85nmkt",
         "",
         140,
         19,
@@ -3422,13 +3296,13 @@ test_async_tools_with_capture_message_content_log_events_test_data = [
     ),
     (
         "azure_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini",
-        "chatcmpl-AIEVPAAgrPcEpkQHXamdD9JpNNPep",
-        "call_uO2RgeshT5Xmbwg778qN14d5",
+        "unused",
+        "gpt-4-32k",
+        "chatcmpl-ASxkYrqUQVubUzovieQByym7sxgdm",
+        "call_U0QYBadhpy4pBO6jYPm09KvZ",
         "",
-        140,
-        19,
+        144,
+        20,
         0.002889830619096756,
     ),
 ]
@@ -3541,22 +3415,10 @@ async def test_async_tools_with_capture_message_content_log_events(
     }
     assert dict(second_user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
     assert dict(second_user_message.body) == {"content": "i think it is order_12345"}
-    assert dict(choice.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
 
-    expected_body = {
-        "finish_reason": "tool_calls",
-        "index": 0,
-        "message": {
-            "tool_calls": [
-                {
-                    "function": {"arguments": '{"order_id":"order_12345"}', "name": "get_delivery_date"},
-                    "id": function_call_id,
-                    "type": "function",
-                },
-            ],
-        },
-    }
-    assert dict(choice.body) == expected_body
+    assert_tool_call_log_record(
+        choice, [ToolCall(function_call_id, "get_delivery_date", '{"order_id": "order_12345"}')]
+    )
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -3576,33 +3438,19 @@ async def test_async_tools_with_capture_message_content_log_events(
 
 
 test_without_model_parameter_test_data = [
-    (
-        "openai_provider_chat_completions",
-        "api.openai.com",
-        443,
-        5,
-    ),
-    (
-        "azure_provider_chat_completions",
-        "test.openai.azure.com",
-        443,
-        5,
-    ),
+    ("openai_provider_chat_completions", 5),
+    ("azure_provider_chat_completions", 5),
     (
         "ollama_provider_chat_completions",
-        "localhost",
-        11434,
         5,
     ),
 ]
 
 
 @pytest.mark.vcr()
-@pytest.mark.parametrize("provider_str,server_address,server_port,duration", test_without_model_parameter_test_data)
+@pytest.mark.parametrize("provider_str,duration", test_without_model_parameter_test_data)
 def test_without_model_parameter(
     provider_str,
-    server_address,
-    server_port,
     duration,
     trace_exporter,
     metrics_reader,
@@ -3639,12 +3487,16 @@ def test_without_model_parameter(
         ERROR_TYPE: "TypeError",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_SYSTEM: "openai",
-        SERVER_ADDRESS: server_address,
-        SERVER_PORT: server_port,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
     }
 
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
-    attributes = {"error.type": "TypeError", "server.address": server_address, "server.port": server_port}
+    attributes = {
+        "error.type": "TypeError",
+        "server.address": provider.server_address,
+        "server.port": provider.server_port,
+    }
     assert_error_operation_duration_metric(
         provider, operation_duration_metric, attributes=attributes, data_point=duration, value_delta=5
     )
@@ -3653,22 +3505,13 @@ def test_without_model_parameter(
 test_with_model_not_found_test_data = [
     (
         "openai_provider_chat_completions",
-        "api.openai.com",
-        443,
         "The model `not-found-model` does not exist or you do not have access to it.",
         0.00230291485786438,
     ),
-    (
-        "azure_provider_chat_completions",
-        "test.openai.azure.com",
-        443,
-        "The API deployment for this resource does not exist. If you created the deployment within the last 5 minutes, please wait a moment and try again.",
-        0.00230291485786438,
-    ),
+    # We don't test with azure because the model parameter is ignored, so ends up successful.
+    # This is verifiable by noticing the model parameter is always set to "unused"
     (
         "ollama_provider_chat_completions",
-        "localhost",
-        11434,
         'model "not-found-model" not found, try pulling it first',
         0.00230291485786438,
     ),
@@ -3676,13 +3519,9 @@ test_with_model_not_found_test_data = [
 
 
 @pytest.mark.vcr()
-@pytest.mark.parametrize(
-    "provider_str,server_address,server_port,exception,duration", test_with_model_not_found_test_data
-)
+@pytest.mark.parametrize("provider_str,exception,duration", test_with_model_not_found_test_data)
 def test_with_model_not_found(
     provider_str,
-    server_address,
-    server_port,
     exception,
     duration,
     trace_exporter,
@@ -3716,16 +3555,16 @@ def test_with_model_not_found(
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_MODEL: "not-found-model",
         GEN_AI_SYSTEM: "openai",
-        SERVER_ADDRESS: server_address,
-        SERVER_PORT: server_port,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
     }
 
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
     attributes = {
         "gen_ai.request.model": "not-found-model",
         "error.type": "NotFoundError",
-        "server.address": server_address,
-        "server.port": server_port,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
     }
     assert_error_operation_duration_metric(
         provider, operation_duration_metric, attributes=attributes, data_point=duration
@@ -3759,3 +3598,52 @@ def test_exported_schema_version(
     for metrics in resource_metrics:
         for scope_metrics in metrics.scope_metrics:
             assert scope_metrics.schema_url == "https://opentelemetry.io/schemas/1.27.0"
+
+
+@dataclass
+class ToolCall:
+    id: str
+    name: str
+    arguments_json: str
+
+
+def assert_stop_log_record(log_record: LogRecord, expected_content: str, expected_index=0):
+    assert log_record.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
+    assert log_record.body["index"] == expected_index
+    assert log_record.body["finish_reason"] == "stop"
+    message = log_record.body["message"]
+    assert message["content"] == expected_content
+
+
+def assert_tool_call_log_record(log_record: LogRecord, expected_tool_calls: List[ToolCall], expected_index=0):
+    assert log_record.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
+    assert log_record.body["index"] == expected_index
+    assert log_record.body["finish_reason"] == "tool_calls"
+    message = log_record.body["message"]
+    assert_tool_calls(message["tool_calls"], expected_tool_calls)
+
+
+def assert_tool_call_event(event: Event, expected_tool_calls: List[ToolCall]):
+    assert event.name == "gen_ai.content.completion"
+    # The 'gen_ai.completion' attribute is a JSON string, so parse it first.
+    gen_ai_completions = json.loads(event.attributes["gen_ai.completion"])
+
+    gen_ai_completion = gen_ai_completions[0]
+    assert gen_ai_completion["role"] == "assistant"
+    assert gen_ai_completion["content"] == ""
+    assert_tool_calls(gen_ai_completion["tool_calls"], expected_tool_calls)
+
+
+def assert_tool_calls(tool_calls, expected_tool_calls: List[ToolCall]):
+    for i, tool_call in enumerate(tool_calls):
+        expected_call = expected_tool_calls[i]
+        args = tool_call["function"]["arguments"]
+        # The function arguments are also a string, which has different whitespace
+        # in Azure. Assert in a whitespace agnostic way first.
+        assert json.dumps(json.loads(args), sort_keys=True) == expected_call.arguments_json
+
+        assert tool_call == {
+            "id": expected_call.id,
+            "type": "function",
+            "function": {"name": expected_call.name, "arguments": args},
+        }, f"Unexpected tool_call at index {i}: {tool_call} != {expected_call}"

@@ -1,8 +1,16 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
-      ocean contains the falkland islands?"}], "model": "qwen2.5:0.5b", "stream":
-      true}'
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?"
+          }
+        ],
+        "model": "qwen2.5:0.5b",
+        "stream": true
+      }
     headers:
       accept:
       - application/json
@@ -19,74 +27,53 @@ interactions:
       host:
       - localhost:11434
       user-agent:
-      - AsyncOpenAI/Python 1.34.0
+      - AsyncOpenAI/Python 1.50.2
       x-stainless-arch:
-      - x64
+      - arm64
       x-stainless-async:
       - async:asyncio
       x-stainless-lang:
       - python
       x-stainless-os:
-      - Linux
+      - MacOS
       x-stainless-package-version:
-      - 1.34.0
+      - 1.50.2
+      x-stainless-retry-count:
+      - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.10.12
+      - 3.12.6
     method: POST
     uri: http://localhost:11434/v1/chat/completions
   response:
     body:
-      string: 'data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"The"},"finish_reason":null}]}
+      string: |+
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"The"},"finish_reason":null}]}
 
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" Falk"},"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
-        Falk"},"finish_reason":null}]}
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"land"},"finish_reason":null}]}
 
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" Islands"},"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"land"},"finish_reason":null}]}
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" belong"},"finish_reason":null}]}
 
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" to"},"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
-        Islands"},"finish_reason":null}]}
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" Argentina"},"finish_reason":null}]}
 
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"."},"finish_reason":null}]}
 
-        data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
-        contain"},"finish_reason":null}]}
-
-
-        data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
-        the"},"finish_reason":null}]}
-
-
-        data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
-        South"},"finish_reason":null}]}
-
-
-        data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
-        Atlantic"},"finish_reason":null}]}
-
-
-        data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"
-        Ocean"},"finish_reason":null}]}
-
-
-        data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"."},"finish_reason":null}]}
-
-
-        data: {"id":"chatcmpl-466","object":"chat.completion.chunk","created":1728909025,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"stop"}]}
-
+        data: {"id":"chatcmpl-465","object":"chat.completion.chunk","created":1731314345,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"stop"}]}
 
         data: [DONE]
 
-
-        '
     headers:
       Content-Type:
       - text/event-stream
       Date:
-      - Mon, 14 Oct 2024 12:30:25 GMT
+      - Mon, 11 Nov 2024 08:39:05 GMT
       Set-Cookie: test_set_cookie
       Transfer-Encoding:
       - chunked

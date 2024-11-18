@@ -1,7 +1,15 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Answer in up to 3 words: Which
-      ocean contains the falkland islands?"}], "model": "gpt-4o-mini"}'
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?"
+          }
+        ],
+        "model": "unused"
+      }
     headers:
       accept:
       - application/json
@@ -14,70 +22,133 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '138'
+      - '133'
       content-type:
       - application/json
       host:
       - test.openai.azure.com
       user-agent:
-      - AzureOpenAI/Python 1.50.0
+      - AzureOpenAI/Python 1.54.3
       x-stainless-arch:
-      - x64
+      - arm64
       x-stainless-async:
       - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
-      - Linux
+      - MacOS
       x-stainless-package-version:
-      - 1.50.0
+      - 1.54.3
       x-stainless-retry-count:
       - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.10.12
+      - 3.12.6
     method: POST
-    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2023-03-15-preview
+    uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2024-08-01-preview
   response:
     body:
-      string: '{"choices":[{"finish_reason":"stop","index":0,"message":{"content":"South
-        Atlantic Ocean","role":"assistant"}}],"created":1727957193,"id":"chatcmpl-AEEtFi8N27MCQoHr62DvUowImjwEc","model":"gpt-4o-mini","object":"chat.completion","system_fingerprint":"fp_878413d04d","usage":{"completion_tokens":3,"prompt_tokens":24,"total_tokens":27}}
-
-        '
+      string: |-
+        {
+          "choices": [
+            {
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": "Atlantic Ocean",
+                "role": "assistant"
+              }
+            }
+          ],
+          "created": 1731466202,
+          "id": "chatcmpl-ASxkAADVoG0VU3xx1Q0D1afSVpqLQ",
+          "model": "gpt-4-32k",
+          "object": "chat.completion",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 24,
+            "total_tokens": 26
+          }
+        }
     headers:
+      Cache-Control:
+      - no-cache, must-revalidate
       Content-Length:
-      - '335'
+      - '805'
       Content-Type:
       - application/json
       Date:
-      - Thu, 03 Oct 2024 12:06:33 GMT
+      - Wed, 13 Nov 2024 02:50:01 GMT
       Set-Cookie: test_set_cookie
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
+      access-control-allow-origin:
+      - '*'
       apim-request-id:
-      - 71ac28ce-007b-414e-ab35-f326fc57faa5
+      - 31b19ef4-5471-444c-8e6d-1ab2dc748d01
       azureml-model-session:
-      - d009-20240925061008
-      openai-organization: test_openai_org_key
+      - d160-20241010151341
+      openai-organization: test_openai_org_id
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '241'
       x-ms-client-request-id:
-      - 71ac28ce-007b-414e-ab35-f326fc57faa5
+      - 31b19ef4-5471-444c-8e6d-1ab2dc748d01
       x-ms-rai-invoked:
       - 'true'
       x-ms-region:
-      - East US
+      - Switzerland North
       x-ratelimit-remaining-requests:
-      - '909'
+      - '79'
       x-ratelimit-remaining-tokens:
-      - '90343'
+      - '79984'
       x-request-id:
-      - 2edfbb9b-c853-42c9-97cc-de74fe7e5d1f
+      - 89b1115a-9029-4964-b1dd-21d034cc674a
     status:
       code: 200
       message: OK
