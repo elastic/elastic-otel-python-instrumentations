@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import Mapping, Optional, Sequence
+from unittest import mock
 
 from opentelemetry.sdk._logs._internal import LogData
 from opentelemetry.sdk.metrics._internal.point import Metric
@@ -69,9 +70,16 @@ def is_data_points_equal(
 
     values_diff = None
     if isinstance(data_point, NumberDataPoint):
-        values_diff = abs(expected_data_point.value - data_point.value)
+        if data_point.value is mock.ANY or data_point.value is MOCK_POSITIVE_FLOAT:
+            values_diff = 0
+        else:
+            values_diff = abs(expected_data_point.value - data_point.value)
     elif isinstance(data_point, HistogramDataPoint):
-        values_diff = abs(expected_data_point.sum - data_point.sum)
+        if expected_data_point.sum is mock.ANY or expected_data_point.sum is MOCK_POSITIVE_FLOAT:
+            values_diff = 0
+        else:
+            values_diff = abs(expected_data_point.sum - data_point.sum)
+
         if expected_data_point.count != data_point.count or (
             est_value_delta == 0
             and (expected_data_point.min != data_point.min or expected_data_point.max != data_point.max)
@@ -123,3 +131,11 @@ def create_histogram_data_point(sum_data_point, count, max_data_point, min_data_
 
 def logrecords_from_logs(logs: Sequence[LogData]) -> Sequence[Mapping[str, AttributeValue]]:
     return [log.log_record for log in logs]
+
+
+class MockPositiveFloat:
+    def __eq__(self, other):
+        return isinstance(other, float) and other > 0.0
+
+
+MOCK_POSITIVE_FLOAT = MockPositiveFloat()

@@ -46,7 +46,9 @@ from .conftest import (
     assert_operation_duration_metric,
     assert_token_usage_metric,
 )
-from .utils import get_sorted_metrics, logrecords_from_logs
+from .utils import MOCK_POSITIVE_FLOAT, get_sorted_metrics, logrecords_from_logs
+
+OPENAI_VERSION = tuple([int(x) for x in openai.version.VERSION.split(".")])
 
 providers = ["openai_provider_chat_completions", "ollama_provider_chat_completions", "azure_provider_chat_completions"]
 
@@ -872,6 +874,146 @@ def test_tools_with_capture_content_log_events(
     )
 
 
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "provider_str,model,response_model",
+    [
+        (
+            "openai_provider_chat_completions",
+            "gpt-4o-mini",
+            "gpt-4o-mini-2024-07-18",
+        ),
+    ],
+)
+def test_tools_with_capture_content_log_events_integration(
+    provider_str,
+    model,
+    response_model,
+    trace_exporter,
+    logs_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_client()
+
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict(
+        "os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
+    ):
+        OpenAIInstrumentor().instrument()
+
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_delivery_date",
+                "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "order_id": {
+                            "type": "string",
+                            "description": "The customer's order ID.",
+                        },
+                    },
+                    "required": ["order_id"],
+                    "additionalProperties": False,
+                },
+            },
+        }
+    ]
+
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user.",
+        },
+        {"role": "user", "content": "Hi, can you tell me the delivery date for my order?"},
+        {
+            "role": "assistant",
+            "content": "Hi there! I can help with that. Can you please provide your order ID?",
+        },
+        {"role": "user", "content": "i think it is order_12345"},
+    ]
+
+    response = client.chat.completions.create(model=model, messages=messages, tools=tools)
+    tool_call = response.choices[0].message.tool_calls[0]
+    assert tool_call.function.name == "get_delivery_date"
+    assert json.loads(tool_call.function.arguments) == {"order_id": "order_12345"}
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response.id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("tool_calls",),
+        GEN_AI_USAGE_INPUT_TOKENS: response.usage.prompt_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: response.usage.completion_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+
+    logs = logs_exporter.get_finished_logs()
+    assert len(logs) == 5
+    log_records = logrecords_from_logs(logs)
+    system_message, user_message, assistant_message, second_user_message, choice = log_records
+    assert system_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.system.message"}
+    assert system_message.body == {
+        "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user."
+    }
+    assert user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert user_message.body == {"content": "Hi, can you tell me the delivery date for my order?"}
+    assert assistant_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.assistant.message"}
+    assert assistant_message.body == {
+        "content": "Hi there! I can help with that. Can you please provide your order ID?"
+    }
+    assert second_user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert second_user_message.body == {"content": "i think it is order_12345"}
+    assert choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
+
+    expected_body = {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+            "tool_calls": [
+                {
+                    "function": {"arguments": '{"order_id":"order_12345"}', "name": "get_delivery_date"},
+                    "id": tool_call.id,
+                    "type": "function",
+                },
+            ],
+        },
+    }
+    assert dict(choice.body) == expected_body
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, min_data_point=MOCK_POSITIVE_FLOAT
+    )
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=response.usage.prompt_tokens,
+        output_data_point=response.usage.completion_tokens,
+    )
+
+
 test_connection_error_test_data = [
     (
         "openai_provider_chat_completions",
@@ -1054,6 +1196,92 @@ def test_basic_with_capture_content(
         attributes=attributes,
         input_data_point=input_tokens,
         output_data_point=output_tokens,
+    )
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "provider_str,model,response_model",
+    [
+        (
+            "openai_provider_chat_completions",
+            "gpt-4o-mini",
+            "gpt-4o-mini-2024-07-18",
+        )
+    ],
+)
+def test_basic_with_capture_content_integration(
+    provider_str,
+    model,
+    response_model,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
+        OpenAIInstrumentor().instrument()
+
+    client = provider.get_client()
+
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
+
+    response = client.chat.completions.create(model=model, messages=messages)
+    content = response.choices[0].message.content
+    assert content
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response.id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: response.usage.prompt_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: response.usage.completion_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+
+    assert len(span.events) == 2
+    prompt_event, completion_event = span.events
+    assert prompt_event.name == "gen_ai.content.prompt"
+    assert dict(prompt_event.attributes) == {"gen_ai.prompt": json.dumps(messages)}
+    assert completion_event.name == "gen_ai.content.completion"
+    assert dict(completion_event.attributes) == {
+        "gen_ai.completion": '[{"role": "assistant", "content": "' + content + '"}]'
+    }
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, min_data_point=MOCK_POSITIVE_FLOAT
+    )
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=response.usage.prompt_tokens,
+        output_data_point=response.usage.completion_tokens,
     )
 
 
@@ -1289,6 +1517,7 @@ test_stream_with_include_usage_option_test_data = [
 ]
 
 
+@pytest.mark.skipif(OPENAI_VERSION < (1, 26, 0), reason="stream_options added in 1.26.0")
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
@@ -1360,6 +1589,98 @@ def test_stream_with_include_usage_option(
         attributes=attributes,
         input_data_point=input_tokens,
         output_data_point=output_tokens,
+    )
+
+
+@pytest.mark.skipif(OPENAI_VERSION < (1, 26, 0), reason="stream_options added in 1.26.0")
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "provider_str,model,response_model",
+    [
+        (
+            "openai_provider_chat_completions",
+            "gpt-4o-mini",
+            "gpt-4o-mini-2024-07-18",
+        )
+    ],
+)
+def test_stream_with_include_usage_option_and_capture_content_integration(
+    provider_str,
+    model,
+    response_model,
+    trace_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict("os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true"}):
+        OpenAIInstrumentor().instrument()
+
+    client = provider.get_client()
+
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
+
+    response = client.chat.completions.create(
+        model=model, messages=messages, stream=True, stream_options={"include_usage": True}
+    )
+    chunks = [chunk for chunk in response]
+    usage = chunks[-1].usage
+
+    chunks_content = [chunk.choices[0].delta.content or "" for chunk in chunks if chunk.choices]
+    content = "".join(chunks_content)
+    assert content
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: chunks[0].id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: usage.prompt_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: usage.completion_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    assert len(span.events) == 2
+    prompt_event, completion_event = span.events
+    assert prompt_event.name == "gen_ai.content.prompt"
+    assert dict(prompt_event.attributes) == {"gen_ai.prompt": json.dumps(messages)}
+    assert completion_event.name == "gen_ai.content.completion"
+    assert dict(completion_event.attributes) == {
+        "gen_ai.completion": '[{"role": "assistant", "content": "' + content + '"}]'
+    }
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, min_data_point=MOCK_POSITIVE_FLOAT
+    )
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=usage.prompt_tokens,
+        output_data_point=usage.completion_tokens,
     )
 
 
@@ -2548,6 +2869,103 @@ async def test_async_basic_with_capture_content_log_events(
         attributes=attributes,
         input_data_point=input_tokens,
         output_data_point=output_tokens,
+    )
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "provider_str,model,response_model",
+    [
+        (
+            "openai_provider_chat_completions",
+            "gpt-4o-mini",
+            "gpt-4o-mini-2024-07-18",
+        ),
+    ],
+)
+async def test_async_basic_with_capture_content_log_events_integration(
+    provider_str,
+    model,
+    response_model,
+    trace_exporter,
+    logs_exporter,
+    metrics_reader,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_async_client()
+
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict(
+        "os.environ", {"ELASTIC_OTEL_GENAI_CAPTURE_CONTENT": "true", "ELASTIC_OTEL_GENAI_EVENTS": "log"}
+    ):
+        OpenAIInstrumentor().instrument()
+
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
+
+    response = await client.chat.completions.create(model=model, messages=messages)
+    content = response.choices[0].message.content
+    assert content
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response.id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: response.usage.prompt_tokens,
+        GEN_AI_USAGE_OUTPUT_TOKENS: response.usage.completion_tokens,
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+
+    logs = logs_exporter.get_finished_logs()
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert user_message.body == {"content": "Answer in up to 3 words: Which ocean contains the falkland islands?"}
+    assert choice.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.choice"}
+
+    expected_body = {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+            "content": content,
+        },
+    }
+    assert dict(choice.body) == expected_body
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, min_data_point=MOCK_POSITIVE_FLOAT
+    )
+    assert_token_usage_metric(
+        provider,
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=response.usage.prompt_tokens,
+        output_data_point=response.usage.completion_tokens,
     )
 
 

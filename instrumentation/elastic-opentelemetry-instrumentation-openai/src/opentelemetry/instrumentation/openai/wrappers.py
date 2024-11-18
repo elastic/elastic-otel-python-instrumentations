@@ -104,7 +104,9 @@ class StreamWrapper:
     def process_chunk(self, chunk):
         self.response_id = chunk.id
         self.model = chunk.model
-        self.usage = chunk.usage
+        # usage with streaming is available since 1.26.0
+        if hasattr(chunk, "usage"):
+            self.usage = chunk.usage
         # with `include_usage` in `stream_options` we will get a last chunk without choices
         if chunk.choices:
             self.choices += chunk.choices
