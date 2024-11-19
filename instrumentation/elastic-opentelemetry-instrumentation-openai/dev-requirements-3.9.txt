@@ -20,7 +20,7 @@ certifi==2024.8.30
     #   httpx
 click==8.1.7
     # via pip-tools
-deprecated==1.2.14
+deprecated==1.2.15
     # via
     #   opentelemetry-api
     #   opentelemetry-semantic-conventions
@@ -32,7 +32,7 @@ exceptiongroup==1.2.2
     #   pytest
 h11==0.14.0
     # via httpcore
-httpcore==1.0.6
+httpcore==1.0.7
     # via httpx
 httpx==0.27.2
     # via openai
@@ -55,23 +55,23 @@ numpy==1.24.4
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
 openai==1.54.4
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-opentelemetry-api==1.28.1
+opentelemetry-api==1.28.2
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   opentelemetry-instrumentation
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
     #   opentelemetry-test-utils
-opentelemetry-instrumentation==0.49b1
+opentelemetry-instrumentation==0.49b2
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-opentelemetry-sdk==1.28.1
+opentelemetry-sdk==1.28.2
     # via opentelemetry-test-utils
-opentelemetry-semantic-conventions==0.49b1
+opentelemetry-semantic-conventions==0.49b2
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   opentelemetry-instrumentation
     #   opentelemetry-sdk
-opentelemetry-test-utils==0.49b1
+opentelemetry-test-utils==0.49b2
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
 packaging==24.2
     # via
@@ -136,6 +136,7 @@ wheel==0.45.0
 wrapt==1.16.0
     # via
     #   deprecated
+    #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   opentelemetry-instrumentation
     #   vcrpy
 yarl==1.15.2

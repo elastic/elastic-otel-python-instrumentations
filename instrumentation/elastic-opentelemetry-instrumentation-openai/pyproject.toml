@@ -25,10 +25,10 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    # 1.28.1 is required for Events API/SDK
-    "opentelemetry-api ~= 1.28.1",
-    "opentelemetry-instrumentation ~= 0.49b1",
-    "opentelemetry-semantic-conventions ~= 0.49b1",
+    # 1.28.2 is required for Events API/SDK
+    "opentelemetry-api ~= 1.28.2",
+    "opentelemetry-instrumentation ~= 0.49b2",
+    "opentelemetry-semantic-conventions ~= 0.49b2",
     "wrapt >= 1.0.0, < 2.0.0",
 ]
 
