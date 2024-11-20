@@ -9,7 +9,7 @@ We currently support the following features:
 - Streaming support
 - Functions calling with tools
 - Client side metrics
-- Following 1.27.0 Gen AI Semantic Conventions
+- Following 1.28.0 Gen AI Semantic Conventions
 
 ## Installation
 
@@ -19,7 +19,7 @@ pip install elastic-opentelemetry-instrumentation-openai
 
 ## Usage
 
-This instrumentation supports *0-code* / *autoinstrumentation*:
+This instrumentation supports *zero-code* / *autoinstrumentation*:
 
 ```
 opentelemetry-instrument python use_openai.py
