@@ -48,8 +48,8 @@ EVENT_GEN_AI_USER_MESSAGE = "gen_ai.user.message"
 EVENT_GEN_AI_SYSTEM_MESSAGE = "gen_ai.system.message"
 EVENT_GEN_AI_TOOL_MESSAGE = "gen_ai.tool.message"
 
-# elastic specific attributes
-GEN_AI_REQUEST_ENCODING_FORMAT = "gen_ai.request.encoding_format"
+# not yet released attributes
+GEN_AI_REQUEST_ENCODING_FORMATS = "gen_ai.request.encoding_formats"
 
 # As this is only used for a type annotation, only import from openai module
 # when running type checker like pyright since we otherwise don't want to import
@@ -204,7 +204,7 @@ def _get_embeddings_span_attributes_from_wrapper(instance, kwargs) -> Attributes
         span_attributes.update(_attributes_from_client(client))
 
     if (encoding_format := kwargs.get("encoding_format")) is not None:
-        span_attributes[GEN_AI_REQUEST_ENCODING_FORMAT] = encoding_format
+        span_attributes[GEN_AI_REQUEST_ENCODING_FORMATS] = [encoding_format]
 
     return span_attributes
 
