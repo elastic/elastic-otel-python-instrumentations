@@ -18,7 +18,7 @@ import re
 
 import openai
 import pytest
-from opentelemetry.instrumentation.openai.helpers import GEN_AI_REQUEST_ENCODING_FORMAT
+from opentelemetry.instrumentation.openai.helpers import GEN_AI_REQUEST_ENCODING_FORMATS
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPERATION_NAME,
@@ -117,7 +117,7 @@ def test_all_the_client_options(provider_str, model, input_tokens, duration, tra
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
         GEN_AI_RESPONSE_MODEL: model,
-        GEN_AI_REQUEST_ENCODING_FORMAT: "float",
+        GEN_AI_REQUEST_ENCODING_FORMATS: ("float",),
         GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
         SERVER_ADDRESS: provider.server_address,
         SERVER_PORT: provider.server_port,
@@ -159,7 +159,7 @@ def test_all_the_client_options_integration(provider_str, model, trace_exporter,
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
         GEN_AI_RESPONSE_MODEL: model,
-        GEN_AI_REQUEST_ENCODING_FORMAT: "float",
+        GEN_AI_REQUEST_ENCODING_FORMATS: ("float",),
         GEN_AI_USAGE_INPUT_TOKENS: response.usage.prompt_tokens,
         SERVER_ADDRESS: provider.server_address,
         SERVER_PORT: provider.server_port,
@@ -312,7 +312,7 @@ async def test_async_all_the_client_options(
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
         GEN_AI_RESPONSE_MODEL: model,
-        GEN_AI_REQUEST_ENCODING_FORMAT: "float",
+        GEN_AI_REQUEST_ENCODING_FORMATS: ("float",),
         GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
         SERVER_ADDRESS: provider.server_address,
         SERVER_PORT: provider.server_port,
@@ -355,7 +355,7 @@ async def test_async_all_the_client_options_integration(provider_str, model, tra
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
         GEN_AI_RESPONSE_MODEL: model,
-        GEN_AI_REQUEST_ENCODING_FORMAT: "float",
+        GEN_AI_REQUEST_ENCODING_FORMATS: ("float",),
         GEN_AI_USAGE_INPUT_TOKENS: response.usage.prompt_tokens,
         SERVER_ADDRESS: provider.server_address,
         SERVER_PORT: provider.server_port,
