@@ -38,6 +38,13 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_USAGE_INPUT_TOKENS,
     GEN_AI_USAGE_OUTPUT_TOKENS,
 )
+
+try:
+    from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_REQUEST_ENCODING_FORMATS
+except ImportError:
+    # available since 1.29.0
+    GEN_AI_REQUEST_ENCODING_FORMATS = "gen_ai.request.encoding_formats"
+
 from opentelemetry.metrics import Histogram
 from opentelemetry.trace import Span
 from opentelemetry.util.types import Attributes
@@ -47,9 +54,6 @@ EVENT_GEN_AI_CHOICE = "gen_ai.choice"
 EVENT_GEN_AI_USER_MESSAGE = "gen_ai.user.message"
 EVENT_GEN_AI_SYSTEM_MESSAGE = "gen_ai.system.message"
 EVENT_GEN_AI_TOOL_MESSAGE = "gen_ai.tool.message"
-
-# not yet released attributes
-GEN_AI_REQUEST_ENCODING_FORMATS = "gen_ai.request.encoding_formats"
 
 # As this is only used for a type annotation, only import from openai module
 # when running type checker like pyright since we otherwise don't want to import

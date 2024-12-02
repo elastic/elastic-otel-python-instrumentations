@@ -10,7 +10,7 @@ We currently support the following features:
 - Functions calling with tools for chat completions
 - Client side metrics
 - Embeddings API calls
-- Following 1.28.0 Gen AI Semantic Conventions
+- Following 1.29.0 Gen AI Semantic Conventions
 
 ## Installation
 
@@ -60,8 +60,7 @@ log events instead of span events.
 
 ### Elastic specific semantic conventions
 
-- New `embeddings` value for `gen_ai.operation.name`
-- New `gen_ai.request.encoding_formats` attribute with openai specific values `[[float], [base64]]`
+None at the moment
 
 ## Development
 
