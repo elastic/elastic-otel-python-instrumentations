@@ -79,62 +79,6 @@ def _set_embeddings_span_attributes_from_response(span: Span, model: str, usage:
     span.set_attribute(GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
 
 
-def _message_from_choice(choice):
-    """Format a choice into a message of the same shape of the prompt"""
-    if tool_calls := getattr(choice.message, "tool_calls", None):
-        return {
-            "role": choice.message.role,
-            "content": "",
-            "tool_calls": [
-                {
-                    "id": tool_call.id,
-                    "type": tool_call.type,
-                    "function": {
-                        "name": tool_call.function.name,
-                        "arguments": tool_call.function.arguments,
-                    },
-                }
-                for tool_call in tool_calls
-            ],
-        }
-    else:
-        return {"role": choice.message.role, "content": choice.message.content}
-
-
-def _message_from_stream_choices(choices):
-    """Format an iterable of choices into a message of the same shape of the prompt"""
-    messages = {}
-    tool_calls = {}
-    for choice in choices:
-        messages.setdefault(choice.index, {"role": None, "content": ""})
-        message = messages[choice.index]
-        if choice.delta.role:
-            message["role"] = choice.delta.role
-        if choice.delta.content:
-            message["content"] += choice.delta.content
-
-        if choice.delta.tool_calls:
-            for call in choice.delta.tool_calls:
-                tool_calls.setdefault(choice.index, {})
-                tool_calls[choice.index].setdefault(call.index, {"function": {"arguments": ""}})
-                tool_call = tool_calls[choice.index][call.index]
-                if call.function.arguments:
-                    tool_call["function"]["arguments"] += call.function.arguments
-                if call.function.name:
-                    tool_call["function"]["name"] = call.function.name
-                if call.id:
-                    tool_call["id"] = call.id
-                if call.type:
-                    tool_call["type"] = call.type
-
-    for message_index in tool_calls:
-        message = messages[message_index]
-        message["tool_calls"] = [arguments for _, arguments in sorted(tool_calls[message_index].items())]
-
-    # assumes there's only one message
-    return [message for _, message in sorted(messages.items())][0]
-
-
 def _attributes_from_client(client) -> Attributes:
     span_attributes = {}
 
