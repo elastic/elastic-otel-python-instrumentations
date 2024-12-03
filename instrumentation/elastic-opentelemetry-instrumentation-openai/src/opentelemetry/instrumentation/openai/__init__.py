@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import logging
 import os
 from timeit import default_timer
@@ -26,14 +25,12 @@ from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.openai.environment_variables import (
-    ELASTIC_OTEL_GENAI_EVENTS,
     OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
 )
 from opentelemetry.instrumentation.openai.helpers import (
     _get_embeddings_span_attributes_from_wrapper,
     _get_event_attributes,
     _get_span_attributes_from_wrapper,
-    _message_from_choice,
     _record_token_usage_metrics,
     _record_operation_duration_metric,
     _send_log_events_from_messages,
@@ -46,10 +43,6 @@ from opentelemetry.instrumentation.openai.package import _instruments
 from opentelemetry.instrumentation.openai.version import __version__
 from opentelemetry.instrumentation.openai.wrappers import StreamWrapper
 from opentelemetry.metrics import get_meter
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_COMPLETION,
-    GEN_AI_PROMPT,
-)
 from opentelemetry.semconv._incubating.metrics.gen_ai_metrics import (
     create_gen_ai_client_token_usage,
     create_gen_ai_client_operation_duration,
@@ -85,13 +78,6 @@ class OpenAIInstrumentor(BaseInstrumentor):
             os.environ.get(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, capture_message_content).lower()
             == "true"
         )
-
-        # we support 3 values for deciding how to send events:
-        # - "latest" to match latest semconv, as 1.28.0 it's log
-        # - "log" to send log events (default)
-        # - "span" to send span events
-        genai_events = os.environ.get(ELASTIC_OTEL_GENAI_EVENTS, "latest").lower()
-        self.event_kind = "span" if genai_events == "span" else "log"
 
         tracer_provider = kwargs.get("tracer_provider")
         self.tracer = get_tracer(
@@ -165,13 +151,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             if self.capture_message_content:
                 messages = kwargs.get("messages", [])
 
-                if self.event_kind == "log":
-                    _send_log_events_from_messages(self.event_logger, messages=messages, attributes=event_attributes)
-                elif span.is_recording():
-                    try:
-                        span.add_event(EVENT_GEN_AI_CONTENT_PROMPT, attributes={GEN_AI_PROMPT: json.dumps(messages)})
-                    except TypeError:
-                        logger.error(f"Failed to serialize {EVENT_GEN_AI_CONTENT_PROMPT}")
+                _send_log_events_from_messages(self.event_logger, messages=messages, attributes=event_attributes)
 
             start_time = default_timer()
             try:
@@ -188,7 +168,6 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     stream=result,
                     span=span,
                     capture_message_content=self.capture_message_content,
-                    event_kind=self.event_kind,
                     event_attributes=event_attributes,
                     event_logger=self.event_logger,
                     start_time=start_time,
@@ -205,19 +184,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
 
             if self.capture_message_content:
-                if self.event_kind == "log":
-                    _send_log_events_from_choices(
-                        self.event_logger, choices=result.choices, attributes=event_attributes
-                    )
-                elif span.is_recording():
-                    # same format as the prompt
-                    completion = [_message_from_choice(choice) for choice in result.choices]
-                    try:
-                        span.add_event(
-                            EVENT_GEN_AI_CONTENT_COMPLETION, attributes={GEN_AI_COMPLETION: json.dumps(completion)}
-                        )
-                    except TypeError:
-                        logger.error(f"Failed to serialize {EVENT_GEN_AI_CONTENT_COMPLETION}")
+                _send_log_events_from_choices(self.event_logger, choices=result.choices, attributes=event_attributes)
 
             span.end()
 
@@ -239,14 +206,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         ) as span:
             if self.capture_message_content:
                 messages = kwargs.get("messages", [])
-
-                if self.event_kind == "log":
-                    _send_log_events_from_messages(self.event_logger, messages=messages, attributes=event_attributes)
-                elif span.is_recording():
-                    try:
-                        span.add_event(EVENT_GEN_AI_CONTENT_PROMPT, attributes={GEN_AI_PROMPT: json.dumps(messages)})
-                    except TypeError:
-                        logger.error(f"Failed to serialize {EVENT_GEN_AI_CONTENT_PROMPT}")
+                _send_log_events_from_messages(self.event_logger, messages=messages, attributes=event_attributes)
 
             start_time = default_timer()
             try:
@@ -263,7 +223,6 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     stream=result,
                     span=span,
                     capture_message_content=self.capture_message_content,
-                    event_kind=self.event_kind,
                     event_attributes=event_attributes,
                     event_logger=self.event_logger,
                     start_time=start_time,
@@ -280,19 +239,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
 
             if self.capture_message_content:
-                if self.event_kind == "log":
-                    _send_log_events_from_choices(
-                        self.event_logger, choices=result.choices, attributes=event_attributes
-                    )
-                elif span.is_recording():
-                    # same format as the prompt
-                    completion = [_message_from_choice(choice) for choice in result.choices]
-                    try:
-                        span.add_event(
-                            EVENT_GEN_AI_CONTENT_COMPLETION, attributes={GEN_AI_COMPLETION: json.dumps(completion)}
-                        )
-                    except TypeError:
-                        logger.error(f"Failed to serialize {EVENT_GEN_AI_CONTENT_COMPLETION}")
+                _send_log_events_from_choices(self.event_logger, choices=result.choices, attributes=event_attributes)
 
             span.end()
 
