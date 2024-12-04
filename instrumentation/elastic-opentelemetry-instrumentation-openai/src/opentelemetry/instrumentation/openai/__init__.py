@@ -19,11 +19,8 @@ import os
 from timeit import default_timer
 from typing import Collection
 
-from wrapt import register_post_import_hook, wrap_function_wrapper
-
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.openai.environment_variables import (
     OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
 )
@@ -31,27 +28,28 @@ from opentelemetry.instrumentation.openai.helpers import (
     _get_embeddings_span_attributes_from_wrapper,
     _get_event_attributes,
     _get_span_attributes_from_wrapper,
-    _record_token_usage_metrics,
     _record_operation_duration_metric,
-    _send_log_events_from_messages,
+    _record_token_usage_metrics,
     _send_log_events_from_choices,
-    _set_span_attributes_from_response,
+    _send_log_events_from_messages,
     _set_embeddings_span_attributes_from_response,
+    _set_span_attributes_from_response,
     _span_name_from_span_attributes,
 )
 from opentelemetry.instrumentation.openai.package import _instruments
 from opentelemetry.instrumentation.openai.version import __version__
 from opentelemetry.instrumentation.openai.wrappers import StreamWrapper
+from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
 from opentelemetry.semconv._incubating.metrics.gen_ai_metrics import (
-    create_gen_ai_client_token_usage,
     create_gen_ai_client_operation_duration,
+    create_gen_ai_client_token_usage,
 )
-
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv.schemas import Schemas
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import StatusCode
+from wrapt import register_post_import_hook, wrap_function_wrapper
 
 EVENT_GEN_AI_CONTENT_PROMPT = "gen_ai.content.prompt"
 EVENT_GEN_AI_CONTENT_COMPLETION = "gen_ai.content.completion"

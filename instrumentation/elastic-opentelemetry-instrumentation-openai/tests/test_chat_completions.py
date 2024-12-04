@@ -25,7 +25,6 @@ import pytest
 from opentelemetry._events import Event
 from opentelemetry._logs import LogRecord
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
-from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPERATION_NAME,
     GEN_AI_REQUEST_FREQUENCY_PENALTY,
@@ -35,15 +34,16 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_REQUEST_STOP_SEQUENCES,
     GEN_AI_REQUEST_TEMPERATURE,
     GEN_AI_REQUEST_TOP_P,
-    GEN_AI_SYSTEM,
+    GEN_AI_RESPONSE_FINISH_REASONS,
     GEN_AI_RESPONSE_ID,
     GEN_AI_RESPONSE_MODEL,
-    GEN_AI_RESPONSE_FINISH_REASONS,
+    GEN_AI_SYSTEM,
     GEN_AI_USAGE_INPUT_TOKENS,
     GEN_AI_USAGE_OUTPUT_TOKENS,
 )
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, SERVER_PORT
+from opentelemetry.trace import SpanKind, StatusCode
 
 from .conftest import (
     assert_error_operation_duration_metric,

@@ -19,8 +19,6 @@ from timeit import default_timer
 from typing import TYPE_CHECKING
 
 from opentelemetry._events import Event, EventLogger
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, SERVER_PORT
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPERATION_NAME,
     GEN_AI_REQUEST_FREQUENCY_PENALTY,
@@ -30,14 +28,16 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_REQUEST_STOP_SEQUENCES,
     GEN_AI_REQUEST_TEMPERATURE,
     GEN_AI_REQUEST_TOP_P,
-    GEN_AI_RESPONSE_ID,
     GEN_AI_RESPONSE_FINISH_REASONS,
+    GEN_AI_RESPONSE_ID,
     GEN_AI_RESPONSE_MODEL,
     GEN_AI_SYSTEM,
     GEN_AI_TOKEN_TYPE,
     GEN_AI_USAGE_INPUT_TOKENS,
     GEN_AI_USAGE_OUTPUT_TOKENS,
 )
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, SERVER_PORT
 
 try:
     from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_REQUEST_ENCODING_FORMATS
