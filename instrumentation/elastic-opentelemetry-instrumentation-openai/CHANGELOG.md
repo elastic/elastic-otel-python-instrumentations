@@ -1,5 +1,11 @@
 # Elastic OpenTelemetry Instrumentation OpenAI
 
+## v0.5.0
+
+- Sync embeddings calls tracing with semantic conventions 1.29.0 (#36)
+- Drop span events support for events, ELASTIC_OTEL_GENAI_EVENTS environment variable is gone (#38)
+- Relax opentelemetry-api dependency so it supports 1.29.0+ (#40)
+
 ## v0.4.0
 
 - Add support for tracing embeddings calls (#20)
