@@ -18,9 +18,9 @@ from unittest import mock
 from opentelemetry.sdk._logs._internal import LogData
 from opentelemetry.sdk.metrics._internal.point import Metric
 from opentelemetry.sdk.metrics.export import (
-    InMemoryMetricReader,
     DataPointT,
     HistogramDataPoint,
+    InMemoryMetricReader,
     NumberDataPoint,
 )
 from opentelemetry.util.types import AttributeValue

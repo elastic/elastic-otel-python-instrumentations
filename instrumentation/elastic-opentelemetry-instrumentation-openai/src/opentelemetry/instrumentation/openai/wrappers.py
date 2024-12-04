@@ -18,10 +18,10 @@ import logging
 
 from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.openai.helpers import (
-    _record_token_usage_metrics,
     _record_operation_duration_metric,
-    _set_span_attributes_from_response,
+    _record_token_usage_metrics,
     _send_log_events_from_stream_choices,
+    _set_span_attributes_from_response,
 )
 from opentelemetry.metrics import Histogram
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE

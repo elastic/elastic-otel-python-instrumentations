@@ -15,8 +15,8 @@
 # limitations under the License.
 
 import json
-import re
 import os
+import re
 from typing import Sequence, Union
 from urllib.parse import parse_qs, urlparse
 
@@ -24,8 +24,8 @@ import openai
 import pytest
 import yaml
 from opentelemetry import metrics, trace
-from opentelemetry._logs import set_logger_provider
 from opentelemetry._events import set_event_logger_provider
+from opentelemetry._logs import set_logger_provider
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.metrics import Histogram
 from opentelemetry.sdk._events import EventLoggerProvider

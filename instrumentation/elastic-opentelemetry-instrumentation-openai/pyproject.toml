@@ -65,12 +65,3 @@ where = ["src"]
 
 [tool.setuptools.dynamic]
 version = {attr = "opentelemetry.instrumentation.openai.version.__version__"}
-
-[tool.ruff]
-target-version = "py38"
-line-length = 120
-
-[tool.ruff.lint.isort]
-known-third-party = [
-  "opentelemetry",
-]

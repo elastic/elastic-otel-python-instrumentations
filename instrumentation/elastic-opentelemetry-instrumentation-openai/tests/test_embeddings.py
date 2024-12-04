@@ -19,16 +19,16 @@ import re
 import openai
 import pytest
 from opentelemetry.instrumentation.openai.helpers import GEN_AI_REQUEST_ENCODING_FORMATS
-from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPERATION_NAME,
     GEN_AI_REQUEST_MODEL,
-    GEN_AI_SYSTEM,
     GEN_AI_RESPONSE_MODEL,
+    GEN_AI_SYSTEM,
     GEN_AI_USAGE_INPUT_TOKENS,
 )
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, SERVER_PORT
+from opentelemetry.trace import SpanKind, StatusCode
 
 from .conftest import (
     assert_error_operation_duration_metric,
@@ -36,7 +36,6 @@ from .conftest import (
     assert_token_usage_input_metric,
 )
 from .utils import MOCK_POSITIVE_FLOAT, get_sorted_metrics
-
 
 test_basic_test_data = [
     ("openai_provider_embeddings", "text-embedding-3-small", 4, 0.2263190783560276),
