@@ -18,6 +18,7 @@ interactions:
         "seed": 100,
         "service_tier": "default",
         "stop": "foo",
+        "stream": true,
         "temperature": 1,
         "top_p": 1
       }
@@ -31,7 +32,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '327'
+      - '343'
       content-type:
       - application/json
       host:
@@ -58,37 +59,25 @@ interactions:
     uri: http://localhost:11434/v1/chat/completions
   response:
     body:
-      string: |-
-        {
-          "id": "chatcmpl-593",
-          "object": "chat.completion",
-          "created": 1733409255,
-          "model": "qwen2.5:0.5b",
-          "system_fingerprint": "fp_ollama",
-          "choices": [
-            {
-              "index": 0,
-              "message": {
-                "role": "assistant",
-                "content": "Amalfis Sea"
-              },
-              "finish_reason": "stop"
-            }
-          ],
-          "usage": {
-            "prompt_tokens": 46,
-            "completion_tokens": 5,
-            "total_tokens": 51
-          }
-        }
+      string: |+
+        data: {"id":"chatcmpl-75","object":"chat.completion.chunk","created":1733410754,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"Am"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-75","object":"chat.completion.chunk","created":1733410754,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"alfis"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-75","object":"chat.completion.chunk","created":1733410754,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" Sea"},"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-75","object":"chat.completion.chunk","created":1733410754,"model":"qwen2.5:0.5b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
     headers:
-      Content-Length:
-      - '297'
       Content-Type:
-      - application/json
+      - text/event-stream
       Date:
-      - Thu, 05 Dec 2024 14:34:15 GMT
+      - Thu, 05 Dec 2024 14:59:14 GMT
       Set-Cookie: test_set_cookie
+      Transfer-Encoding:
+      - chunked
       openai-organization: test_openai_org_id
     status:
       code: 200

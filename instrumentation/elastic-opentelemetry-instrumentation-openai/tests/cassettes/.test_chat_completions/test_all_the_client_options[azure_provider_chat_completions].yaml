@@ -12,6 +12,11 @@ interactions:
         "frequency_penalty": 0,
         "max_tokens": 100,
         "presence_penalty": 0,
+        "response_format": {
+          "type": "text"
+        },
+        "seed": 100,
+        "service_tier": "default",
         "stop": "foo",
         "temperature": 1,
         "top_p": 1
@@ -28,29 +33,29 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '244'
+      - '321'
       content-type:
       - application/json
       host:
       - test.openai.azure.com
       user-agent:
-      - AzureOpenAI/Python 1.54.3
+      - AzureOpenAI/Python 1.54.5
       x-stainless-arch:
-      - arm64
+      - x64
       x-stainless-async:
       - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
-      - MacOS
+      - Linux
       x-stainless-package-version:
-      - 1.54.3
+      - 1.54.5
       x-stainless-retry-count:
       - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.12.6
+      - 3.10.12
     method: POST
     uri: https://test.openai.azure.com/openai/deployments/test-azure-deployment/chat/completions?api-version=2024-08-01-preview
   response:
@@ -63,6 +68,14 @@ interactions:
                 "hate": {
                   "filtered": false,
                   "severity": "safe"
+                },
+                "protected_material_code": {
+                  "filtered": false,
+                  "detected": false
+                },
+                "protected_material_text": {
+                  "filtered": false,
+                  "detected": false
                 },
                 "self_harm": {
                   "filtered": false,
@@ -81,14 +94,14 @@ interactions:
               "index": 0,
               "logprobs": null,
               "message": {
-                "content": "Atlantic Ocean",
+                "content": "South Atlantic Ocean.",
                 "role": "assistant"
               }
             }
           ],
-          "created": 1731466203,
-          "id": "chatcmpl-ASxkBZGOa53uXX1Ciygl77IrF8PbB",
-          "model": "gpt-4-32k",
+          "created": 1733409253,
+          "id": "chatcmpl-Ab7DhFk7vSvmMW4ICIZh0gkvTZn7G",
+          "model": "gpt-4o-mini",
           "object": "chat.completion",
           "prompt_filter_results": [
             {
@@ -97,6 +110,10 @@ interactions:
                 "hate": {
                   "filtered": false,
                   "severity": "safe"
+                },
+                "jailbreak": {
+                  "filtered": false,
+                  "detected": false
                 },
                 "self_harm": {
                   "filtered": false,
@@ -113,48 +130,46 @@ interactions:
               }
             }
           ],
-          "system_fingerprint": null,
+          "system_fingerprint": "fp_04751d0b65",
           "usage": {
-            "completion_tokens": 2,
+            "completion_tokens": 4,
             "prompt_tokens": 24,
-            "total_tokens": 26
+            "total_tokens": 28
           }
         }
     headers:
-      Cache-Control:
-      - no-cache, must-revalidate
       Content-Length:
-      - '805'
+      - '997'
       Content-Type:
       - application/json
       Date:
-      - Wed, 13 Nov 2024 02:50:02 GMT
+      - Thu, 05 Dec 2024 14:34:13 GMT
       Set-Cookie: test_set_cookie
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
-      access-control-allow-origin:
-      - '*'
       apim-request-id:
-      - f0e5ae5b-b609-4908-bedb-533ec71e9bfa
+      - ad6ebb52-6f0c-427c-b4cd-a186597cff93
       azureml-model-session:
-      - d156-20241010120317
+      - d029-20241115170135
       openai-organization: test_openai_org_id
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
+      x-envoy-upstream-service-time:
+      - '180'
       x-ms-client-request-id:
-      - f0e5ae5b-b609-4908-bedb-533ec71e9bfa
+      - ad6ebb52-6f0c-427c-b4cd-a186597cff93
       x-ms-rai-invoked:
       - 'true'
       x-ms-region:
-      - Switzerland North
+      - East US
       x-ratelimit-remaining-requests:
-      - '78'
+      - '909'
       x-ratelimit-remaining-tokens:
-      - '79884'
+      - '90883'
       x-request-id:
-      - 3a1ee803-cce9-472f-ad04-2d0757009288
+      - 80dd2ee4-7ce2-4d04-a114-efb137a58ed4
     status:
       code: 200
       message: OK
