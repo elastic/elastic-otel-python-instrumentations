@@ -59,6 +59,7 @@ class StreamWrapper:
         self.model = None
         self.choices = []
         self.usage = None
+        self.service_tier = None
 
     def end(self, exc=None):
         # StopIteration is not an error, it signals that we have consumed all the stream
@@ -70,7 +71,9 @@ class StreamWrapper:
             return
 
         if self.span.is_recording():
-            _set_span_attributes_from_response(self.span, self.response_id, self.model, self.choices, self.usage)
+            _set_span_attributes_from_response(
+                self.span, self.response_id, self.model, self.choices, self.usage, self.service_tier
+            )
 
         _record_operation_duration_metric(self.operation_duration_metric, self.span, self.start_time)
         if self.usage:
@@ -92,6 +95,8 @@ class StreamWrapper:
         # with `include_usage` in `stream_options` we will get a last chunk without choices
         if chunk.choices:
             self.choices += chunk.choices
+        if hasattr(chunk, "service_tier"):
+            self.service_tier = chunk.service_tier
 
     def __enter__(self):
         return self

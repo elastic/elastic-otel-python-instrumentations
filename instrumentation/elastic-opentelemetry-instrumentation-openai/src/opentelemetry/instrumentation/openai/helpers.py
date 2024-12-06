@@ -16,10 +16,14 @@
 
 from collections.abc import Iterable, Mapping
 from timeit import default_timer
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from opentelemetry._events import Event, EventLogger
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT,
+    GEN_AI_OPENAI_REQUEST_SEED,
+    GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
+    GEN_AI_OPENAI_RESPONSE_SERVICE_TIER,
     GEN_AI_OPERATION_NAME,
     GEN_AI_REQUEST_FREQUENCY_PENALTY,
     GEN_AI_REQUEST_MAX_TOKENS,
@@ -65,7 +69,12 @@ else:
 
 
 def _set_span_attributes_from_response(
-    span: Span, response_id: str, model: str, choices, usage: CompletionUsage
+    span: Span,
+    response_id: str,
+    model: str,
+    choices,
+    usage: CompletionUsage,
+    service_tier: Optional[str],
 ) -> None:
     span.set_attribute(GEN_AI_RESPONSE_ID, response_id)
     span.set_attribute(GEN_AI_RESPONSE_MODEL, model)
@@ -76,6 +85,9 @@ def _set_span_attributes_from_response(
     if usage:
         span.set_attribute(GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
         span.set_attribute(GEN_AI_USAGE_OUTPUT_TOKENS, usage.completion_tokens)
+    # this is available only if requested
+    if service_tier:
+        span.set_attribute(GEN_AI_OPENAI_RESPONSE_SERVICE_TIER, service_tier)
 
 
 def _set_embeddings_span_attributes_from_response(span: Span, model: str, usage: CompletionUsage) -> None:
@@ -126,6 +138,17 @@ def _get_span_attributes_from_wrapper(instance, kwargs) -> Attributes:
         if isinstance(stop_sequences, str):
             stop_sequences = [stop_sequences]
         span_attributes[GEN_AI_REQUEST_STOP_SEQUENCES] = stop_sequences
+    if (seed := kwargs.get("seed")) is not None:
+        span_attributes[GEN_AI_OPENAI_REQUEST_SEED] = seed
+    if (service_tier := kwargs.get("service_tier")) is not None:
+        span_attributes[GEN_AI_OPENAI_REQUEST_SERVICE_TIER] = service_tier
+    if (response_format := kwargs.get("response_format")) is not None:
+        # response_format may be string or object with a string in the `type` key
+        if isinstance(response_format, Mapping):
+            if (response_format_type := response_format.get("type")) is not None:
+                span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = response_format_type
+        else:
+            span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = response_format
 
     return span_attributes
 

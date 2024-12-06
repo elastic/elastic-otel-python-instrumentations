@@ -176,7 +176,9 @@ class OpenAIInstrumentor(BaseInstrumentor):
             logger.debug(f"openai.resources.chat.completions.Completions.create result: {result}")
 
             if span.is_recording():
-                _set_span_attributes_from_response(span, result.id, result.model, result.choices, result.usage)
+                _set_span_attributes_from_response(
+                    span, result.id, result.model, result.choices, result.usage, getattr(result, "service_tier", None)
+                )
 
             _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
@@ -231,7 +233,9 @@ class OpenAIInstrumentor(BaseInstrumentor):
             logger.debug(f"openai.resources.chat.completions.AsyncCompletions.create result: {result}")
 
             if span.is_recording():
-                _set_span_attributes_from_response(span, result.id, result.model, result.choices, result.usage)
+                _set_span_attributes_from_response(
+                    span, result.id, result.model, result.choices, result.usage, getattr(result, "service_tier", None)
+                )
 
             _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)

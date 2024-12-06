@@ -26,6 +26,10 @@ from opentelemetry._events import Event
 from opentelemetry._logs import LogRecord
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT,
+    GEN_AI_OPENAI_REQUEST_SEED,
+    GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
+    GEN_AI_OPENAI_RESPONSE_SERVICE_TIER,
     GEN_AI_OPERATION_NAME,
     GEN_AI_REQUEST_FREQUENCY_PENALTY,
     GEN_AI_REQUEST_MAX_TOKENS,
@@ -170,7 +174,7 @@ test_all_the_client_options_test_data = [
         "gpt-4o-mini",
         "gpt-4o-mini-2024-07-18",
         "South Atlantic Ocean.",
-        "chatcmpl-ASfa7XMQNQ9K4GKZSSrBU3zSmIyx5",
+        "chatcmpl-Ab7DgqASxxcxoeuHYGRPqWaL6rJok",
         24,
         4,
         0.006761051714420319,
@@ -178,26 +182,27 @@ test_all_the_client_options_test_data = [
     (
         "azure_provider_chat_completions",
         "unused",
-        "gpt-4-32k",
-        "Atlantic Ocean",
-        "chatcmpl-ASxkBZGOa53uXX1Ciygl77IrF8PbB",
+        "gpt-4o-mini",
+        "South Atlantic Ocean.",
+        "chatcmpl-Ab7DhFk7vSvmMW4ICIZh0gkvTZn7G",
         24,
-        2,
+        4,
         0.002889830619096756,
     ),
     (
         "ollama_provider_chat_completions",
         "qwen2.5:0.5b",
         "qwen2.5:0.5b",
-        "The Falklands Islands are located in Atlantic Oceans.",
-        "chatcmpl-46",
+        "Amalfis Sea",
+        "chatcmpl-593",
         46,
-        12,
+        5,
         0.002600736916065216,
     ),
 ]
 
 
+@pytest.mark.skipif(OPENAI_VERSION < (1, 35, 0), reason="service tieri added in 1.35.0")
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
     "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
@@ -236,6 +241,9 @@ def test_all_the_client_options(
         temperature=1,
         top_p=1,
         stop="foo",
+        seed=100,
+        service_tier="default",
+        response_format={"type": "text"},
     )
 
     assert chat_completion.choices[0].message.content == content
@@ -248,7 +256,11 @@ def test_all_the_client_options(
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.UNSET
 
-    assert dict(span.attributes) == {
+    expected_attrs = {
+        GEN_AI_OPENAI_REQUEST_SEED: 100,
+        GEN_AI_OPENAI_REQUEST_SERVICE_TIER: "default",
+        GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT: "text",
+        GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_FREQUENCY_PENALTY: 0,
         GEN_AI_REQUEST_MAX_TOKENS: 100,
@@ -266,6 +278,9 @@ def test_all_the_client_options(
         SERVER_ADDRESS: provider.server_address,
         SERVER_PORT: provider.server_port,
     }
+    if provider_str != "openai_provider_chat_completions":
+        del expected_attrs[GEN_AI_OPENAI_RESPONSE_SERVICE_TIER]
+    assert dict(span.attributes) == expected_attrs
 
     logs = logs_exporter.get_finished_logs()
     assert len(logs) == 0
@@ -1176,6 +1191,133 @@ def test_stream(
         SERVER_ADDRESS: provider.server_address,
         SERVER_PORT: provider.server_port,
     }
+
+    logs = logs_exporter.get_finished_logs()
+    assert len(logs) == 0
+
+    (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response_model,
+    }
+    assert_operation_duration_metric(
+        provider, operation_duration_metric, attributes=attributes, min_data_point=duration
+    )
+
+
+test_stream_all_the_client_options_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-Ab7br3ArYb5ZSjD5Z4ujJO3zlnmU6",
+        24,
+        4,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "unused",
+        "gpt-4o-mini",
+        "South Atlantic Ocean.",
+        "chatcmpl-Ab7bsWDRtmzRV9yhkTN8fEPJW0Z8r",
+        24,
+        4,
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "Amalfis Sea",
+        "chatcmpl-75",
+        46,
+        5,
+        0.002600736916065216,
+    ),
+]
+
+
+@pytest.mark.skipif(OPENAI_VERSION < (1, 35, 0), reason="service tier added in 1.35.0")
+@pytest.mark.vcr()
+@pytest.mark.parametrize(
+    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
+    test_stream_all_the_client_options_test_data,
+)
+def test_stream_all_the_client_options(
+    provider_str,
+    model,
+    response_model,
+    content,
+    response_id,
+    input_tokens,
+    output_tokens,
+    duration,
+    trace_exporter,
+    metrics_reader,
+    logs_exporter,
+    request,
+):
+    provider = request.getfixturevalue(provider_str)
+    client = provider.get_client()
+
+    messages = [
+        {
+            "role": "user",
+            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+        }
+    ]
+
+    chat_completion = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        frequency_penalty=0,
+        max_tokens=100,  # AzureOpenAI still does not support max_completions_tokens
+        presence_penalty=0,
+        temperature=1,
+        top_p=1,
+        stop="foo",
+        seed=100,
+        service_tier="default",
+        response_format={"type": "text"},
+        stream=True,
+    )
+
+    chunks = [chunk.choices[0].delta.content or "" for chunk in chat_completion if chunk.choices]
+    assert "".join(chunks) == content
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {model}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    expected_attrs = {
+        GEN_AI_OPENAI_REQUEST_SEED: 100,
+        GEN_AI_OPENAI_REQUEST_SERVICE_TIER: "default",
+        GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT: "text",
+        GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_FREQUENCY_PENALTY: 0,
+        GEN_AI_REQUEST_MAX_TOKENS: 100,
+        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_REQUEST_PRESENCE_PENALTY: 0,
+        GEN_AI_REQUEST_STOP_SEQUENCES: ("foo",),
+        GEN_AI_REQUEST_TEMPERATURE: 1,
+        GEN_AI_REQUEST_TOP_P: 1,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: response_model,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        SERVER_ADDRESS: provider.server_address,
+        SERVER_PORT: provider.server_port,
+    }
+    if provider_str != "openai_provider_chat_completions":
+        del expected_attrs[GEN_AI_OPENAI_RESPONSE_SERVICE_TIER]
+    assert dict(span.attributes) == expected_attrs
 
     logs = logs_exporter.get_finished_logs()
     assert len(logs) == 0
