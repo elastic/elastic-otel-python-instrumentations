@@ -18,6 +18,7 @@ interactions:
         "seed": 100,
         "service_tier": "default",
         "stop": "foo",
+        "stream": true,
         "temperature": 1,
         "top_p": 1
       }
@@ -31,7 +32,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '326'
+      - '342'
       content-type:
       - application/json
       host:
@@ -58,53 +59,32 @@ interactions:
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: |-
-        {
-          "id": "chatcmpl-Ab7DgqASxxcxoeuHYGRPqWaL6rJok",
-          "object": "chat.completion",
-          "created": 1733409252,
-          "model": "gpt-4o-mini-2024-07-18",
-          "choices": [
-            {
-              "index": 0,
-              "message": {
-                "role": "assistant",
-                "content": "South Atlantic Ocean.",
-                "refusal": null
-              },
-              "logprobs": null,
-              "finish_reason": "stop"
-            }
-          ],
-          "usage": {
-            "prompt_tokens": 24,
-            "completion_tokens": 4,
-            "total_tokens": 28,
-            "prompt_tokens_details": {
-              "cached_tokens": 0,
-              "audio_tokens": 0
-            },
-            "completion_tokens_details": {
-              "reasoning_tokens": 0,
-              "audio_tokens": 0,
-              "accepted_prediction_tokens": 0,
-              "rejected_prediction_tokens": 0
-            }
-          },
-          "service_tier": "default",
-          "system_fingerprint": "fp_0705bf87c0"
-        }
+      string: |+
+        data: {"id":"chatcmpl-Ab7br3ArYb5ZSjD5Z4ujJO3zlnmU6","object":"chat.completion.chunk","created":1733410751,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_0705bf87c0","choices":[{"index":0,"delta":{"role":"assistant","content":"","refusal":null},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-Ab7br3ArYb5ZSjD5Z4ujJO3zlnmU6","object":"chat.completion.chunk","created":1733410751,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_0705bf87c0","choices":[{"index":0,"delta":{"content":"South"},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-Ab7br3ArYb5ZSjD5Z4ujJO3zlnmU6","object":"chat.completion.chunk","created":1733410751,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_0705bf87c0","choices":[{"index":0,"delta":{"content":" Atlantic"},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-Ab7br3ArYb5ZSjD5Z4ujJO3zlnmU6","object":"chat.completion.chunk","created":1733410751,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_0705bf87c0","choices":[{"index":0,"delta":{"content":" Ocean"},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-Ab7br3ArYb5ZSjD5Z4ujJO3zlnmU6","object":"chat.completion.chunk","created":1733410751,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_0705bf87c0","choices":[{"index":0,"delta":{"content":"."},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-Ab7br3ArYb5ZSjD5Z4ujJO3zlnmU6","object":"chat.completion.chunk","created":1733410751,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_0705bf87c0","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"stop"}]}
+
+        data: [DONE]
+
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8ed4c16dee6a0e22-MXP
+      - 8ed4e60e7a38374c-MXP
       Connection:
       - keep-alive
       Content-Type:
-      - application/json
+      - text/event-stream; charset=utf-8
       Date:
-      - Thu, 05 Dec 2024 14:34:12 GMT
+      - Thu, 05 Dec 2024 14:59:12 GMT
       Server:
       - cloudflare
       Set-Cookie: test_set_cookie
@@ -116,11 +96,9 @@ interactions:
       - X-Request-ID
       alt-svc:
       - h3=":443"; ma=86400
-      content-length:
-      - '800'
       openai-organization: test_openai_org_id
       openai-processing-ms:
-      - '691'
+      - '176'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -132,13 +110,13 @@ interactions:
       x-ratelimit-remaining-requests:
       - '9999'
       x-ratelimit-remaining-tokens:
-      - '199882'
+      - '199881'
       x-ratelimit-reset-requests:
       - 8.64s
       x-ratelimit-reset-tokens:
       - 35ms
       x-request-id:
-      - req_56da94fadb360ae462260ccc24d8eb62
+      - req_db36c32e7855b5b084ee81e6ba58691f
     status:
       code: 200
       message: OK
