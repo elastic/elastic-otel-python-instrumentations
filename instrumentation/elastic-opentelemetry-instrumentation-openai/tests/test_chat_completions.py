@@ -149,7 +149,13 @@ def test_basic(
     }
 
     logs = logs_exporter.get_finished_logs()
-    assert len(logs) == 0
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert dict(user_message.body) == {}
+
+    assert_stop_log_record(choice, expected_content=None)
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -283,7 +289,13 @@ def test_all_the_client_options(
     assert dict(span.attributes) == expected_attrs
 
     logs = logs_exporter.get_finished_logs()
-    assert len(logs) == 0
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert dict(user_message.body) == {}
+
+    assert_stop_log_record(choice, expected_content=None)
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -300,40 +312,6 @@ def test_all_the_client_options(
         input_data_point=input_tokens,
         output_data_point=output_tokens,
     )
-
-
-test_function_calling_with_tools_test_data = [
-    (
-        "openai_provider_chat_completions",
-        "gpt-4o-mini",
-        "gpt-4o-mini-2024-07-18",
-        "South Atlantic Ocean.",
-        "chatcmpl-ASfa8hgDJKumHgFlD27gZDNSC8HzZ",
-        140,
-        19,
-        0.006761051714420319,
-    ),
-    (
-        "azure_provider_chat_completions",
-        "unused",
-        "gpt-4-32k",
-        "South Atlantic Ocean",
-        "chatcmpl-ASxkDInQTANJ57p0VfUCuAISgNbW8",
-        144,
-        20,
-        0.002889830619096756,
-    ),
-    (
-        "ollama_provider_chat_completions",
-        "qwen2.5:0.5b",
-        "qwen2.5:0.5b",
-        "The Falklands Islands are located in the oceans south of South America.",
-        "chatcmpl-641",
-        241,
-        28,
-        0.002600736916065216,
-    ),
-]
 
 
 test_multiple_choices_capture_message_content_test_data = [
@@ -448,9 +426,46 @@ def test_multiple_choices_with_capture_message_content(
     )
 
 
+test_function_calling_with_tools_test_data = [
+    (
+        "openai_provider_chat_completions",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "South Atlantic Ocean.",
+        "chatcmpl-ASfa8hgDJKumHgFlD27gZDNSC8HzZ",
+        "call_62Px1tSvshkL8RBrj4p4msgO",
+        140,
+        19,
+        0.006761051714420319,
+    ),
+    (
+        "azure_provider_chat_completions",
+        "unused",
+        "gpt-4-32k",
+        "South Atlantic Ocean",
+        "chatcmpl-ASxkDInQTANJ57p0VfUCuAISgNbW8",
+        "call_U0QYBadhpy4pBO6jYPm09KvZ",
+        144,
+        20,
+        0.002889830619096756,
+    ),
+    (
+        "ollama_provider_chat_completions",
+        "qwen2.5:0.5b",
+        "qwen2.5:0.5b",
+        "The Falklands Islands are located in the oceans south of South America.",
+        "chatcmpl-641",
+        "call_ww759p36",
+        241,
+        28,
+        0.002600736916065216,
+    ),
+]
+
+
 @pytest.mark.vcr()
 @pytest.mark.parametrize(
-    "provider_str,model,response_model,content,response_id,input_tokens,output_tokens,duration",
+    "provider_str,model,response_model,content,response_id,function_call_id,input_tokens,output_tokens,duration",
     test_function_calling_with_tools_test_data,
 )
 def test_function_calling_with_tools(
@@ -459,6 +474,7 @@ def test_function_calling_with_tools(
     response_model,
     content,
     response_id,
+    function_call_id,
     input_tokens,
     output_tokens,
     duration,
@@ -532,7 +548,21 @@ def test_function_calling_with_tools(
     }
 
     logs = logs_exporter.get_finished_logs()
-    assert len(logs) == 0
+    assert len(logs) == 5
+    log_records = logrecords_from_logs(logs)
+    system_message, user_message, assistant_message, second_user_message, choice = log_records
+    assert system_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.system.message"}
+    assert system_message.body == {}
+    assert user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert user_message.body == {}
+    assert assistant_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.assistant.message"}
+    assert assistant_message.body == {}
+    assert second_user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert second_user_message.body == {}
+
+    assert_tool_call_log_record(
+        choice, [ToolCall(function_call_id, "get_delivery_date", '{"order_id": "order_12345"}')]
+    )
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -891,7 +921,11 @@ def test_connection_error(provider_str, model, duration, trace_exporter, metrics
     }
 
     logs = logs_exporter.get_finished_logs()
-    assert len(logs) == 0
+    assert len(logs) == 1
+    log_records = logrecords_from_logs(logs)
+    (user_message,) = log_records
+    assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert dict(user_message.body) == {}
 
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -1193,7 +1227,13 @@ def test_stream(
     }
 
     logs = logs_exporter.get_finished_logs()
-    assert len(logs) == 0
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert dict(user_message.body) == {}
+
+    assert_stop_log_record(choice, expected_content=None)
 
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -1320,7 +1360,13 @@ def test_stream_all_the_client_options(
     assert dict(span.attributes) == expected_attrs
 
     logs = logs_exporter.get_finished_logs()
-    assert len(logs) == 0
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert dict(user_message.body) == {}
+
+    assert_stop_log_record(choice, expected_content=None)
 
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -1416,7 +1462,13 @@ def test_stream_with_include_usage_option(
     }
 
     logs = logs_exporter.get_finished_logs()
-    assert len(logs) == 0
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert dict(user_message.body) == {}
+
+    assert_stop_log_record(choice, expected_content=None)
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -2128,7 +2180,13 @@ async def test_async_basic(
     }
 
     logs = logs_exporter.get_finished_logs()
-    assert len(logs) == 0
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert dict(user_message.body) == {}
+
+    assert_stop_log_record(choice, expected_content=None)
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -2432,7 +2490,13 @@ async def test_async_stream(
     }
 
     logs = logs_exporter.get_finished_logs()
-    assert len(logs) == 0
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert dict(user_message.body) == {}
+
+    assert_stop_log_record(choice, expected_content=None)
 
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
     attributes = {
@@ -2881,7 +2945,10 @@ def assert_stop_log_record(log_record: LogRecord, expected_content: str, expecte
     assert log_record.body["index"] == expected_index
     assert log_record.body["finish_reason"] == "stop"
     message = log_record.body["message"]
-    assert message["content"] == expected_content
+    if expected_content is None:
+        assert "content" not in message
+    else:
+        assert message["content"] == expected_content
 
 
 def assert_tool_call_log_record(log_record: LogRecord, expected_tool_calls: List[ToolCall], expected_index=0):
