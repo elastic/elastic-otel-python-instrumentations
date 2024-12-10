@@ -79,10 +79,13 @@ class StreamWrapper:
         if self.usage:
             _record_token_usage_metrics(self.token_usage_metric, self.span, self.usage)
 
-        if self.capture_message_content:
-            _send_log_events_from_stream_choices(
-                self.event_logger, choices=self.choices, span=self.span, attributes=self.event_attributes
-            )
+        _send_log_events_from_stream_choices(
+            self.event_logger,
+            choices=self.choices,
+            span=self.span,
+            attributes=self.event_attributes,
+            capture_message_content=self.capture_message_content,
+        )
 
         self.span.end()
 

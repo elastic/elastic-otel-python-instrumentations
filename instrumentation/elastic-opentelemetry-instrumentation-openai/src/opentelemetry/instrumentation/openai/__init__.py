@@ -145,11 +145,13 @@ class OpenAIInstrumentor(BaseInstrumentor):
             # this is important to avoid having the span closed before ending the stream
             end_on_exit=False,
         ) as span:
-            # TODO: more fine grained depending on the message.role?
-            if self.capture_message_content:
-                messages = kwargs.get("messages", [])
-
-                _send_log_events_from_messages(self.event_logger, messages=messages, attributes=event_attributes)
+            messages = kwargs.get("messages", [])
+            _send_log_events_from_messages(
+                self.event_logger,
+                messages=messages,
+                attributes=event_attributes,
+                capture_message_content=self.capture_message_content,
+            )
 
             start_time = default_timer()
             try:
@@ -183,8 +185,12 @@ class OpenAIInstrumentor(BaseInstrumentor):
             _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
 
-            if self.capture_message_content:
-                _send_log_events_from_choices(self.event_logger, choices=result.choices, attributes=event_attributes)
+            _send_log_events_from_choices(
+                self.event_logger,
+                choices=result.choices,
+                attributes=event_attributes,
+                capture_message_content=self.capture_message_content,
+            )
 
             span.end()
 
@@ -204,9 +210,13 @@ class OpenAIInstrumentor(BaseInstrumentor):
             # this is important to avoid having the span closed before ending the stream
             end_on_exit=False,
         ) as span:
-            if self.capture_message_content:
-                messages = kwargs.get("messages", [])
-                _send_log_events_from_messages(self.event_logger, messages=messages, attributes=event_attributes)
+            messages = kwargs.get("messages", [])
+            _send_log_events_from_messages(
+                self.event_logger,
+                messages=messages,
+                attributes=event_attributes,
+                capture_message_content=self.capture_message_content,
+            )
 
             start_time = default_timer()
             try:
@@ -240,8 +250,12 @@ class OpenAIInstrumentor(BaseInstrumentor):
             _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
 
-            if self.capture_message_content:
-                _send_log_events_from_choices(self.event_logger, choices=result.choices, attributes=event_attributes)
+            _send_log_events_from_choices(
+                self.event_logger,
+                choices=result.choices,
+                attributes=event_attributes,
+                capture_message_content=self.capture_message_content,
+            )
 
             span.end()
 

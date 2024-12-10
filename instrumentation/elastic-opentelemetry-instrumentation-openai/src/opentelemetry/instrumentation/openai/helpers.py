@@ -245,18 +245,22 @@ def _serialize_tool_calls_for_event(tool_calls):
     ]
 
 
-def _send_log_events_from_messages(event_logger: EventLogger, messages, attributes: Attributes):
+def _send_log_events_from_messages(
+    event_logger: EventLogger, messages, attributes: Attributes, capture_message_content: bool
+):
     for message in messages:
+        body = {}
+        if capture_message_content:
+            content = message.get("content")
+            if content:
+                body["content"] = content
         if message["role"] == "system":
-            event = Event(name=EVENT_GEN_AI_SYSTEM_MESSAGE, body={"content": message["content"]}, attributes=attributes)
+            event = Event(name=EVENT_GEN_AI_SYSTEM_MESSAGE, body=body, attributes=attributes)
             event_logger.emit(event)
         elif message["role"] == "user":
-            event = Event(name=EVENT_GEN_AI_USER_MESSAGE, body={"content": message["content"]}, attributes=attributes)
+            event = Event(name=EVENT_GEN_AI_USER_MESSAGE, body=body, attributes=attributes)
             event_logger.emit(event)
         elif message["role"] == "assistant":
-            body = {}
-            if content := message.get("content"):
-                body["content"] = content
             tool_calls = _serialize_tool_calls_for_event(message.get("tool_calls", []))
             if tool_calls:
                 body["tool_calls"] = tool_calls
@@ -267,28 +271,33 @@ def _send_log_events_from_messages(event_logger: EventLogger, messages, attribut
             )
             event_logger.emit(event)
         elif message["role"] == "tool":
+            body["id"] = message["tool_call_id"]
             event = Event(
                 name=EVENT_GEN_AI_TOOL_MESSAGE,
-                body={"content": message["content"], "id": message["tool_call_id"]},
+                body=body,
                 attributes=attributes,
             )
             event_logger.emit(event)
 
 
-def _send_log_events_from_choices(event_logger: EventLogger, choices, attributes: Attributes):
+def _send_log_events_from_choices(
+    event_logger: EventLogger, choices, attributes: Attributes, capture_message_content: bool
+):
     for choice in choices:
         tool_calls = _serialize_tool_calls_for_event(choice.message.tool_calls or [])
         body = {"finish_reason": choice.finish_reason, "index": choice.index, "message": {}}
         if tool_calls:
             body["message"]["tool_calls"] = tool_calls
-        if choice.message.content:
+        if capture_message_content and choice.message.content:
             body["message"]["content"] = choice.message.content
 
         event = Event(name=EVENT_GEN_AI_CHOICE, body=body, attributes=attributes)
         event_logger.emit(event)
 
 
-def _send_log_events_from_stream_choices(event_logger: EventLogger, choices, span: Span, attributes: Attributes):
+def _send_log_events_from_stream_choices(
+    event_logger: EventLogger, choices, span: Span, attributes: Attributes, capture_message_content: bool
+):
     body = {}
     message = {}
     message_content = ""
@@ -312,7 +321,7 @@ def _send_log_events_from_stream_choices(event_logger: EventLogger, choices, spa
             body["finish_reason"] = choice.finish_reason
         body["index"] = choice.index
 
-    if message_content:
+    if capture_message_content and message_content:
         message["content"] = message_content
     if tool_calls:
         message["tool_calls"] = [call for _, call in sorted(tool_calls.items())]
