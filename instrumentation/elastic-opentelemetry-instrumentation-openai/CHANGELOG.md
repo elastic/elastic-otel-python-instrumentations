@@ -1,5 +1,10 @@
 # Elastic OpenTelemetry Instrumentation OpenAI
 
+## v0.6.0
+
+- Trace GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT, GEN_AI_OPENAI_REQUEST_SEED, GEN_AI_OPENAI_REQUEST_SERVICE_TIER and GEN_AI_OPENAI_RESPONSE_SERVICE_TIER (#41)
+- make OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT work like upstream (#42)
+
 ## v0.5.0
 
 - Sync embeddings calls tracing with semantic conventions 1.29.0 (#36)
