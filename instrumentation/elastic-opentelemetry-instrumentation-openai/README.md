@@ -23,10 +23,13 @@ pip install elastic-opentelemetry-instrumentation-openai
 This instrumentation supports *zero-code* / *autoinstrumentation*:
 
 ```
-opentelemetry-instrument python use_openai.py
+# "examples/chat.py" is a simple script using the openai client library.
+cd examples
+
+opentelemetry-instrument python chat.py
 
 # You can record more information about prompts as log events by enabling content capture.
-OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true opentelemetry-instrument python use_openai.py
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true opentelemetry-instrument python chat.py
 ```
 
 Or manual instrumentation:
