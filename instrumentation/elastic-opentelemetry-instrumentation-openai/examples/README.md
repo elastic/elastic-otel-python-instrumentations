@@ -33,7 +33,7 @@ edot-bootstrap --action=install
 
 ## Configure
 
-Minimally, update the [.env](.env) file with your `OPENAI_API_KEY`.
+Copy [default.env](default.env) to `.env` and update the file with your `OPENAI_API_KEY`.
 
 An OTLP compatible endpoint should be listening for traces, metrics and logs on
 `http://localhost:4317`. If not, update `OTEL_EXPORTER_OTLP_ENDPOINT` as well.
