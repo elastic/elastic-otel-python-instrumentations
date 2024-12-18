@@ -17,7 +17,7 @@
 
 if [ $# -eq 0 ]
 then
-   FILES=$(find . \( -name "*.py" -o -name "*.c" -o -name "*.sh" \) -size +1c -not -path "./dist/*" -not -path "./build/*" -not -path "./venv*/*")
+   FILES=$(find . \( -name "*.py" -o -name "*.c" -o -name "*.sh" \) -size +1c -not -path "./dist/*" -not -path "./build/*" -not -path "./venv*/*" -not -path "*/examples/*")
 else
     FILES=$@
 fi
