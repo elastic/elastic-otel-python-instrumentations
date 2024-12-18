@@ -11,7 +11,7 @@ def main():
     messages = [
         {
             "role": "user",
-            "content": "Answer in up to 3 words: Which ocean contains the falkland islands?",
+            "content": "Answer in up to 3 words: Which ocean contains Bouvet Island?",
         }
     ]
 
