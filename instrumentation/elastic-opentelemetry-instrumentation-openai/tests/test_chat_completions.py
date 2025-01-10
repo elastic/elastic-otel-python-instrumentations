@@ -561,6 +561,7 @@ def test_chat_tools_with_capture_message_content_integration(trace_exporter, log
 
     address, port = address_and_port(client)
     assert dict(span.attributes) == {
+        GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
@@ -695,6 +696,7 @@ def test_chat_with_capture_message_content_integration(trace_exporter, logs_expo
 
     address, port = address_and_port(client)
     assert dict(span.attributes) == {
+        GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
@@ -1052,6 +1054,7 @@ def test_chat_stream_with_include_usage_option_and_capture_message_content_integ
 
     address, port = address_and_port(client)
     assert dict(span.attributes) == {
+        GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
@@ -1629,6 +1632,7 @@ async def test_chat_async_with_capture_message_content_integration(trace_exporte
 
     address, port = address_and_port(client)
     assert dict(span.attributes) == {
+        GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
