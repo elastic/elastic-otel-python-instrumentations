@@ -22,9 +22,6 @@ pip install elastic-opentelemetry-instrumentation-openai
 
 This instrumentation supports *zero-code* / *autoinstrumentation*:
 
-You can see telemetry from this package if you have an OpenTelemetry collector started, for example
-as documented in the root [examples](../../examples/) folder.
-
 Set up a virtual environment with this package, the dependencies it requires
 and `dotenv` (a portable way to load environment variables).
 ```
