@@ -31,19 +31,40 @@ pip install -r test-requirements.txt
 pip install python-dotenv[cli]
 ```
 
-Run the script with telemetry setup to use the instrumentation. [ollama.env](ollama.env)
-includes variables to point to Ollama instead of OpenAI, which allows you to
-run examples without a cloud account:
+Create a `.env` file containing the OpenAI API key:
 
 ```
-dotenv -f ollama.env run -- \
-opentelemetry-instrument python examples/chat.py
+echo "OPENAI_API_KEY=sk-..." > .env
+```
+
+Run the script with telemetry setup to use the instrumentation.
+
+```
+dotenv run -- opentelemetry-instrument python examples/chat.py
 ```
 
 You can record more information about prompts as log events by enabling content capture.
 ```
-OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true dotenv -f ollama.env run -- \
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true dotenv run -- \
 opentelemetry-instrument python examples/chat.py
+```
+
+### Using a local model
+
+[Ollama](https://ollama.com/) may be used to run examples without a cloud account. After you have set it up
+need to install the models in order to run the examples:
+
+```
+# for chat
+ollama pull qwen2.5:0.5b
+# for embeddings
+ollama pull all-minilm:33m
+```
+
+Finally run the examples using [ollama.env](ollama.env) variables to point to Ollama instead of OpenAI:
+
+```
+dotenv run -f ollama.env -- opentelemetry-instrument python examples/chat.py
 ```
 
 ### Instrumentation specific environment variable configuration
