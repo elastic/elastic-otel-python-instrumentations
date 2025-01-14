@@ -22,32 +22,49 @@ pip install elastic-opentelemetry-instrumentation-openai
 
 This instrumentation supports *zero-code* / *autoinstrumentation*:
 
+Set up a virtual environment with this package, the dependencies it requires
+and `dotenv` (a portable way to load environment variables).
 ```
-opentelemetry-instrument python use_openai.py
-
-# You can record more information about prompts as log events by enabling content capture.
-OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true opentelemetry-instrument python use_openai.py
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r test-requirements.txt
+pip install python-dotenv[cli]
 ```
 
-Or manual instrumentation:
+Create a `.env` file containing the OpenAI API key:
 
-```python
-import openai
-from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+```
+echo "OPENAI_API_KEY=sk-..." > .env
+```
 
-OpenAIInstrumentor().instrument()
+Run the script with telemetry setup to use the instrumentation.
 
-# assumes at least the OPENAI_API_KEY environment variable set
-client = openai.Client()
+```
+dotenv run -- opentelemetry-instrument python examples/chat.py
+```
 
-messages = [
-    {
-        "role": "user",
-        "content": "Answer in up to 3 words: Which ocean contains the canarian islands?",
-    }
-]
+You can record more information about prompts as log events by enabling content capture.
+```
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true dotenv run -- \
+opentelemetry-instrument python examples/chat.py
+```
 
-chat_completion = client.chat.completions.create(model="gpt-4o-mini", messages=messages)
+### Using a local model
+
+[Ollama](https://ollama.com/) may be used to run examples without a cloud account. After you have set it up
+need to install the models in order to run the examples:
+
+```
+# for chat
+ollama pull qwen2.5:0.5b
+# for embeddings
+ollama pull all-minilm:33m
+```
+
+Finally run the examples using [ollama.env](ollama.env) variables to point to Ollama instead of OpenAI:
+
+```
+dotenv run -f ollama.env -- opentelemetry-instrument python examples/chat.py
 ```
 
 ### Instrumentation specific environment variable configuration
@@ -110,20 +127,22 @@ response without querying the LLM.
 
 ### Azure OpenAI Environment Variables
 
-Azure is different from OpenAI primarily in that a URL has an implicit model. This means it ignores
-the model parameter set by the OpenAI SDK. The implication is that one endpoint cannot serve both
-chat and embeddings at the same time. Hence, we need separate environment variables for chat and
-embeddings. In either case, the `DEPLOYMENT_URL` is the "Endpoint Target URI" and the `API_KEY` is
-the `Endpoint Key` for a corresponding deployment in https://oai.azure.com/resource/deployments
+The `AzureOpenAI` client extends `OpenAI` with parameters specific to the Azure OpenAI Service.
 
-* `AZURE_CHAT_COMPLETIONS_DEPLOYMENT_URL`
-  * It should look like https://endpoint.com/openai/deployments/my-deployment/chat/completions?api-version=2023-05-15
-* `AZURE_CHAT_COMPLETIONS_API_KEY`
-  * It should be in hex like `abc01...` and possibly the same as `AZURE_EMBEDDINGS_API_KEY`
-* `AZURE_EMBEDDINGS_DEPLOYMENT_URL`
-  * It should look like https://endpoint.com/openai/deployments/my-deployment/embeddings?api-version=2023-05-15
-* `AZURE_EMBEDDINGS_API_KEY`
-  * It should be in hex like `abc01...` and possibly the same as `AZURE_CHAT_COMPLETIONS_API_KEY`
+* `AZURE_OPENAI_ENDPOINT` - "Azure OpenAI Endpoint" in https://oai.azure.com/resource/overview
+  * It should look like `https://<your-resource-name>.openai.azure.com/`
+* `AZURE_OPENAI_API_KEY` - "API key 1 (or 2)" in https://oai.azure.com/resource/overview
+  * It should look be a hex string like `abc01...`
+* `OPENAI_API_VERSION` = "Inference version" from https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation
+  * It should look like `2024-10-01-preview`
+* `TEST_CHAT_MODEL` = "Name" from https://oai.azure.com/resource/deployments that deployed a model
+  that supports tool calling, such as "gpt-4o-mini".
+* `TEST_EMBEDDINGS_MODEL` = "Name" from https://oai.azure.com/resource/deployments that deployed a
+  model that supports embeddings, such as "text-embedding-3-small".
+
+Note: The model parameter of a chat completion or embeddings request is substituted for an identical
+deployment name. As deployment names are arbitrary they may have no correlation with a real model
+like `gpt-4o`
 
 ## License
 

@@ -1,0 +1,156 @@
+interactions:
+- request:
+    body: |-
+      {
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user."
+          },
+          {
+            "role": "user",
+            "content": "Hi, can you tell me the delivery date for my order?"
+          },
+          {
+            "role": "assistant",
+            "content": "Hi there! I can help with that. Can you please provide your order ID?"
+          },
+          {
+            "role": "user",
+            "content": "i think it is order_12345"
+          }
+        ],
+        "model": "gpt-4o-mini",
+        "stream": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_delivery_date",
+              "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string",
+                    "description": "The customer's order ID."
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ]
+      }
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - Bearer test_openai_api_key
+      connection:
+      - keep-alive
+      content-length:
+      - '858'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.54.5
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.54.5
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.1
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: |+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{"role":"assistant","content":null,"tool_calls":[{"index":0,"id":"call_BiJxky21FTzGOu7GDBGK7SHq","type":"function","function":{"name":"get_delivery_date","arguments":""}}],"refusal":null},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\""}}]},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"order"}}]},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"_id"}}]},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\":\""}}]},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"order"}}]},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"_"}}]},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"123"}}]},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"45"}}]},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\"}"}}]},"logprobs":null,"finish_reason":null}]}
+
+        data: {"id":"chatcmpl-AfhuNDvVfpeTo6dHUzXlhuCKVNMyp","object":"chat.completion.chunk","created":1734503595,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_6fc10e10eb","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8f3d1ecc786e4993-SIN
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Wed, 18 Dec 2024 06:33:15 GMT
+      Server:
+      - cloudflare
+      Set-Cookie: test_set_cookie
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization: test_openai_org_id
+      openai-processing-ms:
+      - '309'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '200000'
+      x-ratelimit-remaining-requests:
+      - '9991'
+      x-ratelimit-remaining-tokens:
+      - '199921'
+      x-ratelimit-reset-requests:
+      - 1m11.339s
+      x-ratelimit-reset-tokens:
+      - 23ms
+      x-request-id:
+      - req_c12b6275fe92b3031a3555258f4b505b
+    status:
+      code: 200
+      message: OK
+version: 1

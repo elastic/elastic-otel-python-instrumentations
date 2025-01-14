@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 import re
 
 import openai
@@ -31,27 +31,24 @@ from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, S
 from opentelemetry.trace import SpanKind, StatusCode
 
 from .conftest import (
+    address_and_port,
     assert_error_operation_duration_metric,
     assert_operation_duration_metric,
     assert_token_usage_input_metric,
+    get_integration_async_client,
+    get_integration_client,
 )
 from .utils import MOCK_POSITIVE_FLOAT, get_sorted_metrics
 
-test_basic_test_data = [
-    ("openai_provider_embeddings", "text-embedding-3-small", 4, 0.2263190783560276),
-    ("azure_provider_embeddings", "ada", 4, 0.0017870571464300156),
-    ("ollama_provider_embeddings", "all-minilm:33m", 4, 0.0030461717396974564),
-]
+TEST_EMBEDDINGS_MODEL = "text-embedding-3-small"
+TEST_EMBEDDINGS_INPUT = "South Atlantic Ocean."
 
 
 @pytest.mark.vcr()
-@pytest.mark.parametrize("provider_str,model,input_tokens,duration", test_basic_test_data)
-def test_basic(provider_str, model, input_tokens, duration, trace_exporter, metrics_reader, request):
-    provider = request.getfixturevalue(provider_str)
-    client = provider.get_client()
+def test_embeddings(default_openai_env, trace_exporter, metrics_reader):
+    client = openai.OpenAI()
 
-    text = "South Atlantic Ocean."
-    response = client.embeddings.create(model=model, input=[text])
+    response = client.embeddings.create(model=TEST_EMBEDDINGS_MODEL, input=[TEST_EMBEDDINGS_INPUT])
 
     assert len(response.data) == 1
 
@@ -59,47 +56,40 @@ def test_basic(provider_str, model, input_tokens, duration, trace_exporter, metr
     assert len(spans) == 1
 
     span = spans[0]
-    assert span.name == f"embeddings {model}"
+    assert span.name == f"embeddings {TEST_EMBEDDINGS_MODEL}"
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.UNSET
 
+    address, port = address_and_port(client)
     assert dict(span.attributes) == {
-        GEN_AI_OPERATION_NAME: provider.operation_name,
-        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_OPERATION_NAME: "embeddings",
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
         GEN_AI_SYSTEM: "openai",
-        GEN_AI_RESPONSE_MODEL: model,
-        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
-        SERVER_ADDRESS: provider.server_address,
-        SERVER_PORT: provider.server_port,
+        GEN_AI_RESPONSE_MODEL: TEST_EMBEDDINGS_MODEL,
+        GEN_AI_USAGE_INPUT_TOKENS: 4,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
     }
     assert span.events == ()
 
     attributes = {
-        GEN_AI_REQUEST_MODEL: model,
-        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
+        GEN_AI_RESPONSE_MODEL: TEST_EMBEDDINGS_MODEL,
     }
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     assert_operation_duration_metric(
-        provider, operation_duration_metric, attributes=attributes, min_data_point=duration
+        client, "embeddings", operation_duration_metric, attributes=attributes, min_data_point=0.2263190783560276
     )
-    assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=input_tokens)
-
-
-test_all_the_client_options_test_data = [
-    ("openai_provider_embeddings", "text-embedding-3-small", 4, 0.2263190783560276),
-    ("azure_provider_embeddings", "ada", 4, 0.2263190783560276),
-    ("ollama_provider_embeddings", "all-minilm:33m", 4, 0.2263190783560276),
-]
+    assert_token_usage_input_metric(client, "embeddings", token_usage_metric, attributes=attributes, input_data_point=4)
 
 
 @pytest.mark.vcr()
-@pytest.mark.parametrize("provider_str,model,input_tokens,duration", test_all_the_client_options_test_data)
-def test_all_the_client_options(provider_str, model, input_tokens, duration, trace_exporter, metrics_reader, request):
-    provider = request.getfixturevalue(provider_str)
-    client = provider.get_client()
+def test_embeddings_all_the_client_options(default_openai_env, trace_exporter, metrics_reader):
+    client = openai.OpenAI()
 
-    text = "South Atlantic Ocean."
-    response = client.embeddings.create(model=model, input=[text], encoding_format="float")
+    response = client.embeddings.create(
+        model=TEST_EMBEDDINGS_MODEL, input=[TEST_EMBEDDINGS_INPUT], encoding_format="float"
+    )
 
     assert len(response.data) == 1
 
@@ -107,41 +97,46 @@ def test_all_the_client_options(provider_str, model, input_tokens, duration, tra
     assert len(spans) == 1
 
     span = spans[0]
-    assert span.name == f"embeddings {model}"
+    assert span.name == f"embeddings {TEST_EMBEDDINGS_MODEL}"
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.UNSET
 
+    address, port = address_and_port(client)
     assert dict(span.attributes) == {
-        GEN_AI_OPERATION_NAME: provider.operation_name,
-        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_OPERATION_NAME: "embeddings",
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
         GEN_AI_SYSTEM: "openai",
-        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: TEST_EMBEDDINGS_MODEL,
         GEN_AI_REQUEST_ENCODING_FORMATS: ("float",),
-        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
-        SERVER_ADDRESS: provider.server_address,
-        SERVER_PORT: provider.server_port,
+        GEN_AI_USAGE_INPUT_TOKENS: 4,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
     }
     assert span.events == ()
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
-        GEN_AI_REQUEST_MODEL: model,
-        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
+        GEN_AI_RESPONSE_MODEL: TEST_EMBEDDINGS_MODEL,
     }
     assert_operation_duration_metric(
-        provider, operation_duration_metric, attributes=attributes, min_data_point=duration
+        client, "embeddings", operation_duration_metric, attributes=attributes, min_data_point=0.2263190783560276
     )
-    assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=input_tokens)
+    assert_token_usage_input_metric(
+        client,
+        "embeddings",
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=span.attributes[GEN_AI_USAGE_INPUT_TOKENS],
+    )
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("provider_str,model", [("openai_provider_embeddings", "text-embedding-3-small")])
-def test_all_the_client_options_integration(provider_str, model, trace_exporter, metrics_reader, request):
-    provider = request.getfixturevalue(provider_str)
-    client = provider.get_client()
+def test_embeddings_all_the_client_options_integration(trace_exporter, metrics_reader):
+    client = get_integration_client()
+    model = os.getenv("TEST_EMBEDDINGS_MODEL", TEST_EMBEDDINGS_MODEL)
 
-    text = "South Atlantic Ocean."
-    response = client.embeddings.create(model=model, input=[text], encoding_format="float")
+    response = client.embeddings.create(model=model, input=[TEST_EMBEDDINGS_INPUT], encoding_format="float")
 
     assert len(response.data) == 1
 
@@ -153,60 +148,49 @@ def test_all_the_client_options_integration(provider_str, model, trace_exporter,
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.UNSET
 
+    address, port = address_and_port(client)
     assert dict(span.attributes) == {
-        GEN_AI_OPERATION_NAME: provider.operation_name,
+        GEN_AI_OPERATION_NAME: "embeddings",
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
-        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response.model,
         GEN_AI_REQUEST_ENCODING_FORMATS: ("float",),
         GEN_AI_USAGE_INPUT_TOKENS: response.usage.prompt_tokens,
-        SERVER_ADDRESS: provider.server_address,
-        SERVER_PORT: provider.server_port,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
     }
     assert span.events == ()
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
         GEN_AI_REQUEST_MODEL: model,
-        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response.model,
     }
     assert_operation_duration_metric(
-        provider, operation_duration_metric, attributes=attributes, min_data_point=MOCK_POSITIVE_FLOAT
+        client, "embeddings", operation_duration_metric, attributes=attributes, min_data_point=MOCK_POSITIVE_FLOAT
     )
     assert_token_usage_input_metric(
-        provider, token_usage_metric, attributes=attributes, input_data_point=response.usage.prompt_tokens
+        client, "embeddings", token_usage_metric, attributes=attributes, input_data_point=response.usage.prompt_tokens
     )
 
 
-test_connection_error_data = [
-    ("openai_provider_embeddings", "text-embedding-3-small", 0.460242404602468),
-    ("azure_provider_embeddings", "ada", 0.4328950522467494),
-    ("ollama_provider_embeddings", "all-minilm:33m", 0.4006666960194707),
-]
-
-
-@pytest.mark.vcr()
-@pytest.mark.parametrize("provider_str,model,duration", test_connection_error_data)
-def test_connection_error(provider_str, model, duration, trace_exporter, metrics_reader, request):
-    provider = request.getfixturevalue(provider_str)
-
-    client = openai.Client(base_url="http://localhost:9999/v5", api_key="ada", max_retries=1)
-    text = "South Atlantic Ocean."
+def test_embeddings_connection_error(trace_exporter, metrics_reader):
+    client = openai.Client(base_url="http://localhost:9999/v5", api_key="text-embedding-3-large", max_retries=1)
 
     with pytest.raises(Exception):
-        client.embeddings.create(model=model, input=[text])
+        client.embeddings.create(model=TEST_EMBEDDINGS_MODEL, input=[TEST_EMBEDDINGS_INPUT])
 
     spans = trace_exporter.get_finished_spans()
     assert len(spans) == 1
 
     span = spans[0]
-    assert span.name == f"embeddings {model}"
+    assert span.name == f"embeddings {TEST_EMBEDDINGS_MODEL}"
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.ERROR
 
     assert dict(span.attributes) == {
-        GEN_AI_OPERATION_NAME: provider.operation_name,
-        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_OPERATION_NAME: "embeddings",
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
         GEN_AI_SYSTEM: "openai",
         ERROR_TYPE: "APIConnectionError",
         SERVER_ADDRESS: "localhost",
@@ -216,34 +200,24 @@ def test_connection_error(provider_str, model, duration, trace_exporter, metrics
 
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
     attributes = {
-        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
         ERROR_TYPE: "APIConnectionError",
     }
     assert_error_operation_duration_metric(
-        provider,
+        "embeddings",
         operation_duration_metric,
         attributes=attributes,
-        data_point=duration,
+        data_point=0.460242404602468,
         value_delta=1.0,
     )
 
 
-test_async_basic_test_data = [
-    ("openai_provider_embeddings", "text-embedding-3-small", 4, 0.2263190783560276),
-    ("azure_provider_embeddings", "ada", 4, 0.0017870571464300156),
-    ("ollama_provider_embeddings", "all-minilm:33m", 4, 0.0030461717396974564),
-]
-
-
-@pytest.mark.vcr()
+@pytest.mark.vcr(cassette_name="test_embeddings.yaml")
 @pytest.mark.asyncio
-@pytest.mark.parametrize("provider_str,model,input_tokens,duration", test_async_basic_test_data)
-async def test_async_basic(provider_str, model, input_tokens, duration, trace_exporter, metrics_reader, request):
-    provider = request.getfixturevalue(provider_str)
-    client = provider.get_async_client()
+async def test_embeddings_async(default_openai_env, trace_exporter, metrics_reader):
+    client = openai.AsyncOpenAI()
 
-    text = "South Atlantic Ocean."
-    response = await client.embeddings.create(model=model, input=[text])
+    response = await client.embeddings.create(model=TEST_EMBEDDINGS_MODEL, input=[TEST_EMBEDDINGS_INPUT])
 
     assert len(response.data) == 1
 
@@ -251,50 +225,47 @@ async def test_async_basic(provider_str, model, input_tokens, duration, trace_ex
     assert len(spans) == 1
 
     span = spans[0]
-    assert span.name == f"embeddings {model}"
+    assert span.name == f"embeddings {TEST_EMBEDDINGS_MODEL}"
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.UNSET
 
+    address, port = address_and_port(client)
     assert dict(span.attributes) == {
-        GEN_AI_OPERATION_NAME: provider.operation_name,
-        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_OPERATION_NAME: "embeddings",
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
         GEN_AI_SYSTEM: "openai",
-        GEN_AI_RESPONSE_MODEL: model,
-        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
-        SERVER_ADDRESS: provider.server_address,
-        SERVER_PORT: provider.server_port,
+        GEN_AI_RESPONSE_MODEL: TEST_EMBEDDINGS_MODEL,
+        GEN_AI_USAGE_INPUT_TOKENS: 4,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
     }
     assert span.events == ()
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
-        GEN_AI_REQUEST_MODEL: model,
-        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
+        GEN_AI_RESPONSE_MODEL: TEST_EMBEDDINGS_MODEL,
     }
     assert_operation_duration_metric(
-        provider, operation_duration_metric, attributes=attributes, min_data_point=duration
+        client, "embeddings", operation_duration_metric, attributes=attributes, min_data_point=0.2263190783560276
     )
-    assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=input_tokens)
+    assert_token_usage_input_metric(
+        client,
+        "embeddings",
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=span.attributes[GEN_AI_USAGE_INPUT_TOKENS],
+    )
 
 
-test_async_all_the_client_options_test_data = [
-    ("openai_provider_embeddings", "text-embedding-3-small", 4, 0.2263190783560276),
-    ("azure_provider_embeddings", "ada", 4, 0.0017870571464300156),
-    ("ollama_provider_embeddings", "all-minilm:33m", 4, 0.0030461717396974564),
-]
-
-
-@pytest.mark.vcr()
+@pytest.mark.vcr(cassette_name="test_embeddings_all_the_client_options.yaml")
 @pytest.mark.asyncio
-@pytest.mark.parametrize("provider_str,model,input_tokens,duration", test_async_all_the_client_options_test_data)
-async def test_async_all_the_client_options(
-    provider_str, model, input_tokens, duration, trace_exporter, metrics_reader, request
-):
-    provider = request.getfixturevalue(provider_str)
-    client = provider.get_async_client()
+async def test_embeddings_async_all_the_client_options(default_openai_env, trace_exporter, metrics_reader):
+    client = openai.AsyncOpenAI()
 
-    text = "South Atlantic Ocean."
-    response = await client.embeddings.create(model=model, input=[text], encoding_format="float")
+    response = await client.embeddings.create(
+        model=TEST_EMBEDDINGS_MODEL, input=[TEST_EMBEDDINGS_INPUT], encoding_format="float"
+    )
 
     assert len(response.data) == 1
 
@@ -302,42 +273,53 @@ async def test_async_all_the_client_options(
     assert len(spans) == 1
 
     span = spans[0]
-    assert span.name == f"embeddings {model}"
+    assert span.name == f"embeddings {TEST_EMBEDDINGS_MODEL}"
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.UNSET
 
+    address, port = address_and_port(client)
     assert dict(span.attributes) == {
-        GEN_AI_OPERATION_NAME: provider.operation_name,
-        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_OPERATION_NAME: "embeddings",
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
         GEN_AI_SYSTEM: "openai",
-        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: TEST_EMBEDDINGS_MODEL,
         GEN_AI_REQUEST_ENCODING_FORMATS: ("float",),
-        GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
-        SERVER_ADDRESS: provider.server_address,
-        SERVER_PORT: provider.server_port,
+        GEN_AI_USAGE_INPUT_TOKENS: 4,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
     }
     assert span.events == ()
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
-        GEN_AI_REQUEST_MODEL: model,
-        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
+        GEN_AI_RESPONSE_MODEL: TEST_EMBEDDINGS_MODEL,
     }
     assert_operation_duration_metric(
-        provider, operation_duration_metric, attributes=attributes, min_data_point=duration
+        client, "embeddings", operation_duration_metric, attributes=attributes, min_data_point=0.2263190783560276
     )
-    assert_token_usage_input_metric(provider, token_usage_metric, attributes=attributes, input_data_point=input_tokens)
+    assert_token_usage_input_metric(
+        client,
+        "embeddings",
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=span.attributes[GEN_AI_USAGE_INPUT_TOKENS],
+    )
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-@pytest.mark.parametrize("provider_str,model", [("openai_provider_embeddings", "text-embedding-3-small")])
-async def test_async_all_the_client_options_integration(provider_str, model, trace_exporter, metrics_reader, request):
-    provider = request.getfixturevalue(provider_str)
-    client = provider.get_async_client()
+async def test_embeddings_async_all_the_client_options_integration(trace_exporter, metrics_reader):
+    client = get_integration_async_client()
+    model = os.getenv("TEST_EMBEDDINGS_MODEL", TEST_EMBEDDINGS_MODEL)
 
-    text = "South Atlantic Ocean."
-    response = await client.embeddings.create(model=model, input=[text], encoding_format="float")
+    params = {
+        "model": model,
+        "input": [TEST_EMBEDDINGS_INPUT],
+        "encoding_format": "float",
+    }
+
+    response = await client.embeddings.create(**params)
 
     assert len(response.data) == 1
 
@@ -349,61 +331,52 @@ async def test_async_all_the_client_options_integration(provider_str, model, tra
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.UNSET
 
-    assert dict(span.attributes) == {
-        GEN_AI_OPERATION_NAME: provider.operation_name,
+    address, port = address_and_port(client)
+    expected_attrs = {
+        GEN_AI_OPERATION_NAME: "embeddings",
         GEN_AI_REQUEST_MODEL: model,
         GEN_AI_SYSTEM: "openai",
-        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response.model,
         GEN_AI_REQUEST_ENCODING_FORMATS: ("float",),
         GEN_AI_USAGE_INPUT_TOKENS: response.usage.prompt_tokens,
-        SERVER_ADDRESS: provider.server_address,
-        SERVER_PORT: provider.server_port,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
     }
+    assert dict(span.attributes) == expected_attrs
+
     assert span.events == ()
 
     operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
     attributes = {
         GEN_AI_REQUEST_MODEL: model,
-        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_RESPONSE_MODEL: response.model,
     }
     assert_operation_duration_metric(
-        provider, operation_duration_metric, attributes=attributes, min_data_point=MOCK_POSITIVE_FLOAT
+        client, "embeddings", operation_duration_metric, attributes=attributes, min_data_point=MOCK_POSITIVE_FLOAT
     )
     assert_token_usage_input_metric(
-        provider, token_usage_metric, attributes=attributes, input_data_point=response.usage.prompt_tokens
+        client, "embeddings", token_usage_metric, attributes=attributes, input_data_point=response.usage.prompt_tokens
     )
 
 
-test_async_connection_error_test_data = [
-    ("openai_provider_embeddings", "text-embedding-3-small", 0.2263190783560276),
-    ("azure_provider_embeddings", "ada", 0.8369011571630836),
-    ("ollama_provider_embeddings", "all-minilm:33m", 1.0055546019999895),
-]
-
-
-@pytest.mark.vcr()
 @pytest.mark.asyncio
-@pytest.mark.parametrize("provider_str,model,duration", test_async_connection_error_test_data)
-async def test_async_connection_error(provider_str, model, duration, trace_exporter, metrics_reader, request):
-    provider = request.getfixturevalue(provider_str)
-
+async def test_embeddings_async_connection_error(default_openai_env, trace_exporter, metrics_reader):
     client = openai.AsyncOpenAI(base_url="http://localhost:9999/v5", api_key="unused", max_retries=1)
-    text = "South Atlantic Ocean."
 
     with pytest.raises(Exception):
-        await client.embeddings.create(model=model, input=[text])
+        await client.embeddings.create(model=TEST_EMBEDDINGS_MODEL, input=[TEST_EMBEDDINGS_INPUT])
 
     spans = trace_exporter.get_finished_spans()
     assert len(spans) == 1
 
     span = spans[0]
-    assert span.name == f"embeddings {model}"
+    assert span.name == f"embeddings {TEST_EMBEDDINGS_MODEL}"
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.ERROR
 
     assert dict(span.attributes) == {
-        GEN_AI_OPERATION_NAME: provider.operation_name,
-        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_OPERATION_NAME: "embeddings",
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
         GEN_AI_SYSTEM: "openai",
         ERROR_TYPE: "APIConnectionError",
         SERVER_ADDRESS: "localhost",
@@ -414,34 +387,24 @@ async def test_async_connection_error(provider_str, model, duration, trace_expor
 
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
     attributes = {
-        GEN_AI_REQUEST_MODEL: model,
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
         ERROR_TYPE: "APIConnectionError",
     }
     assert_error_operation_duration_metric(
-        provider,
+        "embeddings",
         operation_duration_metric,
         attributes=attributes,
-        data_point=duration,
+        data_point=0.2263190783560276,
         value_delta=1.0,
     )
 
 
-test_without_model_parameter_test_data = [
-    ("openai_provider_embeddings", 4.2263190783560276),
-    ("azure_provider_embeddings", 4.0017870571464300156),
-    ("ollama_provider_embeddings", 4.10461717396974564),
-]
-
-
 @pytest.mark.vcr()
-@pytest.mark.parametrize("provider_str,duration", test_without_model_parameter_test_data)
-def test_without_model_parameter(provider_str, duration, trace_exporter, metrics_reader, request):
-    provider = request.getfixturevalue(provider_str)
-    client = provider.get_client()
+def test_embeddings_without_model_parameter(default_openai_env, trace_exporter, metrics_reader):
+    client = openai.OpenAI()
 
-    text = "South Atlantic Ocean."
     with pytest.raises(TypeError, match=re.escape("create() missing 1 required keyword-only argument: 'model'")):
-        client.embeddings.create(input=[text])
+        client.embeddings.create(input=[TEST_EMBEDDINGS_INPUT])
 
     spans = trace_exporter.get_finished_spans()
     assert len(spans) == 1
@@ -451,61 +414,37 @@ def test_without_model_parameter(provider_str, duration, trace_exporter, metrics
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.ERROR
 
+    address, port = address_and_port(client)
     assert dict(span.attributes) == {
         ERROR_TYPE: "TypeError",
         GEN_AI_OPERATION_NAME: "embeddings",
         GEN_AI_SYSTEM: "openai",
-        SERVER_ADDRESS: provider.server_address,
-        SERVER_PORT: provider.server_port,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
     }
 
     attributes = {
         "error.type": "TypeError",
-        "server.address": provider.server_address,
-        "server.port": provider.server_port,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
         "gen_ai.operation.name": "embeddings",
     }
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
     assert_error_operation_duration_metric(
-        provider, operation_duration_metric, attributes=attributes, data_point=duration, value_delta=5
+        "embeddings", operation_duration_metric, attributes=attributes, data_point=4.2263190783560276, value_delta=5
     )
 
 
-test_model_not_found_test_data = [
-    (
-        "openai_provider_embeddings",
-        openai.NotFoundError,
-        "The model `not-found-model` does not exist or you do not have access to it.",
-        0.05915193818509579,
-    ),
-    # Azure ignores the model parameter, so doesn't return a not found error.
-    (
-        "ollama_provider_embeddings",
-        openai.NotFoundError,
-        'model "not-found-model" not found, try pulling it first',
-        0.087132233195006854,
-    ),
-]
-
-
 @pytest.mark.vcr()
-@pytest.mark.parametrize("provider_str,exception,exception_message,duration", test_model_not_found_test_data)
-def test_model_not_found(
-    provider_str,
-    exception,
-    exception_message,
-    duration,
-    trace_exporter,
-    metrics_reader,
-    request,
-):
-    provider = request.getfixturevalue(provider_str)
+def test_embeddings_model_not_found(default_openai_env, trace_exporter, metrics_reader):
     # force a timeout to don't slow down tests
-    client = provider.get_client(timeout=1)
+    client = openai.OpenAI(timeout=1)
 
-    text = "South Atlantic Ocean."
-    with pytest.raises(exception, match=re.escape(exception_message)):
-        client.embeddings.create(model="not-found-model", input=[text])
+    exception = openai.NotFoundError
+    with pytest.raises(
+        exception, match=re.escape("The model `not-found-model` does not exist or you do not have access to it.")
+    ):
+        client.embeddings.create(model="not-found-model", input=[TEST_EMBEDDINGS_INPUT])
 
     spans = trace_exporter.get_finished_spans()
     assert len(spans) == 1
@@ -515,23 +454,24 @@ def test_model_not_found(
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.ERROR
 
+    address, port = address_and_port(client)
     assert dict(span.attributes) == {
         ERROR_TYPE: exception.__qualname__,
         GEN_AI_OPERATION_NAME: "embeddings",
         GEN_AI_REQUEST_MODEL: "not-found-model",
         GEN_AI_SYSTEM: "openai",
-        SERVER_ADDRESS: provider.server_address,
-        SERVER_PORT: provider.server_port,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
     }
 
     attributes = {
         "error.type": exception.__qualname__,
-        "server.address": provider.server_address,
-        "server.port": provider.server_port,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
         "gen_ai.operation.name": "embeddings",
         "gen_ai.request.model": "not-found-model",
     }
     (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
     assert_error_operation_duration_metric(
-        provider, operation_duration_metric, attributes=attributes, data_point=duration
+        "embeddings", operation_duration_metric, attributes=attributes, data_point=0.05915193818509579
     )
