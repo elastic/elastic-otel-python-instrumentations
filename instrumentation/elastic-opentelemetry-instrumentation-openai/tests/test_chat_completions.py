@@ -26,6 +26,7 @@ import pytest
 from opentelemetry._events import Event
 from opentelemetry._logs import LogRecord
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+from opentelemetry.metrics import NoOpMeterProvider
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT,
     GEN_AI_OPENAI_REQUEST_SEED,
@@ -48,7 +49,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, SERVER_PORT
-from opentelemetry.trace import SpanKind, StatusCode
+from opentelemetry.trace import NoOpTracerProvider, SpanKind, StatusCode
 
 from .conftest import (
     address_and_port,
@@ -1008,6 +1009,34 @@ def test_chat_stream_with_include_usage_option(default_openai_env, trace_exporte
         input_data_point=span.attributes[GEN_AI_USAGE_INPUT_TOKENS],
         output_data_point=span.attributes[GEN_AI_USAGE_OUTPUT_TOKENS],
     )
+
+
+@pytest.mark.vcr()
+def test_chat_stream_with_include_usage_option_disabled(default_openai_env, instrument):
+    """
+    When OTEL_SDK_DISABLED=true, opentelemetry-instrument still instruments
+    OpenAI, just with NoOp tracer and meter providers. This ensures when NoOp,
+    instrumentation doesn't crash.
+    """
+
+    instrument.uninstrument()
+    instrumentor = OpenAIInstrumentor()
+    instrumentor.instrument(tracer_provider=NoOpTracerProvider(), meter_provider=NoOpMeterProvider())
+    try:
+        client = openai.OpenAI()
+
+        messages = [
+            {
+                "role": "user",
+                "content": TEST_CHAT_INPUT,
+            }
+        ]
+
+        chat_completion = client.chat.completions.create(model=TEST_CHAT_MODEL, messages=messages, stream=True)
+        chunks = [chunk.choices[0].delta.content or "" for chunk in chat_completion if chunk.choices]
+        assert "".join(chunks) == "South Atlantic Ocean."
+    finally:
+        instrumentor.uninstrument()
 
 
 @pytest.mark.skipif(OPENAI_VERSION < (1, 26, 0), reason="stream_options added in 1.26.0")

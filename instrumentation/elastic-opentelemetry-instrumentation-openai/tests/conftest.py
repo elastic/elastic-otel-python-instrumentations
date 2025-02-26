@@ -16,6 +16,7 @@
 
 import json
 import os
+import re
 from typing import Sequence, Tuple, Union
 
 import openai
@@ -105,15 +106,12 @@ def instrument():
 @pytest.fixture
 def vcr_cassette_name(request):
     """
-    Strips `_async` from the test function name as they use the same data.
+    Strips `_async` and `_disabled` from test function names as they use the same data.
     """
     # Get the name of the test function
     test_name = request.node.name
 
-    # Remove '_async' from the test name
-    cassette_name = test_name.replace("_async", "")
-
-    return cassette_name
+    return re.sub(r"(_async|_disabled)", "", test_name)
 
 
 OPENAI_API_KEY = "test_openai_api_key"

@@ -49,7 +49,7 @@ except ImportError:
     # available since 1.29.0
     GEN_AI_REQUEST_ENCODING_FORMATS = "gen_ai.request.encoding_formats"
 
-from opentelemetry.metrics import Histogram
+from opentelemetry.metrics import Histogram, NoOpHistogram
 from opentelemetry.trace import Span
 from opentelemetry.util.types import Attributes
 
@@ -191,6 +191,9 @@ def _get_attributes_if_set(span: Span, names: Iterable) -> Attributes:
 
 
 def _record_token_usage_metrics(metric: Histogram, span: Span, usage: CompletionUsage):
+    if _is_metric_disabled(metric):
+        return  # Avoid reading back attributes for an unrecorded metric
+
     token_usage_metric_attrs = _get_attributes_if_set(
         span,
         (
@@ -208,7 +211,14 @@ def _record_token_usage_metrics(metric: Histogram, span: Span, usage: Completion
         metric.record(usage.completion_tokens, {**token_usage_metric_attrs, GEN_AI_TOKEN_TYPE: "output"})
 
 
+def _is_metric_disabled(metric: Histogram):
+    return isinstance(metric, NoOpHistogram)
+
+
 def _record_operation_duration_metric(metric: Histogram, span: Span, start: float):
+    if _is_metric_disabled(metric):
+        return  # Avoid reading back attributes for an unrecorded metric
+
     operation_duration_metric_attrs = _get_attributes_if_set(
         span,
         (
