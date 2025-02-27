@@ -68,31 +68,36 @@ else:
     CompletionUsage = None
 
 
-def _set_span_attributes_from_response(
-    span: Span,
+def _get_attributes_from_response(
     response_id: str,
     model: str,
     choices,
     usage: CompletionUsage,
     service_tier: Optional[str],
-) -> None:
-    span.set_attribute(GEN_AI_RESPONSE_ID, response_id)
-    span.set_attribute(GEN_AI_RESPONSE_MODEL, model)
+) -> Attributes:
     # when streaming finish_reason is None for every chunk that is not the last
     finish_reasons = [choice.finish_reason for choice in choices if choice.finish_reason]
-    span.set_attribute(GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons or ["error"])
+
+    attributes = {
+        GEN_AI_RESPONSE_ID: response_id,
+        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_RESPONSE_FINISH_REASONS: finish_reasons or ["error"],
+    }
     # without `include_usage` in `stream_options` we won't get this
     if usage:
-        span.set_attribute(GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
-        span.set_attribute(GEN_AI_USAGE_OUTPUT_TOKENS, usage.completion_tokens)
+        attributes[GEN_AI_USAGE_INPUT_TOKENS] = usage.prompt_tokens
+        attributes[GEN_AI_USAGE_OUTPUT_TOKENS] = usage.completion_tokens
     # this is available only if requested
     if service_tier:
-        span.set_attribute(GEN_AI_OPENAI_RESPONSE_SERVICE_TIER, service_tier)
+        attributes[GEN_AI_OPENAI_RESPONSE_SERVICE_TIER] = service_tier
+    return attributes
 
 
-def _set_embeddings_span_attributes_from_response(span: Span, model: str, usage: CompletionUsage) -> None:
-    span.set_attribute(GEN_AI_RESPONSE_MODEL, model)
-    span.set_attribute(GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
+def _get_embeddings_attributes_from_response(model: str, usage: CompletionUsage) -> Attributes:
+    return {
+        GEN_AI_RESPONSE_MODEL: model,
+        GEN_AI_USAGE_INPUT_TOKENS: usage.prompt_tokens,
+    }
 
 
 def _attributes_from_client(client) -> Attributes:
@@ -112,7 +117,7 @@ def _attributes_from_client(client) -> Attributes:
     return span_attributes
 
 
-def _get_span_attributes_from_wrapper(instance, kwargs) -> Attributes:
+def _get_attributes_from_wrapper(instance, kwargs) -> Attributes:
     span_attributes = {
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_SYSTEM: "openai",
@@ -153,7 +158,7 @@ def _get_span_attributes_from_wrapper(instance, kwargs) -> Attributes:
     return span_attributes
 
 
-def _span_name_from_span_attributes(attributes: Attributes) -> str:
+def _span_name_from_attributes(attributes: Attributes) -> str:
     request_model = attributes.get(GEN_AI_REQUEST_MODEL)
     return (
         f"{attributes[GEN_AI_OPERATION_NAME]} {request_model}"
@@ -162,7 +167,7 @@ def _span_name_from_span_attributes(attributes: Attributes) -> str:
     )
 
 
-def _get_embeddings_span_attributes_from_wrapper(instance, kwargs) -> Attributes:
+def _get_embeddings_attributes_from_wrapper(instance, kwargs) -> Attributes:
     span_attributes = {
         GEN_AI_OPERATION_NAME: "embeddings",
         GEN_AI_SYSTEM: "openai",
@@ -190,37 +195,33 @@ def _get_attributes_if_set(span: Span, names: Iterable) -> Attributes:
     return {name: attributes[name] for name in names if name in attributes}
 
 
-def _record_token_usage_metrics(metric: Histogram, span: Span, usage: CompletionUsage):
-    token_usage_metric_attrs = _get_attributes_if_set(
-        span,
-        (
-            GEN_AI_OPERATION_NAME,
-            GEN_AI_REQUEST_MODEL,
-            GEN_AI_RESPONSE_MODEL,
-            GEN_AI_SYSTEM,
-            SERVER_ADDRESS,
-            SERVER_PORT,
-        ),
+def _record_token_usage_metrics(metric: Histogram, attributes: Attributes, usage: CompletionUsage):
+    attribute_names = (
+        GEN_AI_OPERATION_NAME,
+        GEN_AI_REQUEST_MODEL,
+        GEN_AI_RESPONSE_MODEL,
+        GEN_AI_SYSTEM,
+        SERVER_ADDRESS,
+        SERVER_PORT,
     )
+    token_usage_metric_attrs = {k: v for k, v in attributes.items() if k in attribute_names}
     metric.record(usage.prompt_tokens, {**token_usage_metric_attrs, GEN_AI_TOKEN_TYPE: "input"})
     # embeddings responses only have input tokens
     if hasattr(usage, "completion_tokens"):
         metric.record(usage.completion_tokens, {**token_usage_metric_attrs, GEN_AI_TOKEN_TYPE: "output"})
 
 
-def _record_operation_duration_metric(metric: Histogram, span: Span, start: float):
-    operation_duration_metric_attrs = _get_attributes_if_set(
-        span,
-        (
-            GEN_AI_OPERATION_NAME,
-            GEN_AI_REQUEST_MODEL,
-            GEN_AI_RESPONSE_MODEL,
-            GEN_AI_SYSTEM,
-            ERROR_TYPE,
-            SERVER_ADDRESS,
-            SERVER_PORT,
-        ),
+def _record_operation_duration_metric(metric: Histogram, attributes: Attributes, start: float):
+    attribute_names = (
+        GEN_AI_OPERATION_NAME,
+        GEN_AI_REQUEST_MODEL,
+        GEN_AI_RESPONSE_MODEL,
+        GEN_AI_SYSTEM,
+        ERROR_TYPE,
+        SERVER_ADDRESS,
+        SERVER_PORT,
     )
+    operation_duration_metric_attrs = {k: v for k, v in attributes.items() if k in attribute_names}
     duration_s = default_timer() - start
     metric.record(duration_s, operation_duration_metric_attrs)
 
