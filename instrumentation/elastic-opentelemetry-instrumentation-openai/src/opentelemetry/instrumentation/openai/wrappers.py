@@ -18,10 +18,10 @@ import logging
 
 from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.openai.helpers import (
+    _get_span_attributes_from_response,
     _record_operation_duration_metric,
     _record_token_usage_metrics,
     _send_log_events_from_stream_choices,
-    _set_span_attributes_from_response,
 )
 from opentelemetry.metrics import Histogram
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
@@ -39,6 +39,7 @@ class StreamWrapper:
         self,
         stream,
         span: Span,
+        span_attributes: Attributes,
         capture_message_content: bool,
         event_attributes: Attributes,
         event_logger: EventLogger,
@@ -48,6 +49,7 @@ class StreamWrapper:
     ):
         self.stream = stream
         self.span = span
+        self.span_attributes = span_attributes
         self.capture_message_content = capture_message_content
         self.event_attributes = event_attributes
         self.event_logger = event_logger
@@ -67,17 +69,21 @@ class StreamWrapper:
             self.span.set_status(StatusCode.ERROR, str(exc))
             self.span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
             self.span.end()
-            _record_operation_duration_metric(self.operation_duration_metric, self.span, self.start_time)
+            error_attributes = {**self.span_attributes, ERROR_TYPE: exc.__class__.__qualname__}
+            _record_operation_duration_metric(self.operation_duration_metric, error_attributes, self.start_time)
             return
 
+        response_attributes = _get_span_attributes_from_response(
+            self.response_id, self.model, self.choices, self.usage, self.service_tier
+        )
         if self.span.is_recording():
-            _set_span_attributes_from_response(
-                self.span, self.response_id, self.model, self.choices, self.usage, self.service_tier
-            )
+            for k, v in response_attributes.items():
+                self.span.set_attribute(k, v)
 
-        _record_operation_duration_metric(self.operation_duration_metric, self.span, self.start_time)
+        metrics_attributes = {**self.span_attributes, **response_attributes}
+        _record_operation_duration_metric(self.operation_duration_metric, metrics_attributes, self.start_time)
         if self.usage:
-            _record_token_usage_metrics(self.token_usage_metric, self.span, self.usage)
+            _record_token_usage_metrics(self.token_usage_metric, metrics_attributes, self.usage)
 
         _send_log_events_from_stream_choices(
             self.event_logger,

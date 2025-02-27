@@ -25,15 +25,15 @@ from opentelemetry.instrumentation.openai.environment_variables import (
     OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
 )
 from opentelemetry.instrumentation.openai.helpers import (
+    _get_embeddings_span_attributes_from_response,
     _get_embeddings_span_attributes_from_wrapper,
     _get_event_attributes,
+    _get_span_attributes_from_response,
     _get_span_attributes_from_wrapper,
     _record_operation_duration_metric,
     _record_token_usage_metrics,
     _send_log_events_from_choices,
     _send_log_events_from_messages,
-    _set_embeddings_span_attributes_from_response,
-    _set_span_attributes_from_response,
     _span_name_from_span_attributes,
 )
 from opentelemetry.instrumentation.openai.package import _instruments
@@ -160,13 +160,15 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 span.set_status(StatusCode.ERROR, str(exc))
                 span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
                 span.end()
-                _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+                error_attributes = {**span_attributes, ERROR_TYPE: exc.__class__.__qualname__}
+                _record_operation_duration_metric(self.operation_duration_metric, error_attributes, start_time)
                 raise
 
             if kwargs.get("stream"):
                 return StreamWrapper(
                     stream=result,
                     span=span,
+                    span_attributes=span_attributes,
                     capture_message_content=self.capture_message_content,
                     event_attributes=event_attributes,
                     event_logger=self.event_logger,
@@ -177,13 +179,16 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
             logger.debug(f"openai.resources.chat.completions.Completions.create result: {result}")
 
+            response_attributes = _get_span_attributes_from_response(
+                result.id, result.model, result.choices, result.usage, getattr(result, "service_tier", None)
+            )
             if span.is_recording():
-                _set_span_attributes_from_response(
-                    span, result.id, result.model, result.choices, result.usage, getattr(result, "service_tier", None)
-                )
+                for k, v in response_attributes.items():
+                    span.set_attribute(k, v)
 
-            _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
-            _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+            metrics_attributes = {**span_attributes, **response_attributes}
+            _record_token_usage_metrics(self.token_usage_metric, metrics_attributes, result.usage)
+            _record_operation_duration_metric(self.operation_duration_metric, metrics_attributes, start_time)
 
             _send_log_events_from_choices(
                 self.event_logger,
@@ -225,13 +230,15 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 span.set_status(StatusCode.ERROR, str(exc))
                 span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
                 span.end()
-                _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+                error_attributes = {ERROR_TYPE: exc.__class__.__qualname__}
+                _record_operation_duration_metric(self.operation_duration_metric, error_attributes, start_time)
                 raise
 
             if kwargs.get("stream"):
                 return StreamWrapper(
                     stream=result,
                     span=span,
+                    span_attributes=span_attributes,
                     capture_message_content=self.capture_message_content,
                     event_attributes=event_attributes,
                     event_logger=self.event_logger,
@@ -242,13 +249,16 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
             logger.debug(f"openai.resources.chat.completions.AsyncCompletions.create result: {result}")
 
+            response_attributes = _get_span_attributes_from_response(
+                result.id, result.model, result.choices, result.usage, getattr(result, "service_tier", None)
+            )
             if span.is_recording():
-                _set_span_attributes_from_response(
-                    span, result.id, result.model, result.choices, result.usage, getattr(result, "service_tier", None)
-                )
+                for k, v in response_attributes.items():
+                    span.set_attribute(k, v)
 
-            _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
-            _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+            metrics_attributes = {**span_attributes, **response_attributes}
+            _record_token_usage_metrics(self.token_usage_metric, metrics_attributes, result.usage)
+            _record_operation_duration_metric(self.operation_duration_metric, metrics_attributes, start_time)
 
             _send_log_events_from_choices(
                 self.event_logger,
@@ -279,14 +289,18 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 span.set_status(StatusCode.ERROR, str(exc))
                 span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
                 span.end()
-                _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+                error_attributes = {**span_attributes, ERROR_TYPE: exc.__class__.__qualname__}
+                _record_operation_duration_metric(self.operation_duration_metric, error_attributes, start_time)
                 raise
 
+            response_attributes = _get_embeddings_span_attributes_from_response(result.model, result.usage)
             if span.is_recording():
-                _set_embeddings_span_attributes_from_response(span, result.model, result.usage)
+                for k, v in response_attributes.items():
+                    span.set_attribute(k, v)
 
-            _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
-            _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+            metrics_attributes = {**span_attributes, **response_attributes}
+            _record_token_usage_metrics(self.token_usage_metric, metrics_attributes, result.usage)
+            _record_operation_duration_metric(self.operation_duration_metric, metrics_attributes, start_time)
 
             span.end()
 
@@ -310,14 +324,18 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 span.set_status(StatusCode.ERROR, str(exc))
                 span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
                 span.end()
-                _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+                error_attributes = {**span_attributes, ERROR_TYPE: exc.__class__.__qualname__}
+                _record_operation_duration_metric(self.operation_duration_metric, error_attributes, start_time)
                 raise
 
+            response_attributes = _get_embeddings_span_attributes_from_response(result.model, result.usage)
             if span.is_recording():
-                _set_embeddings_span_attributes_from_response(span, result.model, result.usage)
+                for k, v in response_attributes.items():
+                    span.set_attribute(k, v)
 
-            _record_token_usage_metrics(self.token_usage_metric, span, result.usage)
-            _record_operation_duration_metric(self.operation_duration_metric, span, start_time)
+            metrics_attributes = {**span_attributes, **response_attributes}
+            _record_token_usage_metrics(self.token_usage_metric, metrics_attributes, result.usage)
+            _record_operation_duration_metric(self.operation_duration_metric, metrics_attributes, start_time)
 
             span.end()
 
