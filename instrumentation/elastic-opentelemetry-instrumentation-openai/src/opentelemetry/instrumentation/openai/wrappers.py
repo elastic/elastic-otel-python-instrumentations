@@ -18,7 +18,7 @@ import logging
 
 from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.openai.helpers import (
-    _get_span_attributes_from_response,
+    _get_attributes_from_response,
     _record_operation_duration_metric,
     _record_token_usage_metrics,
     _send_log_events_from_stream_choices,
@@ -73,7 +73,7 @@ class StreamWrapper:
             _record_operation_duration_metric(self.operation_duration_metric, error_attributes, self.start_time)
             return
 
-        response_attributes = _get_span_attributes_from_response(
+        response_attributes = _get_attributes_from_response(
             self.response_id, self.model, self.choices, self.usage, self.service_tier
         )
         if self.span.is_recording():

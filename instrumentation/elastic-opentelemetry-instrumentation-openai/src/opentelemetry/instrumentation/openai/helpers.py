@@ -68,7 +68,7 @@ else:
     CompletionUsage = None
 
 
-def _get_span_attributes_from_response(
+def _get_attributes_from_response(
     response_id: str,
     model: str,
     choices,
@@ -93,7 +93,7 @@ def _get_span_attributes_from_response(
     return attributes
 
 
-def _get_embeddings_span_attributes_from_response(model: str, usage: CompletionUsage) -> Attributes:
+def _get_embeddings_attributes_from_response(model: str, usage: CompletionUsage) -> Attributes:
     return {
         GEN_AI_RESPONSE_MODEL: model,
         GEN_AI_USAGE_INPUT_TOKENS: usage.prompt_tokens,
@@ -117,7 +117,7 @@ def _attributes_from_client(client) -> Attributes:
     return span_attributes
 
 
-def _get_span_attributes_from_wrapper(instance, kwargs) -> Attributes:
+def _get_attributes_from_wrapper(instance, kwargs) -> Attributes:
     span_attributes = {
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_SYSTEM: "openai",
@@ -158,7 +158,7 @@ def _get_span_attributes_from_wrapper(instance, kwargs) -> Attributes:
     return span_attributes
 
 
-def _span_name_from_span_attributes(attributes: Attributes) -> str:
+def _span_name_from_attributes(attributes: Attributes) -> str:
     request_model = attributes.get(GEN_AI_REQUEST_MODEL)
     return (
         f"{attributes[GEN_AI_OPERATION_NAME]} {request_model}"
@@ -167,7 +167,7 @@ def _span_name_from_span_attributes(attributes: Attributes) -> str:
     )
 
 
-def _get_embeddings_span_attributes_from_wrapper(instance, kwargs) -> Attributes:
+def _get_embeddings_attributes_from_wrapper(instance, kwargs) -> Attributes:
     span_attributes = {
         GEN_AI_OPERATION_NAME: "embeddings",
         GEN_AI_SYSTEM: "openai",
