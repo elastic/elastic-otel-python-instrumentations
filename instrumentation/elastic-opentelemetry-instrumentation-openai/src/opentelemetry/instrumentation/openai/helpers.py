@@ -255,7 +255,9 @@ def _send_log_events_from_messages(
             content = message.get("content")
             if content:
                 body["content"] = content
-        if message["role"] == "system":
+        if message["role"] == "system" or message["role"] == "developer":
+            if message["role"] == "developer":
+                body["role"] = message["role"]
             event = Event(name=EVENT_GEN_AI_SYSTEM_MESSAGE, body=body, attributes=attributes)
             event_logger.emit(event)
         elif message["role"] == "user":
