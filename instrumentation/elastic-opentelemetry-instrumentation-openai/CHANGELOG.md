@@ -1,5 +1,11 @@
 # Elastic OpenTelemetry Instrumentation OpenAI
 
+## v0.6.1
+
+- Handle message with developer role (#58)
+- Decouple metrics from span recording, fixes running with `OTEL_SDK_DISABLED=true` (#56)
+- Add examples and simplify test matrix (#46, Adrian Cole)
+
 ## v0.6.0
 
 - Trace GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT, GEN_AI_OPENAI_REQUEST_SEED, GEN_AI_OPENAI_REQUEST_SERVICE_TIER and GEN_AI_OPENAI_RESPONSE_SERVICE_TIER (#41)
