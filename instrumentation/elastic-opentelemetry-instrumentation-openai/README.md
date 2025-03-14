@@ -27,7 +27,7 @@ and `dotenv` (a portable way to load environment variables).
 ```
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r test-requirements.txt
+pip install -r dev-requirements.txt
 pip install python-dotenv[cli]
 ```
 
