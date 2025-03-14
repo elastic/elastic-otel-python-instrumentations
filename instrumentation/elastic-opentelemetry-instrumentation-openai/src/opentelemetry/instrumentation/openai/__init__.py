@@ -99,15 +99,11 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
         register_post_import_hook(self._patch, "openai")
 
-    def _patch(self, _module):
+    def _patch(self, module):
+        version = tuple([int(x) for x in getattr(getattr(module, "version"), "VERSION").split(".")])
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "Completions.create",
-            self._chat_completion_wrapper,
-        )
-        wrap_function_wrapper(
-            "openai.resources.beta.chat.completions",
-            "Completions.parse",
             self._chat_completion_wrapper,
         )
         wrap_function_wrapper(
@@ -115,11 +111,17 @@ class OpenAIInstrumentor(BaseInstrumentor):
             "AsyncCompletions.create",
             self._async_chat_completion_wrapper,
         )
-        wrap_function_wrapper(
-            "openai.resources.beta.chat.completions",
-            "AsyncCompletions.parse",
-            self._async_chat_completion_wrapper,
-        )
+        if version >= (1, 40, 0):
+            wrap_function_wrapper(
+                "openai.resources.beta.chat.completions",
+                "Completions.parse",
+                self._chat_completion_wrapper,
+            )
+            wrap_function_wrapper(
+                "openai.resources.beta.chat.completions",
+                "AsyncCompletions.parse",
+                self._async_chat_completion_wrapper,
+            )
         wrap_function_wrapper(
             "openai.resources.embeddings",
             "Embeddings.create",
