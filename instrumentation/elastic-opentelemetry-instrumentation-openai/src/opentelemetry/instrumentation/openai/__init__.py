@@ -106,8 +106,18 @@ class OpenAIInstrumentor(BaseInstrumentor):
             self._chat_completion_wrapper,
         )
         wrap_function_wrapper(
+            "openai.resources.beta.chat.completions",
+            "Completions.parse",
+            self._chat_completion_wrapper,
+        )
+        wrap_function_wrapper(
             "openai.resources.chat.completions",
             "AsyncCompletions.create",
+            self._async_chat_completion_wrapper,
+        )
+        wrap_function_wrapper(
+            "openai.resources.beta.chat.completions",
+            "AsyncCompletions.parse",
             self._async_chat_completion_wrapper,
         )
         wrap_function_wrapper(
@@ -127,12 +137,14 @@ class OpenAIInstrumentor(BaseInstrumentor):
         import openai
 
         unwrap(openai.resources.chat.completions.Completions, "create")
+        unwrap(openai.resources.beta.chat.completions.Completions, "parse")
         unwrap(openai.resources.chat.completions.AsyncCompletions, "create")
+        unwrap(openai.resources.beta.chat.completions.AsyncCompletions, "parse")
         unwrap(openai.resources.embeddings.Embeddings, "create")
         unwrap(openai.resources.embeddings.AsyncEmbeddings, "create")
 
     def _chat_completion_wrapper(self, wrapped, instance, args, kwargs):
-        logger.debug(f"openai.resources.chat.completions.Completions.create kwargs: {kwargs}")
+        logger.debug(f"{wrapped} kwargs: {kwargs}")
 
         span_attributes = _get_attributes_from_wrapper(instance, kwargs)
         event_attributes = _get_event_attributes()
