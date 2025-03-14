@@ -64,7 +64,7 @@ ollama pull all-minilm:33m
 Finally run the examples using [ollama.env](ollama.env) variables to point to Ollama instead of OpenAI:
 
 ```
-dotenv run -f ollama.env -- opentelemetry-instrument python examples/chat.py
+dotenv -f ollama.env run -- opentelemetry-instrument python examples/chat.py
 ```
 
 ### Instrumentation specific environment variable configuration
