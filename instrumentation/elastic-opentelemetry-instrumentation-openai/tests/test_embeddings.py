@@ -131,6 +131,53 @@ def test_embeddings_all_the_client_options(default_openai_env, trace_exporter, m
     )
 
 
+@pytest.mark.vcr()
+def test_embeddings_all_the_client_options_not_given(default_openai_env, trace_exporter, metrics_reader):
+    client = openai.OpenAI()
+
+    response = client.embeddings.create(
+        model=TEST_EMBEDDINGS_MODEL, input=[TEST_EMBEDDINGS_INPUT], encoding_format=openai.NOT_GIVEN
+    )
+
+    assert len(response.data) == 1
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"embeddings {TEST_EMBEDDINGS_MODEL}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    address, port = address_and_port(client)
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "embeddings",
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_MODEL: TEST_EMBEDDINGS_MODEL,
+        GEN_AI_USAGE_INPUT_TOKENS: 4,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
+    }
+    assert span.events == ()
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: TEST_EMBEDDINGS_MODEL,
+        GEN_AI_RESPONSE_MODEL: TEST_EMBEDDINGS_MODEL,
+    }
+    assert_operation_duration_metric(
+        client, "embeddings", operation_duration_metric, attributes=attributes, min_data_point=0.050556943751871586
+    )
+    assert_token_usage_input_metric(
+        client,
+        "embeddings",
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=span.attributes[GEN_AI_USAGE_INPUT_TOKENS],
+    )
+
+
 @pytest.mark.integration
 def test_embeddings_all_the_client_options_integration(trace_exporter, metrics_reader):
     client = get_integration_client()
