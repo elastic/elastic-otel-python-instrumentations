@@ -118,39 +118,45 @@ def _attributes_from_client(client) -> Attributes:
 
 
 def _get_attributes_from_wrapper(instance, kwargs) -> Attributes:
+    # we import this here to avoid races with other instrumentations
+    from openai import NotGiven
+
+    def _is_set(value):
+        return value is not None and not isinstance(value, NotGiven)
+
     span_attributes = {
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_SYSTEM: "openai",
     }
 
-    if (request_model := kwargs.get("model")) is not None:
+    if _is_set(request_model := kwargs.get("model")):
         span_attributes[GEN_AI_REQUEST_MODEL] = request_model
 
     if client := getattr(instance, "_client", None):
         span_attributes.update(_attributes_from_client(client))
 
-    if (frequency_penalty := kwargs.get("frequency_penalty")) is not None:
+    if _is_set(frequency_penalty := kwargs.get("frequency_penalty")):
         span_attributes[GEN_AI_REQUEST_FREQUENCY_PENALTY] = frequency_penalty
-    if (max_tokens := kwargs.get("max_completion_tokens", kwargs.get("max_tokens"))) is not None:
+    if _is_set(max_tokens := kwargs.get("max_completion_tokens", kwargs.get("max_tokens"))):
         span_attributes[GEN_AI_REQUEST_MAX_TOKENS] = max_tokens
-    if (presence_penalty := kwargs.get("presence_penalty")) is not None:
+    if _is_set(presence_penalty := kwargs.get("presence_penalty")):
         span_attributes[GEN_AI_REQUEST_PRESENCE_PENALTY] = presence_penalty
-    if (temperature := kwargs.get("temperature")) is not None:
+    if _is_set(temperature := kwargs.get("temperature")):
         span_attributes[GEN_AI_REQUEST_TEMPERATURE] = temperature
-    if (top_p := kwargs.get("top_p")) is not None:
+    if _is_set(top_p := kwargs.get("top_p")):
         span_attributes[GEN_AI_REQUEST_TOP_P] = top_p
-    if (stop_sequences := kwargs.get("stop")) is not None:
+    if _is_set(stop_sequences := kwargs.get("stop")):
         if isinstance(stop_sequences, str):
             stop_sequences = [stop_sequences]
         span_attributes[GEN_AI_REQUEST_STOP_SEQUENCES] = stop_sequences
-    if (seed := kwargs.get("seed")) is not None:
+    if _is_set(seed := kwargs.get("seed")):
         span_attributes[GEN_AI_OPENAI_REQUEST_SEED] = seed
-    if (service_tier := kwargs.get("service_tier")) is not None:
+    if _is_set(service_tier := kwargs.get("service_tier")):
         span_attributes[GEN_AI_OPENAI_REQUEST_SERVICE_TIER] = service_tier
-    if (response_format := kwargs.get("response_format")) is not None:
+    if _is_set(response_format := kwargs.get("response_format")):
         # response_format may be string or object with a string in the `type` key
         if isinstance(response_format, Mapping):
-            if (response_format_type := response_format.get("type")) is not None:
+            if _is_set(response_format_type := response_format.get("type")):
                 span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = response_format_type
         else:
             span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = response_format
@@ -168,18 +174,24 @@ def _span_name_from_attributes(attributes: Attributes) -> str:
 
 
 def _get_embeddings_attributes_from_wrapper(instance, kwargs) -> Attributes:
+    # we import this here to avoid races with other instrumentations
+    from openai import NotGiven
+
+    def _is_set(value):
+        return value is not None and not isinstance(value, NotGiven)
+
     span_attributes = {
         GEN_AI_OPERATION_NAME: "embeddings",
         GEN_AI_SYSTEM: "openai",
     }
 
-    if (request_model := kwargs.get("model")) is not None:
+    if _is_set(request_model := kwargs.get("model")):
         span_attributes[GEN_AI_REQUEST_MODEL] = request_model
 
     if client := getattr(instance, "_client", None):
         span_attributes.update(_attributes_from_client(client))
 
-    if (encoding_format := kwargs.get("encoding_format")) is not None:
+    if _is_set(encoding_format := kwargs.get("encoding_format")):
         span_attributes[GEN_AI_REQUEST_ENCODING_FORMATS] = [encoding_format]
 
     return span_attributes
