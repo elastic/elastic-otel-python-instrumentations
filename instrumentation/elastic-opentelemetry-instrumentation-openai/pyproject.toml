@@ -41,7 +41,7 @@ Homepage = "https://github.com/elastic/elastic-otel-python-instrumentations"
 "Bug Tracker" = "https://github.com/elastic/elastic-otel-python-instrumentations/issues"
 
 [project.optional-dependencies]
-dev = ["pytest", "pip-tools", "openai", "numpy", "opentelemetry-test-utils", "vcrpy", "pytest-asyncio", "pytest-vcr"]
+dev = ["pytest", "pip-tools", "openai", "numpy", "opentelemetry-test-utils", "vcrpy", "pytest-asyncio", "pytest-vcr", "pydantic"]
 instruments = [
   "openai >= 1.2.0",
 ]

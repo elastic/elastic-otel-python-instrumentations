@@ -50,6 +50,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, SERVER_PORT
 from opentelemetry.trace import SpanKind, StatusCode
+from pydantic import BaseModel
 
 from .conftest import (
     address_and_port,
@@ -1507,6 +1508,159 @@ def test_chat_exported_schema_version(default_openai_env, trace_exporter, metric
     for metrics in resource_metrics:
         for scope_metrics in metrics.scope_metrics:
             assert scope_metrics.schema_url == "https://opentelemetry.io/schemas/1.28.0"
+
+
+@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.vcr()
+def test_parse_response_format_json_object_with_capture_message_content(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter
+):
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+        OpenAIInstrumentor().instrument()
+
+    client = openai.OpenAI()
+
+    from pydantic import BaseModel
+
+    class Reason(BaseModel):
+        reason: str
+
+    chat_input = """Provide up to 3 words explaining why 2 + 2 equals 4 in JSON format with a 'reason' key."""
+    messages = [{"role": "user", "content": chat_input}]
+
+    response = client.beta.chat.completions.parse(
+        model=TEST_CHAT_MODEL, messages=messages, response_format={"type": "json_object"}
+    )
+    json_content = response.choices[0].message.content
+
+    assert json_content == """{\n  "reason": "Basic arithmetic rules"\n}"""
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {TEST_CHAT_MODEL}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    address, port = address_and_port(client)
+    assert dict(span.attributes) == {
+        GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
+        GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT: "json_object",
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: "chatcmpl-BCQUdjVKJTEdMSvJ2QOiAWDrK0snY",
+        GEN_AI_RESPONSE_MODEL: TEST_CHAT_RESPONSE_MODEL,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: 33,
+        GEN_AI_USAGE_OUTPUT_TOKENS: 12,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
+    }
+
+    logs = logs_exporter.get_finished_logs()
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert user_message.body == {"content": chat_input}
+
+    assert_stop_log_record(choice, json_content)
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
+        GEN_AI_RESPONSE_MODEL: TEST_CHAT_RESPONSE_MODEL,
+    }
+    assert_operation_duration_metric(
+        client, "chat", operation_duration_metric, attributes=attributes, min_data_point=0.006761051714420319
+    )
+    assert_token_usage_metric(
+        client,
+        "chat",
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=span.attributes[GEN_AI_USAGE_INPUT_TOKENS],
+        output_data_point=span.attributes[GEN_AI_USAGE_OUTPUT_TOKENS],
+    )
+
+
+class Reason(BaseModel):
+    reason: str
+
+
+@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.vcr()
+def test_parse_response_format_structured_output_with_capture_message_content(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter
+):
+    # Redo the instrumentation dance to be affected by the environment variable
+    OpenAIInstrumentor().uninstrument()
+    with mock.patch.dict("os.environ", {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"}):
+        OpenAIInstrumentor().instrument()
+
+    client = openai.OpenAI()
+
+    chat_input = """Provide up to 3 words explaining why 2 + 2 equals 4 in JSON format with a 'reason' key."""
+    messages = [{"role": "user", "content": chat_input}]
+
+    response = client.beta.chat.completions.parse(model=TEST_CHAT_MODEL, messages=messages, response_format=Reason)
+    parsed_response: Reason = response.choices[0].message.parsed
+
+    assert parsed_response == Reason(reason="Basic arithmetic operation")
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {TEST_CHAT_MODEL}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    address, port = address_and_port(client)
+    assert dict(span.attributes) == {
+        GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
+        GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT: "json_schema",
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: "chatcmpl-BCQyQRM6O8IAVbMuCXPbdLjZWwJrX",
+        GEN_AI_RESPONSE_MODEL: TEST_CHAT_RESPONSE_MODEL,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: 69,
+        GEN_AI_USAGE_OUTPUT_TOKENS: 8,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
+    }
+
+    logs = logs_exporter.get_finished_logs()
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert user_message.attributes == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert user_message.body == {"content": chat_input}
+
+    assert_stop_log_record(choice, parsed_response.model_dump_json())
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
+        GEN_AI_RESPONSE_MODEL: TEST_CHAT_RESPONSE_MODEL,
+    }
+    assert_operation_duration_metric(
+        client, "chat", operation_duration_metric, attributes=attributes, min_data_point=0.006761051714420319
+    )
+    assert_token_usage_metric(
+        client,
+        "chat",
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=span.attributes[GEN_AI_USAGE_INPUT_TOKENS],
+        output_data_point=span.attributes[GEN_AI_USAGE_OUTPUT_TOKENS],
+    )
 
 
 @dataclass
