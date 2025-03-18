@@ -119,10 +119,16 @@ def _attributes_from_client(client) -> Attributes:
 
 def _get_attributes_from_wrapper(instance, kwargs) -> Attributes:
     # we import this here to avoid races with other instrumentations
-    from openai import NotGiven
+    try:
+        # available since 1.13.4
+        from openai import NotGiven
+    except ImportError:
+        NotGiven = None
 
     def _is_set(value):
-        return value is not None and not isinstance(value, NotGiven)
+        if NotGiven is not None:
+            return value is not None and not isinstance(value, NotGiven)
+        return value is not None
 
     span_attributes = {
         GEN_AI_OPERATION_NAME: "chat",
@@ -175,10 +181,16 @@ def _span_name_from_attributes(attributes: Attributes) -> str:
 
 def _get_embeddings_attributes_from_wrapper(instance, kwargs) -> Attributes:
     # we import this here to avoid races with other instrumentations
-    from openai import NotGiven
+    try:
+        # available since 1.13.4
+        from openai import NotGiven
+    except ImportError:
+        NotGiven = None
 
     def _is_set(value):
-        return value is not None and not isinstance(value, NotGiven)
+        if NotGiven is not None:
+            return value is not None and not isinstance(value, NotGiven)
+        return value is not None
 
     span_attributes = {
         GEN_AI_OPERATION_NAME: "embeddings",
