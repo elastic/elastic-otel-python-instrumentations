@@ -291,6 +291,86 @@ def test_chat_all_the_client_options(default_openai_env, trace_exporter, metrics
     )
 
 
+@pytest.mark.skipif(OPENAI_VERSION < (1, 35, 0), reason="service tier added in 1.35.0")
+@pytest.mark.vcr()
+def test_chat_all_the_client_options_not_given(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
+    client = openai.OpenAI()
+
+    messages = [
+        {
+            "role": "user",
+            "content": TEST_CHAT_INPUT,
+        }
+    ]
+
+    params = {
+        "model": TEST_CHAT_MODEL,
+        "messages": messages,
+        "frequency_penalty": openai.NOT_GIVEN,
+        "max_completion_tokens": openai.NOT_GIVEN,
+        "presence_penalty": openai.NOT_GIVEN,
+        "temperature": openai.NOT_GIVEN,
+        "top_p": openai.NOT_GIVEN,
+        "stop": openai.NOT_GIVEN,
+        "seed": openai.NOT_GIVEN,
+        "service_tier": openai.NOT_GIVEN,
+        "response_format": openai.NOT_GIVEN,
+    }
+    chat_completion = client.chat.completions.create(**params)
+
+    assert chat_completion.choices[0].message.content == "Atlantic Ocean"
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {TEST_CHAT_MODEL}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    address, port = address_and_port(client)
+    expected_attrs = {
+        GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: "chatcmpl-BCOdmGkOZ511LwlA800bJkFWf528Z",
+        GEN_AI_RESPONSE_MODEL: TEST_CHAT_RESPONSE_MODEL,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        GEN_AI_USAGE_INPUT_TOKENS: 22,
+        GEN_AI_USAGE_OUTPUT_TOKENS: 3,
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
+    }
+    assert dict(span.attributes) == expected_attrs
+
+    logs = logs_exporter.get_finished_logs()
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert dict(user_message.body) == {}
+
+    assert_stop_log_record(choice)
+
+    operation_duration_metric, token_usage_metric = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
+        GEN_AI_RESPONSE_MODEL: TEST_CHAT_RESPONSE_MODEL,
+    }
+    assert_operation_duration_metric(
+        client, "chat", operation_duration_metric, attributes=attributes, min_data_point=0.006761051714420319
+    )
+    assert_token_usage_metric(
+        client,
+        "chat",
+        token_usage_metric,
+        attributes=attributes,
+        input_data_point=span.attributes[GEN_AI_USAGE_INPUT_TOKENS],
+        output_data_point=span.attributes[GEN_AI_USAGE_OUTPUT_TOKENS],
+    )
+
+
 @pytest.mark.vcr()
 def test_chat_multiple_choices_with_capture_message_content(
     default_openai_env, trace_exporter, metrics_reader, logs_exporter
