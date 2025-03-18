@@ -164,12 +164,12 @@ def _get_attributes_from_wrapper(instance, kwargs) -> Attributes:
         if isinstance(response_format, Mapping):
             if _is_set(response_format_type := response_format.get("type")):
                 span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = response_format_type
-        elif not isinstance(response_format, str):
+        elif isinstance(response_format, str):
+            span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = response_format
+        else:
             # Assume structured output lazily parsed to a schema via type_to_response_format_param or similar.
             # e.g. pydantic._internal._model_construction.ModelMetaclass
             span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = "json_schema"
-        else:
-            span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = response_format
 
     return span_attributes
 
