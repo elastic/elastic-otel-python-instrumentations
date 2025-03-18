@@ -40,6 +40,7 @@ from .conftest import (
 )
 from .utils import MOCK_POSITIVE_FLOAT, get_sorted_metrics
 
+OPENAI_VERSION = tuple([int(x) for x in openai.version.VERSION.split(".")])
 TEST_EMBEDDINGS_MODEL = "text-embedding-3-small"
 TEST_EMBEDDINGS_INPUT = "South Atlantic Ocean."
 
@@ -131,6 +132,7 @@ def test_embeddings_all_the_client_options(default_openai_env, trace_exporter, m
     )
 
 
+@pytest.mark.skipif(OPENAI_VERSION < (1, 13, 4), reason="openai.NOT_GIVEN not available")
 @pytest.mark.vcr()
 def test_embeddings_all_the_client_options_not_given(default_openai_env, trace_exporter, metrics_reader):
     client = openai.OpenAI()
