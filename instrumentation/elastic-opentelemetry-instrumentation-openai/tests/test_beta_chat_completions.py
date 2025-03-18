@@ -1522,11 +1522,6 @@ def test_parse_response_format_json_object_with_capture_message_content(
 
     client = openai.OpenAI()
 
-    from pydantic import BaseModel
-
-    class Reason(BaseModel):
-        reason: str
-
     chat_input = """Provide up to 3 words explaining why 2 + 2 equals 4 in JSON format with a 'reason' key."""
     messages = [{"role": "user", "content": chat_input}]
 
