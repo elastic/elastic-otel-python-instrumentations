@@ -2,7 +2,7 @@
 
 An OpenTelemetry instrumentation for the `openai` client library.
 
-This instrumentation currently supports instrumenting the chat completions and the embeddings APIs.
+This instrumentation currently supports instrumenting the chat completions (create and parse (beta) APIs) and the embeddings API.
 
 We currently support the following features:
 - `sync` and `async` chat completions
