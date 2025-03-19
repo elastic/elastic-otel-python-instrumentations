@@ -109,32 +109,24 @@ class StreamWrapper(ObjectProxy):
         if hasattr(chunk, "service_tier"):
             self.service_tier = chunk.service_tier
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.end(exc_value)
-
     def __iter__(self):
-        return self
-
-    def __aiter__(self):
-        return self
-
-    def __next__(self):
         try:
-            chunk = next(self.__wrapped__)
-            self.process_chunk(chunk)
-            return chunk
+            for chunk in self.__wrapped__:
+                self.process_chunk(chunk)
+                yield chunk
         except Exception as exc:
             self.end(exc)
             raise
+        self.end()
 
-    async def __anext__(self):
+    async def __aiter__(self):
         try:
-            chunk = await self.__wrapped__.__anext__()
-            self.process_chunk(chunk)
-            return chunk
+            async for chunk in self.__wrapped__:
+                print("chunk")
+                self.process_chunk(chunk)
+                yield chunk
         except Exception as exc:
+            print("exc!", exc)
             self.end(exc)
             raise
+        self.end()
