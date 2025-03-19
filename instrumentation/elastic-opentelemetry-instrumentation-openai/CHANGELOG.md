@@ -1,5 +1,12 @@
 # Elastic OpenTelemetry Instrumentation OpenAI
 
+## v0.7.0
+
+- Map non-string, non-dict schema as json_schema (#68, Adrian Cole)
+- Don't set attributes if they are NotGiven (#67)
+- Apply instrumentation to beta.chat.Completions.parse (#65, Anuraag (Rag) Agrawal)
+- Fix README venv installation command and dotenv (#63, Anuraag (Rag) Agrawal)
+
 ## v0.6.1
 
 - Handle message with developer role (#58)
