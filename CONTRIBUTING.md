@@ -109,6 +109,6 @@ If you have commit access, the process is as follows:
    Copy the changelog for the release to the tag message, removing any leading `#`.
 1. Push tag upstream with `git push upstream --tags` (and optionally to your own fork as well)
 1. After tests pass, Github Actions will automatically build and push the new release to PyPI.
-1. Edit and publish the [draft Github release](https://github.com/elastic/elastic-otel-python/releases)
+1. Edit and publish the [draft Github release](https://github.com/elastic/elastic-otel-python-instrumentations/releases)
    created by Github Actions. Substitute the generated changelog with one hand written into the body of the
    release.
