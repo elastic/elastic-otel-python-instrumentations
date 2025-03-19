@@ -28,13 +28,14 @@ from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.trace import Span
 from opentelemetry.trace.status import StatusCode
 from opentelemetry.util.types import Attributes
+from wrapt import ObjectProxy
 
 EVENT_GEN_AI_CONTENT_COMPLETION = "gen_ai.content.completion"
 
 logger = logging.getLogger(__name__)
 
 
-class StreamWrapper:
+class StreamWrapper(ObjectProxy):
     def __init__(
         self,
         stream,
@@ -47,7 +48,8 @@ class StreamWrapper:
         token_usage_metric: Histogram,
         operation_duration_metric: Histogram,
     ):
-        self.stream = stream
+        super().__init__(stream)
+
         self.span = span
         self.span_attributes = span_attributes
         self.capture_message_content = capture_message_content
@@ -121,7 +123,7 @@ class StreamWrapper:
 
     def __next__(self):
         try:
-            chunk = next(self.stream)
+            chunk = next(self.__wrapped__)
             self.process_chunk(chunk)
             return chunk
         except Exception as exc:
@@ -130,7 +132,7 @@ class StreamWrapper:
 
     async def __anext__(self):
         try:
-            chunk = await self.stream.__anext__()
+            chunk = await self.__wrapped__.__anext__()
             self.process_chunk(chunk)
             return chunk
         except Exception as exc:
