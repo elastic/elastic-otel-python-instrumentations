@@ -26,6 +26,10 @@ from opentelemetry import metrics, trace
 from opentelemetry._events import set_event_logger_provider
 from opentelemetry._logs import set_logger_provider
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+from opentelemetry.instrumentation.openai.metrics import (
+    _GEN_AI_CLIENT_OPERATION_DURATION_BUCKETS,
+    _GEN_AI_CLIENT_TOKEN_USAGE_BUCKETS,
+)
 from opentelemetry.metrics import Histogram
 from opentelemetry.sdk._events import EventLoggerProvider
 from opentelemetry.sdk._logs import LoggerProvider
@@ -219,6 +223,7 @@ def assert_operation_duration_metric(
                 max_data_point=max_data_point,
                 min_data_point=min_data_point,
                 attributes={**default_attributes, **attributes},
+                explicit_bounds=tuple(_GEN_AI_CLIENT_OPERATION_DURATION_BUCKETS),
             ),
         ],
         est_value_delta=0.25,
@@ -245,6 +250,7 @@ def assert_error_operation_duration_metric(
                 max_data_point=data_point,
                 min_data_point=data_point,
                 attributes={**default_attributes, **attributes},
+                explicit_bounds=tuple(_GEN_AI_CLIENT_OPERATION_DURATION_BUCKETS),
             ),
         ],
         est_value_delta=value_delta,
@@ -272,6 +278,7 @@ def assert_token_usage_input_metric(
                 max_data_point=input_data_point,
                 min_data_point=input_data_point,
                 attributes={**default_attributes, **attributes},
+                explicit_bounds=tuple(_GEN_AI_CLIENT_TOKEN_USAGE_BUCKETS),
             ),
         ],
     )
@@ -320,6 +327,7 @@ def assert_token_usage_metric(
                 max_data_point=max_input,
                 min_data_point=min_input,
                 attributes={**default_attributes, **attributes, "gen_ai.token.type": "input"},
+                explicit_bounds=tuple(_GEN_AI_CLIENT_TOKEN_USAGE_BUCKETS),
             ),
             create_histogram_data_point(
                 count=count,
@@ -327,6 +335,7 @@ def assert_token_usage_metric(
                 max_data_point=max_output,
                 min_data_point=min_output,
                 attributes={**default_attributes, **attributes, "gen_ai.token.type": "output"},
+                explicit_bounds=tuple(_GEN_AI_CLIENT_TOKEN_USAGE_BUCKETS),
             ),
         ],
     )

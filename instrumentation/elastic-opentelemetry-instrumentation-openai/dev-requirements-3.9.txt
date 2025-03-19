@@ -14,13 +14,13 @@ asgiref==3.8.1
     # via opentelemetry-test-utils
 build==1.2.2.post1
     # via pip-tools
-certifi==2024.8.30
+certifi==2025.1.31
     # via
     #   httpcore
     #   httpx
-click==8.1.7
+click==8.1.8
     # via pip-tools
-deprecated==1.2.15
+deprecated==1.2.18
     # via
     #   opentelemetry-api
     #   opentelemetry-semantic-conventions
@@ -47,31 +47,31 @@ importlib-metadata==8.5.0
     #   opentelemetry-api
 iniconfig==2.0.0
     # via pytest
-jiter==0.7.1
+jiter==0.9.0
     # via openai
 multidict==6.1.0
     # via yarl
 numpy==1.24.4
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-openai==1.54.4
+openai==1.66.5
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-opentelemetry-api==1.28.2
+opentelemetry-api==1.31.0
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   opentelemetry-instrumentation
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
     #   opentelemetry-test-utils
-opentelemetry-instrumentation==0.49b2
+opentelemetry-instrumentation==0.52b0
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-opentelemetry-sdk==1.28.2
+opentelemetry-sdk==1.31.0
     # via opentelemetry-test-utils
-opentelemetry-semantic-conventions==0.49b2
+opentelemetry-semantic-conventions==0.52b0
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   opentelemetry-instrumentation
     #   opentelemetry-sdk
-opentelemetry-test-utils==0.49b2
+opentelemetry-test-utils==0.52b0
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
 packaging==24.2
     # via
@@ -84,15 +84,17 @@ pluggy==1.5.0
     # via pytest
 propcache==0.2.0
     # via yarl
-pydantic==2.9.2
-    # via openai
-pydantic-core==2.23.4
+pydantic==2.10.6
+    # via
+    #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
+    #   openai
+pydantic-core==2.27.2
     # via pydantic
 pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
-pytest==8.3.3
+pytest==8.3.5
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   pytest-asyncio
@@ -106,14 +108,13 @@ pyyaml==6.0.2
 sniffio==1.3.1
     # via
     #   anyio
-    #   httpx
     #   openai
-tomli==2.1.0
+tomli==2.2.1
     # via
     #   build
     #   pip-tools
     #   pytest
-tqdm==4.67.0
+tqdm==4.67.1
     # via openai
 typing-extensions==4.12.2
     # via
@@ -131,9 +132,9 @@ vcrpy==6.0.2
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   pytest-vcr
-wheel==0.45.0
+wheel==0.45.1
     # via pip-tools
-wrapt==1.16.0
+wrapt==1.17.2
     # via
     #   deprecated
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)

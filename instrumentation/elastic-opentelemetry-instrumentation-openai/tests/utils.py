@@ -86,7 +86,11 @@ def is_data_points_equal(
         ):
             return False
 
-    return values_diff <= est_value_delta and expected_data_point.attributes == dict(data_point.attributes)
+    return (
+        values_diff <= est_value_delta
+        and expected_data_point.attributes == dict(data_point.attributes)
+        and expected_data_point.explicit_bounds == data_point.explicit_bounds
+    )
 
 
 def assert_data_point_expected(
@@ -115,7 +119,9 @@ def create_number_data_point(value, attributes):
     )
 
 
-def create_histogram_data_point(sum_data_point, count, max_data_point, min_data_point, attributes):
+def create_histogram_data_point(
+    sum_data_point, count, max_data_point, min_data_point, attributes, explicit_bounds=None
+):
     return HistogramDataPoint(
         count=count,
         sum=sum_data_point,
@@ -125,7 +131,7 @@ def create_histogram_data_point(sum_data_point, count, max_data_point, min_data_
         start_time_unix_nano=0,
         time_unix_nano=0,
         bucket_counts=[],
-        explicit_bounds=[],
+        explicit_bounds=explicit_bounds or [],
     )
 
 
