@@ -66,8 +66,7 @@ class StreamWrapper(ObjectProxy):
         self.service_tier = None
 
     def end(self, exc=None):
-        # StopIteration is not an error, it signals that we have consumed all the stream
-        if exc is not None and not isinstance(exc, (StopIteration, StopAsyncIteration)):
+        if exc is not None:
             self.span.set_status(StatusCode.ERROR, str(exc))
             self.span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
             self.span.end()
