@@ -36,14 +36,18 @@ from opentelemetry.instrumentation.openai.helpers import (
     _send_log_events_from_messages,
     _span_name_from_attributes,
 )
+from opentelemetry.instrumentation.openai.metrics import (
+    _GEN_AI_CLIENT_OPERATION_DURATION_BUCKETS,
+    _GEN_AI_CLIENT_TOKEN_USAGE_BUCKETS,
+)
 from opentelemetry.instrumentation.openai.package import _instruments
 from opentelemetry.instrumentation.openai.version import __version__
 from opentelemetry.instrumentation.openai.wrappers import StreamWrapper
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
 from opentelemetry.semconv._incubating.metrics.gen_ai_metrics import (
-    create_gen_ai_client_operation_duration,
-    create_gen_ai_client_token_usage,
+    GEN_AI_CLIENT_OPERATION_DURATION,
+    GEN_AI_CLIENT_TOKEN_USAGE,
 )
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv.schemas import Schemas
@@ -94,8 +98,19 @@ class OpenAIInstrumentor(BaseInstrumentor):
         event_logger_provider = kwargs.get("event_logger_provider")
         self.event_logger = get_event_logger(__name__, event_logger_provider)
 
-        self.token_usage_metric = create_gen_ai_client_token_usage(self.meter)
-        self.operation_duration_metric = create_gen_ai_client_operation_duration(self.meter)
+        self.token_usage_metric = self.meter.create_histogram(
+            name=GEN_AI_CLIENT_TOKEN_USAGE,
+            description="Measures number of input and output tokens used",
+            unit="{token}",
+            explicit_bucket_boundaries_advisory=_GEN_AI_CLIENT_TOKEN_USAGE_BUCKETS,
+        )
+
+        self.operation_duration_metric = self.meter.create_histogram(
+            name=GEN_AI_CLIENT_OPERATION_DURATION,
+            description="GenAI operation duration",
+            unit="s",
+            explicit_bucket_boundaries_advisory=_GEN_AI_CLIENT_OPERATION_DURATION_BUCKETS,
+        )
 
         register_post_import_hook(self._patch, "openai")
 
