@@ -47,7 +47,9 @@ class StreamWrapper(ObjectProxy):
         start_time: float,
         token_usage_metric: Histogram,
         operation_duration_metric: Histogram,
+        is_raw_response: bool,
     ):
+        # we need to wrap the original response even in case of raw_responses
         super().__init__(stream)
 
         self.span = span
@@ -58,6 +60,7 @@ class StreamWrapper(ObjectProxy):
         self.token_usage_metric = token_usage_metric
         self.operation_duration_metric = operation_duration_metric
         self.start_time = start_time
+        self.is_raw_response = is_raw_response
 
         self.response_id = None
         self.model = None
@@ -109,8 +112,11 @@ class StreamWrapper(ObjectProxy):
             self.service_tier = chunk.service_tier
 
     def __iter__(self):
+        stream = self.__wrapped__
         try:
-            for chunk in self.__wrapped__:
+            if self.is_raw_response:
+                stream = stream.parse()
+            for chunk in stream:
                 self.process_chunk(chunk)
                 yield chunk
         except Exception as exc:
@@ -119,13 +125,14 @@ class StreamWrapper(ObjectProxy):
         self.end()
 
     async def __aiter__(self):
+        stream = self.__wrapped__
         try:
-            async for chunk in self.__wrapped__:
-                print("chunk")
+            if self.is_raw_response:
+                stream = stream.parse()
+            async for chunk in stream:
                 self.process_chunk(chunk)
                 yield chunk
         except Exception as exc:
-            print("exc!", exc)
             self.end(exc)
             raise
         self.end()

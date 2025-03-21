@@ -163,6 +163,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
         unwrap(openai.resources.embeddings.AsyncEmbeddings, "create")
 
     def _chat_completion_wrapper(self, wrapped, instance, args, kwargs):
+        from openai._legacy_response import LegacyAPIResponse
+
         logger.debug(f"{wrapped} kwargs: {kwargs}")
 
         span_attributes = _get_attributes_from_wrapper(instance, kwargs)
@@ -195,6 +197,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 _record_operation_duration_metric(self.operation_duration_metric, error_attributes, start_time)
                 raise
 
+            is_raw_response = isinstance(result, LegacyAPIResponse)
             if kwargs.get("stream"):
                 return StreamWrapper(
                     stream=result,
@@ -206,10 +209,14 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     start_time=start_time,
                     token_usage_metric=self.token_usage_metric,
                     operation_duration_metric=self.operation_duration_metric,
+                    is_raw_response=is_raw_response,
                 )
 
             logger.debug(f"openai.resources.chat.completions.Completions.create result: {result}")
 
+            # if the caller is using with_raw_response we need to parse the output to get the response class we expect
+            if is_raw_response:
+                result = result.parse()
             response_attributes = _get_attributes_from_response(
                 result.id, result.model, result.choices, result.usage, getattr(result, "service_tier", None)
             )
@@ -233,6 +240,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
             return result
 
     async def _async_chat_completion_wrapper(self, wrapped, instance, args, kwargs):
+        from openai._legacy_response import LegacyAPIResponse
+
         logger.debug(f"openai.resources.chat.completions.AsyncCompletions.create kwargs: {kwargs}")
 
         span_attributes = _get_attributes_from_wrapper(instance, kwargs)
@@ -265,6 +274,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 _record_operation_duration_metric(self.operation_duration_metric, error_attributes, start_time)
                 raise
 
+            is_raw_response = isinstance(result, LegacyAPIResponse)
             if kwargs.get("stream"):
                 return StreamWrapper(
                     stream=result,
@@ -276,10 +286,14 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     start_time=start_time,
                     token_usage_metric=self.token_usage_metric,
                     operation_duration_metric=self.operation_duration_metric,
+                    is_raw_response=is_raw_response,
                 )
 
             logger.debug(f"openai.resources.chat.completions.AsyncCompletions.create result: {result}")
 
+            # if the caller is using with_raw_response we need to parse the output to get the response class we expect
+            if is_raw_response:
+                result = result.parse()
             response_attributes = _get_attributes_from_response(
                 result.id, result.model, result.choices, result.usage, getattr(result, "service_tier", None)
             )
