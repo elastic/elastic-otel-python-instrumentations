@@ -28,13 +28,14 @@ from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.trace import Span
 from opentelemetry.trace.status import StatusCode
 from opentelemetry.util.types import Attributes
+from wrapt import ObjectProxy
 
 EVENT_GEN_AI_CONTENT_COMPLETION = "gen_ai.content.completion"
 
 logger = logging.getLogger(__name__)
 
 
-class StreamWrapper:
+class StreamWrapper(ObjectProxy):
     def __init__(
         self,
         stream,
@@ -46,8 +47,11 @@ class StreamWrapper:
         start_time: float,
         token_usage_metric: Histogram,
         operation_duration_metric: Histogram,
+        is_raw_response: bool,
     ):
-        self.stream = stream
+        # we need to wrap the original response even in case of raw_responses
+        super().__init__(stream)
+
         self.span = span
         self.span_attributes = span_attributes
         self.capture_message_content = capture_message_content
@@ -56,6 +60,7 @@ class StreamWrapper:
         self.token_usage_metric = token_usage_metric
         self.operation_duration_metric = operation_duration_metric
         self.start_time = start_time
+        self.is_raw_response = is_raw_response
 
         self.response_id = None
         self.model = None
@@ -64,8 +69,7 @@ class StreamWrapper:
         self.service_tier = None
 
     def end(self, exc=None):
-        # StopIteration is not an error, it signals that we have consumed all the stream
-        if exc is not None and not isinstance(exc, (StopIteration, StopAsyncIteration)):
+        if exc is not None:
             self.span.set_status(StatusCode.ERROR, str(exc))
             self.span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
             self.span.end()
@@ -107,32 +111,28 @@ class StreamWrapper:
         if hasattr(chunk, "service_tier"):
             self.service_tier = chunk.service_tier
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.end(exc_value)
-
     def __iter__(self):
-        return self
-
-    def __aiter__(self):
-        return self
-
-    def __next__(self):
+        stream = self.__wrapped__
         try:
-            chunk = next(self.stream)
-            self.process_chunk(chunk)
-            return chunk
+            if self.is_raw_response:
+                stream = stream.parse()
+            for chunk in stream:
+                self.process_chunk(chunk)
+                yield chunk
         except Exception as exc:
             self.end(exc)
             raise
+        self.end()
 
-    async def __anext__(self):
+    async def __aiter__(self):
+        stream = self.__wrapped__
         try:
-            chunk = await self.stream.__anext__()
-            self.process_chunk(chunk)
-            return chunk
+            if self.is_raw_response:
+                stream = stream.parse()
+            async for chunk in stream:
+                self.process_chunk(chunk)
+                yield chunk
         except Exception as exc:
             self.end(exc)
             raise
+        self.end()
