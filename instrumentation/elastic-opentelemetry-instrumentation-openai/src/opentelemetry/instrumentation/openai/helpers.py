@@ -373,3 +373,13 @@ def _send_log_events_from_stream_choices(
         trace_flags=ctx.trace_flags,
     )
     event_logger.emit(event)
+
+
+def _is_raw_response(response):
+    try:
+        # available since 1.8.0
+        from openai._legacy_response import LegacyAPIResponse
+    except ImportError:
+        return False
+
+    return isinstance(response, LegacyAPIResponse)

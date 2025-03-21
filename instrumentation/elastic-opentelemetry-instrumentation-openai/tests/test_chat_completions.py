@@ -130,6 +130,7 @@ def test_chat(default_openai_env, trace_exporter, metrics_reader, logs_exporter)
     )
 
 
+@pytest.mark.skipif(OPENAI_VERSION < (1, 8, 0), reason="LegacyAPIResponse available")
 @pytest.mark.vcr()
 def test_chat_with_raw_response(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
     client = openai.OpenAI()
@@ -1078,6 +1079,7 @@ def test_chat_stream(default_openai_env, trace_exporter, metrics_reader, logs_ex
     )
 
 
+@pytest.mark.skipif(OPENAI_VERSION < (1, 8, 0), reason="LegacyAPIResponse available")
 @pytest.mark.vcr()
 def test_chat_stream_with_raw_response(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
     client = openai.OpenAI()
@@ -1801,6 +1803,7 @@ async def test_chat_async(default_openai_env, trace_exporter, metrics_reader, lo
     )
 
 
+@pytest.mark.skipif(OPENAI_VERSION < (1, 8, 0), reason="LegacyAPIResponse available")
 @pytest.mark.asyncio
 @pytest.mark.vcr()
 async def test_chat_async_with_raw_response(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
@@ -2069,6 +2072,7 @@ async def test_chat_async_stream(default_openai_env, trace_exporter, metrics_rea
     )
 
 
+@pytest.mark.skipif(OPENAI_VERSION < (1, 8, 0), reason="LegacyAPIResponse available")
 @pytest.mark.vcr()
 @pytest.mark.asyncio
 async def test_chat_async_stream_with_raw_response(default_openai_env, trace_exporter, metrics_reader, logs_exporter):

@@ -30,6 +30,7 @@ from opentelemetry.instrumentation.openai.helpers import (
     _get_embeddings_attributes_from_response,
     _get_embeddings_attributes_from_wrapper,
     _get_event_attributes,
+    _is_raw_response,
     _record_operation_duration_metric,
     _record_token_usage_metrics,
     _send_log_events_from_choices,
@@ -163,8 +164,6 @@ class OpenAIInstrumentor(BaseInstrumentor):
         unwrap(openai.resources.embeddings.AsyncEmbeddings, "create")
 
     def _chat_completion_wrapper(self, wrapped, instance, args, kwargs):
-        from openai._legacy_response import LegacyAPIResponse
-
         logger.debug(f"{wrapped} kwargs: {kwargs}")
 
         span_attributes = _get_attributes_from_wrapper(instance, kwargs)
@@ -197,7 +196,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 _record_operation_duration_metric(self.operation_duration_metric, error_attributes, start_time)
                 raise
 
-            is_raw_response = isinstance(result, LegacyAPIResponse)
+            is_raw_response = _is_raw_response(result)
             if kwargs.get("stream"):
                 return StreamWrapper(
                     stream=result,
@@ -240,8 +239,6 @@ class OpenAIInstrumentor(BaseInstrumentor):
             return result
 
     async def _async_chat_completion_wrapper(self, wrapped, instance, args, kwargs):
-        from openai._legacy_response import LegacyAPIResponse
-
         logger.debug(f"openai.resources.chat.completions.AsyncCompletions.create kwargs: {kwargs}")
 
         span_attributes = _get_attributes_from_wrapper(instance, kwargs)
@@ -274,7 +271,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 _record_operation_duration_metric(self.operation_duration_metric, error_attributes, start_time)
                 raise
 
-            is_raw_response = isinstance(result, LegacyAPIResponse)
+            is_raw_response = _is_raw_response(result)
             if kwargs.get("stream"):
                 return StreamWrapper(
                     stream=result,
