@@ -1,5 +1,10 @@
 # Elastic OpenTelemetry Instrumentation OpenAI
 
+## v1.0.0
+
+- Fix instrumentation of with_raw_response (#73)
+- Use proper GenAI suggested buckets for metrics, requires 1.31.0+ SDK (#72)
+
 ## v0.7.0
 
 - Map non-string, non-dict schema as json_schema (#68, Adrian Cole)
