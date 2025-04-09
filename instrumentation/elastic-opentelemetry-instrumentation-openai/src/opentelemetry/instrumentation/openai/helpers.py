@@ -25,6 +25,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
     GEN_AI_OPENAI_RESPONSE_SERVICE_TIER,
     GEN_AI_OPERATION_NAME,
+    GEN_AI_REQUEST_CHOICE_COUNT,
     GEN_AI_REQUEST_FREQUENCY_PENALTY,
     GEN_AI_REQUEST_MAX_TOKENS,
     GEN_AI_REQUEST_MODEL,
@@ -141,6 +142,8 @@ def _get_attributes_from_wrapper(instance, kwargs) -> Attributes:
     if client := getattr(instance, "_client", None):
         span_attributes.update(_attributes_from_client(client))
 
+    if _is_set(choice_count := kwargs.get("n")):
+        span_attributes[GEN_AI_REQUEST_CHOICE_COUNT] = choice_count
     if _is_set(frequency_penalty := kwargs.get("frequency_penalty")):
         span_attributes[GEN_AI_REQUEST_FREQUENCY_PENALTY] = frequency_penalty
     if _is_set(max_tokens := kwargs.get("max_completion_tokens", kwargs.get("max_tokens"))):

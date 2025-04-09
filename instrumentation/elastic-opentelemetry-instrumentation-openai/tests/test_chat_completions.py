@@ -39,6 +39,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_REQUEST_STOP_SEQUENCES,
     GEN_AI_REQUEST_TEMPERATURE,
     GEN_AI_REQUEST_TOP_P,
+    GEN_AI_REQUEST_CHOICE_COUNT,
     GEN_AI_RESPONSE_FINISH_REASONS,
     GEN_AI_RESPONSE_ID,
     GEN_AI_RESPONSE_MODEL,
@@ -471,6 +472,7 @@ def test_chat_multiple_choices_with_capture_message_content(
     address, port = address_and_port(client)
     assert dict(span.attributes) == {
         GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_CHOICE_COUNT: 2,
         GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
         GEN_AI_SYSTEM: "openai",
         GEN_AI_RESPONSE_ID: "chatcmpl-AfhuHpVEbcYGlsFuHOP60MtU4tIq9",
