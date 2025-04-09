@@ -1,9 +1,5 @@
 # Elastic OpenTelemetry Instrumentation OpenAI
 
-## v1.1.0
-
-- Support `gen_ai.request.choice.count` span attribute (#75)
-
 ## v1.0.0
 
 - Fix instrumentation of with_raw_response (#73)
