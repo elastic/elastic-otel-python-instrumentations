@@ -150,7 +150,7 @@ def test_chat_n_1(default_openai_env, trace_exporter, metrics_reader, logs_expor
     assert len(spans) == 1
 
     span = spans[0]
-    assert not hasattr(span.attributes, GEN_AI_REQUEST_CHOICE_COUNT)
+    assert GEN_AI_REQUEST_CHOICE_COUNT not in span.attributes
 
 
 @pytest.mark.skipif(OPENAI_VERSION < (1, 8, 0), reason="LegacyAPIResponse available")
