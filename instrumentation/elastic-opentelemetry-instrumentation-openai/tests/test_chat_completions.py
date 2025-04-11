@@ -131,6 +131,28 @@ def test_chat(default_openai_env, trace_exporter, metrics_reader, logs_exporter)
     )
 
 
+@pytest.mark.vcr()
+def test_chat_n_1(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
+    client = openai.OpenAI()
+
+    messages = [
+        {
+            "role": "user",
+            "content": TEST_CHAT_INPUT,
+        }
+    ]
+
+    chat_completion = client.chat.completions.create(model=TEST_CHAT_MODEL, messages=messages, n=1)
+
+    assert chat_completion.choices[0].message.content == "Atlantic Ocean."
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert not hasattr(span.attributes, GEN_AI_REQUEST_CHOICE_COUNT)
+
+
 @pytest.mark.skipif(OPENAI_VERSION < (1, 8, 0), reason="LegacyAPIResponse available")
 @pytest.mark.vcr()
 def test_chat_with_raw_response(default_openai_env, trace_exporter, metrics_reader, logs_exporter):

@@ -142,7 +142,7 @@ def _get_attributes_from_wrapper(instance, kwargs) -> Attributes:
     if client := getattr(instance, "_client", None):
         span_attributes.update(_attributes_from_client(client))
 
-    if _is_set(choice_count := kwargs.get("n")):
+    if _is_set(choice_count := kwargs.get("n")) and choice_count != 1:
         span_attributes[GEN_AI_REQUEST_CHOICE_COUNT] = choice_count
     if _is_set(frequency_penalty := kwargs.get("frequency_penalty")):
         span_attributes[GEN_AI_REQUEST_FREQUENCY_PENALTY] = frequency_penalty
