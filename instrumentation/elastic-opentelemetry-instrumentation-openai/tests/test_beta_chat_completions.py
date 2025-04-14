@@ -29,7 +29,6 @@ from opentelemetry._logs import LogRecord
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT,
-    GEN_AI_OPENAI_REQUEST_SEED,
     GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
     GEN_AI_OPENAI_RESPONSE_SERVICE_TIER,
     GEN_AI_OPERATION_NAME,
@@ -38,6 +37,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_REQUEST_MAX_TOKENS,
     GEN_AI_REQUEST_MODEL,
     GEN_AI_REQUEST_PRESENCE_PENALTY,
+    GEN_AI_REQUEST_SEED,
     GEN_AI_REQUEST_STOP_SEQUENCES,
     GEN_AI_REQUEST_TEMPERATURE,
     GEN_AI_REQUEST_TOP_P,
@@ -246,7 +246,7 @@ def test_chat_all_the_client_options(default_openai_env, trace_exporter, metrics
 
     address, port = address_and_port(client)
     expected_attrs = {
-        GEN_AI_OPENAI_REQUEST_SEED: 100,
+        GEN_AI_REQUEST_SEED: 100,
         GEN_AI_OPENAI_REQUEST_SERVICE_TIER: "default",
         GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT: "text",
         GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",

@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Optional
 from opentelemetry._events import Event, EventLogger
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT,
-    GEN_AI_OPENAI_REQUEST_SEED,
     GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
     GEN_AI_OPENAI_RESPONSE_SERVICE_TIER,
     GEN_AI_OPERATION_NAME,
@@ -30,6 +29,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_REQUEST_MAX_TOKENS,
     GEN_AI_REQUEST_MODEL,
     GEN_AI_REQUEST_PRESENCE_PENALTY,
+    GEN_AI_REQUEST_SEED,
     GEN_AI_REQUEST_STOP_SEQUENCES,
     GEN_AI_REQUEST_TEMPERATURE,
     GEN_AI_REQUEST_TOP_P,
@@ -159,7 +159,7 @@ def _get_attributes_from_wrapper(instance, kwargs) -> Attributes:
             stop_sequences = [stop_sequences]
         span_attributes[GEN_AI_REQUEST_STOP_SEQUENCES] = stop_sequences
     if _is_set(seed := kwargs.get("seed")):
-        span_attributes[GEN_AI_OPENAI_REQUEST_SEED] = seed
+        span_attributes[GEN_AI_REQUEST_SEED] = seed
     if _is_set(service_tier := kwargs.get("service_tier")):
         span_attributes[GEN_AI_OPENAI_REQUEST_SERVICE_TIER] = service_tier
     if _is_set(response_format := kwargs.get("response_format")):
