@@ -20,10 +20,10 @@ from typing import TYPE_CHECKING, Optional
 
 from opentelemetry._events import Event, EventLogger
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT,
     GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
     GEN_AI_OPENAI_RESPONSE_SERVICE_TIER,
     GEN_AI_OPERATION_NAME,
+    GEN_AI_OUTPUT_TYPE,
     GEN_AI_REQUEST_CHOICE_COUNT,
     GEN_AI_REQUEST_FREQUENCY_PENALTY,
     GEN_AI_REQUEST_MAX_TOKENS,
@@ -166,13 +166,13 @@ def _get_attributes_from_wrapper(instance, kwargs) -> Attributes:
         # response_format may be string or object with a string in the `type` key
         if isinstance(response_format, Mapping):
             if _is_set(response_format_type := response_format.get("type")):
-                span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = response_format_type
+                span_attributes[GEN_AI_OUTPUT_TYPE] = response_format_type
         elif isinstance(response_format, str):
-            span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = response_format
+            span_attributes[GEN_AI_OUTPUT_TYPE] = response_format
         else:
             # Assume structured output lazily parsed to a schema via type_to_response_format_param or similar.
             # e.g. pydantic._internal._model_construction.ModelMetaclass
-            span_attributes[GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT] = "json_schema"
+            span_attributes[GEN_AI_OUTPUT_TYPE] = "json_schema"
 
     return span_attributes
 
