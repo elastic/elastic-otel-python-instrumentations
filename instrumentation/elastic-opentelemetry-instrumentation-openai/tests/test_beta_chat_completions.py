@@ -1545,7 +1545,7 @@ def test_parse_response_format_json_object_with_capture_message_content(
     address, port = address_and_port(client)
     assert dict(span.attributes) == {
         GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
-        GEN_AI_OUTPUT_TYPE: "json_object",
+        GEN_AI_OUTPUT_TYPE: "json",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
         GEN_AI_SYSTEM: "openai",
@@ -1620,7 +1620,7 @@ def test_parse_response_format_structured_output_with_capture_message_content(
     address, port = address_and_port(client)
     assert dict(span.attributes) == {
         GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
-        GEN_AI_OUTPUT_TYPE: "json_schema",
+        GEN_AI_OUTPUT_TYPE: "json",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
         GEN_AI_SYSTEM: "openai",
