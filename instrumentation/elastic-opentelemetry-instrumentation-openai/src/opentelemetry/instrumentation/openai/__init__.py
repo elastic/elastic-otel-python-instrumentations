@@ -87,14 +87,14 @@ class OpenAIInstrumentor(BaseInstrumentor):
             __name__,
             __version__,
             tracer_provider,
-            schema_url=Schemas.V1_28_0.value,
+            schema_url=Schemas.V1_31_0.value,
         )
         meter_provider = kwargs.get("meter_provider")
         self.meter = get_meter(
             __name__,
             __version__,
             meter_provider,
-            schema_url=Schemas.V1_28_0.value,
+            schema_url=Schemas.V1_31_0.value,
         )
         event_logger_provider = kwargs.get("event_logger_provider")
         self.event_logger = get_event_logger(__name__, event_logger_provider)

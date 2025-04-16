@@ -2444,14 +2444,14 @@ def test_chat_exported_schema_version(default_openai_env, trace_exporter, metric
 
     spans = trace_exporter.get_finished_spans()
     (span,) = spans
-    assert span.instrumentation_scope.schema_url == "https://opentelemetry.io/schemas/1.28.0"
+    assert span.instrumentation_scope.schema_url == "https://opentelemetry.io/schemas/1.31.0"
 
     metrics_data = metrics_reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
 
     for metrics in resource_metrics:
         for scope_metrics in metrics.scope_metrics:
-            assert scope_metrics.schema_url == "https://opentelemetry.io/schemas/1.28.0"
+            assert scope_metrics.schema_url == "https://opentelemetry.io/schemas/1.31.0"
 
 
 @dataclass
