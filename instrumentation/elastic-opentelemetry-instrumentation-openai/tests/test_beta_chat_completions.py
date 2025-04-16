@@ -28,10 +28,10 @@ from opentelemetry._events import Event
 from opentelemetry._logs import LogRecord
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT,
     GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
     GEN_AI_OPENAI_RESPONSE_SERVICE_TIER,
     GEN_AI_OPERATION_NAME,
+    GEN_AI_OUTPUT_TYPE,
     GEN_AI_REQUEST_CHOICE_COUNT,
     GEN_AI_REQUEST_FREQUENCY_PENALTY,
     GEN_AI_REQUEST_MAX_TOKENS,
@@ -248,7 +248,7 @@ def test_chat_all_the_client_options(default_openai_env, trace_exporter, metrics
     expected_attrs = {
         GEN_AI_REQUEST_SEED: 100,
         GEN_AI_OPENAI_REQUEST_SERVICE_TIER: "default",
-        GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT: "text",
+        GEN_AI_OUTPUT_TYPE: "text",
         GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_FREQUENCY_PENALTY: 0,
@@ -1502,14 +1502,14 @@ def test_chat_exported_schema_version(default_openai_env, trace_exporter, metric
 
     spans = trace_exporter.get_finished_spans()
     (span,) = spans
-    assert span.instrumentation_scope.schema_url == "https://opentelemetry.io/schemas/1.28.0"
+    assert span.instrumentation_scope.schema_url == "https://opentelemetry.io/schemas/1.31.0"
 
     metrics_data = metrics_reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
 
     for metrics in resource_metrics:
         for scope_metrics in metrics.scope_metrics:
-            assert scope_metrics.schema_url == "https://opentelemetry.io/schemas/1.28.0"
+            assert scope_metrics.schema_url == "https://opentelemetry.io/schemas/1.31.0"
 
 
 @pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
@@ -1545,7 +1545,7 @@ def test_parse_response_format_json_object_with_capture_message_content(
     address, port = address_and_port(client)
     assert dict(span.attributes) == {
         GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
-        GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT: "json_object",
+        GEN_AI_OUTPUT_TYPE: "json",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
         GEN_AI_SYSTEM: "openai",
@@ -1620,7 +1620,7 @@ def test_parse_response_format_structured_output_with_capture_message_content(
     address, port = address_and_port(client)
     assert dict(span.attributes) == {
         GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
-        GEN_AI_OPENAI_REQUEST_RESPONSE_FORMAT: "json_schema",
+        GEN_AI_OUTPUT_TYPE: "json",
         GEN_AI_OPERATION_NAME: "chat",
         GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
         GEN_AI_SYSTEM: "openai",
