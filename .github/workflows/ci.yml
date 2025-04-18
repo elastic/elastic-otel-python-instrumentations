@@ -43,6 +43,7 @@ jobs:
       py310: "3.10"
       py311: "3.11"
       py312: "3.12"
+      py313: "3.13"
       # Baseline version of openai client we support
       baseline: "1.2.0"
       latest: ""
@@ -50,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [py38, py39, py310, py311, py312]
+        python-version: [py38, py39, py310, py311, py312, py313]
         openai-version: [baseline, latest]
     steps:
     - uses: actions/checkout@v4
@@ -72,7 +73,7 @@ jobs:
       working-directory: ${{ env.working_dir }}
     - run: pytest
       working-directory: ${{ env.working_dir }}
-    - if: ${{ env[matrix.python-version] == '3.12' && !env[matrix.openai-version] && env.OPENAI_API_KEY != '' }}
+    - if: ${{ env[matrix.python-version] == '3.13' && !env[matrix.openai-version] && env.OPENAI_API_KEY != '' }}
       # Only run on latest python and openai client version because we are calling openai
       run: pytest --integration-tests
       working-directory: ${{ env.working_dir }}
