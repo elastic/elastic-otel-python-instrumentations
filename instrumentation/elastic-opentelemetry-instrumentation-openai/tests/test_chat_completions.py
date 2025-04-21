@@ -2152,6 +2152,67 @@ async def test_chat_async_stream(default_openai_env, trace_exporter, metrics_rea
     )
 
 
+@pytest.mark.vcr()
+@pytest.mark.asyncio
+async def test_chat_async_stream_with_context_manager(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter
+):
+    client = openai.AsyncOpenAI()
+
+    messages = [
+        {
+            "role": "user",
+            "content": TEST_CHAT_INPUT,
+        }
+    ]
+
+    # Use a context manager for the asynchronous streaming response
+    async with await client.chat.completions.create(
+        model=TEST_CHAT_MODEL, messages=messages, stream=True
+    ) as chat_completion:
+        chunks = [chunk.choices[0].delta.content or "" async for chunk in chat_completion if chunk.choices]
+        assert "".join(chunks) == "South Atlantic Ocean."
+
+    spans = trace_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == f"chat {TEST_CHAT_MODEL}"
+    assert span.kind == SpanKind.CLIENT
+    assert span.status.status_code == StatusCode.UNSET
+
+    address, port = address_and_port(client)
+    assert dict(span.attributes) == {
+        GEN_AI_OPERATION_NAME: "chat",
+        GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
+        GEN_AI_SYSTEM: "openai",
+        GEN_AI_RESPONSE_ID: "chatcmpl-BOja7e365tj5upRjLFinadEB8ZoDL",
+        GEN_AI_RESPONSE_MODEL: TEST_CHAT_RESPONSE_MODEL,
+        GEN_AI_RESPONSE_FINISH_REASONS: ("stop",),
+        SERVER_ADDRESS: address,
+        SERVER_PORT: port,
+        GEN_AI_OPENAI_RESPONSE_SERVICE_TIER: "default",
+    }
+
+    logs = logs_exporter.get_finished_logs()
+    assert len(logs) == 2
+    log_records = logrecords_from_logs(logs)
+    user_message, choice = log_records
+    assert dict(user_message.attributes) == {"gen_ai.system": "openai", "event.name": "gen_ai.user.message"}
+    assert dict(user_message.body) == {}
+
+    assert_stop_log_record(choice)
+
+    (operation_duration_metric,) = get_sorted_metrics(metrics_reader)
+    attributes = {
+        GEN_AI_REQUEST_MODEL: TEST_CHAT_MODEL,
+        GEN_AI_RESPONSE_MODEL: TEST_CHAT_RESPONSE_MODEL,
+    }
+    assert_operation_duration_metric(
+        client, "chat", operation_duration_metric, attributes=attributes, min_data_point=0.006761051714420319
+    )
+
+
 @pytest.mark.skipif(OPENAI_VERSION < (1, 8, 0), reason="LegacyAPIResponse available")
 @pytest.mark.vcr()
 @pytest.mark.asyncio

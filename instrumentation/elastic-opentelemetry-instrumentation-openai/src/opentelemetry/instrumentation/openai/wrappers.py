@@ -135,6 +135,13 @@ class StreamWrapper(ObjectProxy):
         if not self.in_context_manager:
             self.end()
 
+    async def __aenter__(self):
+        # No difference in behavior between sync and async context manager
+        return self.__enter__()
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        self.__exit__(exc_type, exc_value, traceback)
+
     async def __aiter__(self):
         stream = self.__wrapped__
         try:
@@ -146,4 +153,6 @@ class StreamWrapper(ObjectProxy):
         except Exception as exc:
             self.end(exc)
             raise
-        self.end()
+        # if we are inside a context manager we'll end when exiting it
+        if not self.in_context_manager:
+            self.end()
