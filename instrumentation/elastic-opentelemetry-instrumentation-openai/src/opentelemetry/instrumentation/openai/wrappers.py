@@ -67,9 +67,13 @@ class StreamWrapper(ObjectProxy):
         self.choices = []
         self.usage = None
         self.service_tier = None
-        self.in_context_manager = False
+        self.ended = False
 
     def end(self, exc=None):
+        if self.ended:
+            return
+
+        self.ended = True
         if exc is not None:
             self.span.set_status(StatusCode.ERROR, str(exc))
             self.span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
@@ -113,8 +117,6 @@ class StreamWrapper(ObjectProxy):
             self.service_tier = chunk.service_tier
 
     def __enter__(self):
-        # flag we are inside a context manager and want to follow its lifetime
-        self.in_context_manager = True
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -131,9 +133,7 @@ class StreamWrapper(ObjectProxy):
         except Exception as exc:
             self.end(exc)
             raise
-        # if we are inside a context manager we'll end when exiting it
-        if not self.in_context_manager:
-            self.end()
+        self.end()
 
     async def __aenter__(self):
         # No difference in behavior between sync and async context manager
@@ -153,6 +153,4 @@ class StreamWrapper(ObjectProxy):
         except Exception as exc:
             self.end(exc)
             raise
-        # if we are inside a context manager we'll end when exiting it
-        if not self.in_context_manager:
-            self.end()
+        self.end()
