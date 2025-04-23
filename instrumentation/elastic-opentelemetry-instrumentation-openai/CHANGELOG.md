@@ -1,5 +1,10 @@
 # Elastic OpenTelemetry Instrumentation OpenAI
 
+## v1.1.0
+
+- Fix missing or double spans when completion stream is used with context manager (#80)
+- Follow semantic conventions 1.31.0: use GEN_AI_OUTPUT_TYPE, GEN_AI_REQUEST_SEED and GEN_AI_REQUEST_CHOICE_COUNT attributes (#77, #76, #75)
+
 ## v1.0.0
 
 - Fix instrumentation of with_raw_response (#73)
