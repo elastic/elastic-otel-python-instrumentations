@@ -67,8 +67,13 @@ class StreamWrapper(ObjectProxy):
         self.choices = []
         self.usage = None
         self.service_tier = None
+        self.ended = False
 
     def end(self, exc=None):
+        if self.ended:
+            return
+
+        self.ended = True
         if exc is not None:
             self.span.set_status(StatusCode.ERROR, str(exc))
             self.span.set_attribute(ERROR_TYPE, exc.__class__.__qualname__)
@@ -111,6 +116,12 @@ class StreamWrapper(ObjectProxy):
         if hasattr(chunk, "service_tier"):
             self.service_tier = chunk.service_tier
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.end(exc_value)
+
     def __iter__(self):
         stream = self.__wrapped__
         try:
@@ -123,6 +134,13 @@ class StreamWrapper(ObjectProxy):
             self.end(exc)
             raise
         self.end()
+
+    async def __aenter__(self):
+        # No difference in behavior between sync and async context manager
+        return self.__enter__()
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        self.__exit__(exc_type, exc_value, traceback)
 
     async def __aiter__(self):
         stream = self.__wrapped__
