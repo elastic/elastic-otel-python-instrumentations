@@ -154,3 +154,29 @@ class StreamWrapper(ObjectProxy):
             self.end(exc)
             raise
         self.end()
+
+    def parse(self):
+        """
+        Handles direct parse() call on the client in order to maintain instrumentation on the parsed iterator.
+        """
+        parsed_iterator = self.__wrapped__.parse()
+
+        parsed_wrapper = StreamWrapper(
+            stream=parsed_iterator,
+            span=self.span,
+            span_attributes=self.span_attributes,
+            capture_message_content=self.capture_message_content,
+            event_attributes=self.event_attributes,
+            event_logger=self.event_logger,
+            start_time=self.start_time,
+            token_usage_metric=self.token_usage_metric,
+            operation_duration_metric=self.operation_duration_metric,
+            # Crucially, mark the new wrapper as NOT raw after parsing
+            is_raw_response=False,
+        )
+
+        # Handle original sync/async iterators accordingly
+        if hasattr(parsed_iterator, "__aiter__"):
+            return parsed_wrapper.__aiter__()
+
+        return parsed_wrapper.__iter__()
