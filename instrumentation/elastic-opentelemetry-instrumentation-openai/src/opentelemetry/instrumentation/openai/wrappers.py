@@ -47,7 +47,6 @@ class StreamWrapper(ObjectProxy):
         start_time: float,
         token_usage_metric: Histogram,
         operation_duration_metric: Histogram,
-        is_raw_response: bool,
     ):
         # we need to wrap the original response even in case of raw_responses
         super().__init__(stream)
@@ -60,7 +59,6 @@ class StreamWrapper(ObjectProxy):
         self.token_usage_metric = token_usage_metric
         self.operation_duration_metric = operation_duration_metric
         self.start_time = start_time
-        self.is_raw_response = is_raw_response
 
         self.response_id = None
         self.model = None
@@ -125,8 +123,6 @@ class StreamWrapper(ObjectProxy):
     def __iter__(self):
         stream = self.__wrapped__
         try:
-            if self.is_raw_response:
-                stream = stream.parse()
             for chunk in stream:
                 self.process_chunk(chunk)
                 yield chunk
@@ -145,8 +141,6 @@ class StreamWrapper(ObjectProxy):
     async def __aiter__(self):
         stream = self.__wrapped__
         try:
-            if self.is_raw_response:
-                stream = stream.parse()
             async for chunk in stream:
                 self.process_chunk(chunk)
                 yield chunk
@@ -171,8 +165,6 @@ class StreamWrapper(ObjectProxy):
             start_time=self.start_time,
             token_usage_metric=self.token_usage_metric,
             operation_duration_metric=self.operation_duration_metric,
-            # Crucially, mark the new wrapper as NOT raw after parsing
-            is_raw_response=False,
         )
 
         # Handle original sync/async iterators accordingly
