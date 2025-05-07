@@ -1171,9 +1171,12 @@ def test_chat_stream_with_raw_response(default_openai_env, trace_exporter, metri
         }
     ]
 
-    chat_completion = client.chat.completions.with_raw_response.create(
+    raw_response = client.chat.completions.with_raw_response.create(
         model=TEST_CHAT_MODEL, messages=messages, stream=True
     )
+
+    # Explicit parse of the raw response
+    chat_completion = raw_response.parse()
 
     chunks = [chunk.choices[0].delta.content or "" for chunk in chat_completion if chunk.choices]
     assert "".join(chunks) == "Atlantic Ocean"
@@ -2226,9 +2229,12 @@ async def test_chat_async_stream_with_raw_response(default_openai_env, trace_exp
         }
     ]
 
-    chat_completion = await client.chat.completions.with_raw_response.create(
+    raw_response = await client.chat.completions.with_raw_response.create(
         model=TEST_CHAT_MODEL, messages=messages, stream=True
     )
+
+    # Explicit parse of the raw response
+    chat_completion = raw_response.parse()
 
     chunks = [chunk.choices[0].delta.content or "" async for chunk in chat_completion if chunk.choices]
     assert "".join(chunks) == "Atlantic Ocean"

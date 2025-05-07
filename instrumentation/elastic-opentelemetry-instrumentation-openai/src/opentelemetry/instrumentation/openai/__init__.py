@@ -196,7 +196,6 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 _record_operation_duration_metric(self.operation_duration_metric, error_attributes, start_time)
                 raise
 
-            is_raw_response = _is_raw_response(result)
             if kwargs.get("stream"):
                 return StreamWrapper(
                     stream=result,
@@ -208,12 +207,12 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     start_time=start_time,
                     token_usage_metric=self.token_usage_metric,
                     operation_duration_metric=self.operation_duration_metric,
-                    is_raw_response=is_raw_response,
                 )
 
             logger.debug(f"openai.resources.chat.completions.Completions.create result: {result}")
 
             # if the caller is using with_raw_response we need to parse the output to get the response class we expect
+            is_raw_response = _is_raw_response(result)
             if is_raw_response:
                 result = result.parse()
             response_attributes = _get_attributes_from_response(
@@ -271,7 +270,6 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 _record_operation_duration_metric(self.operation_duration_metric, error_attributes, start_time)
                 raise
 
-            is_raw_response = _is_raw_response(result)
             if kwargs.get("stream"):
                 return StreamWrapper(
                     stream=result,
@@ -283,12 +281,12 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     start_time=start_time,
                     token_usage_metric=self.token_usage_metric,
                     operation_duration_metric=self.operation_duration_metric,
-                    is_raw_response=is_raw_response,
                 )
 
             logger.debug(f"openai.resources.chat.completions.AsyncCompletions.create result: {result}")
 
             # if the caller is using with_raw_response we need to parse the output to get the response class we expect
+            is_raw_response = _is_raw_response(result)
             if is_raw_response:
                 result = result.parse()
             response_attributes = _get_attributes_from_response(
