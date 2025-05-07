@@ -1,5 +1,10 @@
 # Elastic OpenTelemetry Instrumentation OpenAI
 
+## v1.1.1
+
+- Fix tracing of streamed `with_raw_response` API calls (#82)
+- Test on Python 3.13 (#78)
+
 ## v1.1.0
 
 - Fix missing or double spans when completion stream is used with context manager (#80)
