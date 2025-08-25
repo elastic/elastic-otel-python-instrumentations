@@ -290,27 +290,39 @@ def _send_logs_from_messages(logger: Logger, messages, attributes: Attributes, c
         if message["role"] == "system" or message["role"] == "developer":
             if message["role"] == "developer":
                 body["role"] = message["role"]
-            log = LogRecord(event_name=EVENT_GEN_AI_SYSTEM_MESSAGE, body=body, attributes=attributes)
+            # keep compat on the exported attributes with Event
+            log = LogRecord(
+                event_name=EVENT_GEN_AI_SYSTEM_MESSAGE,
+                body=body,
+                attributes={**attributes, "event.name": EVENT_GEN_AI_SYSTEM_MESSAGE},
+            )
             logger.emit(log)
         elif message["role"] == "user":
-            log = LogRecord(event_name=EVENT_GEN_AI_USER_MESSAGE, body=body, attributes=attributes)
+            # keep compat on the exported attributes with Event
+            log = LogRecord(
+                event_name=EVENT_GEN_AI_USER_MESSAGE,
+                body=body,
+                attributes={**attributes, "event.name": EVENT_GEN_AI_USER_MESSAGE},
+            )
             logger.emit(log)
         elif message["role"] == "assistant":
             tool_calls = _serialize_tool_calls_for_log(message.get("tool_calls", []))
             if tool_calls:
                 body["tool_calls"] = tool_calls
+            # keep compat on the exported attributes with Event
             log = LogRecord(
                 event_name=EVENT_GEN_AI_ASSISTANT_MESSAGE,
                 body=body,
-                attributes=attributes,
+                attributes={**attributes, "event.name": EVENT_GEN_AI_ASSISTANT_MESSAGE},
             )
             logger.emit(log)
         elif message["role"] == "tool":
             body["id"] = message["tool_call_id"]
+            # keep compat on the exported attributes with Event
             log = LogRecord(
                 event_name=EVENT_GEN_AI_TOOL_MESSAGE,
                 body=body,
-                attributes=attributes,
+                attributes={**attributes, "event.name": EVENT_GEN_AI_TOOL_MESSAGE},
             )
             logger.emit(log)
 
@@ -324,7 +336,10 @@ def _send_logs_from_choices(logger: Logger, choices, attributes: Attributes, cap
         if capture_message_content and choice.message.content:
             body["message"]["content"] = choice.message.content
 
-        log = LogRecord(event_name=EVENT_GEN_AI_CHOICE, body=body, attributes=attributes)
+        # keep compat on the exported attributes with Event
+        log = LogRecord(
+            event_name=EVENT_GEN_AI_CHOICE, body=body, attributes={**attributes, "event.name": EVENT_GEN_AI_CHOICE}
+        )
         logger.emit(log)
 
 
@@ -366,10 +381,11 @@ def _send_logs_from_stream_choices(
     }
     # StreamWrapper is consumed after start_as_current_span exits, so capture the current span
     ctx = span.get_span_context()
+    # keep compat on the exported attributes with Event
     log = LogRecord(
         event_name=EVENT_GEN_AI_CHOICE,
         body=body,
-        attributes=attributes,
+        attributes={**attributes, "event.name": EVENT_GEN_AI_CHOICE},
         trace_id=ctx.trace_id,
         span_id=ctx.span_id,
         trace_flags=ctx.trace_flags,
