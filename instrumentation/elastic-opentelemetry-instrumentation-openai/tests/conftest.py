@@ -23,7 +23,6 @@ import pytest
 import yaml
 from openai._base_client import BaseClient
 from opentelemetry import metrics, trace
-from opentelemetry._events import set_event_logger_provider
 from opentelemetry._logs import set_logger_provider
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.instrumentation.openai.metrics import (
@@ -31,7 +30,6 @@ from opentelemetry.instrumentation.openai.metrics import (
     _GEN_AI_CLIENT_TOKEN_USAGE_BUCKETS,
 )
 from opentelemetry.metrics import Histogram
-from opentelemetry.sdk._events import EventLoggerProvider
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import (
     InMemoryLogExporter,
@@ -82,9 +80,6 @@ def logs_exporter():
     set_logger_provider(logger_provider)
 
     logger_provider.add_log_record_processor(SimpleLogRecordProcessor(exporter))
-
-    event_logger_provider = EventLoggerProvider(logger_provider=logger_provider)
-    set_event_logger_provider(event_logger_provider)
 
     return exporter
 

@@ -24,7 +24,6 @@ from unittest import mock
 
 import openai
 import pytest
-from opentelemetry._events import Event
 from opentelemetry._logs import LogRecord
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
@@ -1686,10 +1685,10 @@ def assert_tool_call_log_record(log_record: LogRecord, expected_tool_calls: List
     assert_tool_calls(message["tool_calls"], expected_tool_calls)
 
 
-def assert_tool_call_event(event: Event, expected_tool_calls: List[ToolCall]):
-    assert event.name == "gen_ai.content.completion"
+def assert_tool_call_log(log: LogRecord, expected_tool_calls: List[ToolCall]):
+    assert log.event_name == "gen_ai.content.completion"
     # The 'gen_ai.completion' attribute is a JSON string, so parse it first.
-    gen_ai_completions = json.loads(event.attributes["gen_ai.completion"])
+    gen_ai_completions = json.loads(log.attributes["gen_ai.completion"])
 
     gen_ai_completion = gen_ai_completions[0]
     assert gen_ai_completion["role"] == "assistant"
