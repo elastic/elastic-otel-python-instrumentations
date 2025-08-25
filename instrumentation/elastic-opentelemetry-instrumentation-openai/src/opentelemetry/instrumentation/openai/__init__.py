@@ -117,7 +117,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
     def _patch(self, module):
         version = tuple([int(x) for x in getattr(getattr(module, "version"), "VERSION").split(".")])
-        self.beta_chat_available = version >= (1, 40, 0)
+        self.beta_chat_available = version >= (1, 40, 0) and version < (1, 93, 0)
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "Completions.create",
