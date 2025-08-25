@@ -16,12 +16,12 @@
 
 import logging
 
-from opentelemetry._events import EventLogger
+from opentelemetry._logs import Logger
 from opentelemetry.instrumentation.openai.helpers import (
     _get_attributes_from_response,
     _record_operation_duration_metric,
     _record_token_usage_metrics,
-    _send_log_events_from_stream_choices,
+    _send_logs_from_stream_choices,
 )
 from opentelemetry.metrics import Histogram
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
@@ -43,7 +43,7 @@ class StreamWrapper(ObjectProxy):
         span_attributes: Attributes,
         capture_message_content: bool,
         event_attributes: Attributes,
-        event_logger: EventLogger,
+        logger: Logger,
         start_time: float,
         token_usage_metric: Histogram,
         operation_duration_metric: Histogram,
@@ -55,7 +55,7 @@ class StreamWrapper(ObjectProxy):
         self.span_attributes = span_attributes
         self.capture_message_content = capture_message_content
         self.event_attributes = event_attributes
-        self.event_logger = event_logger
+        self.logger = logger
         self.token_usage_metric = token_usage_metric
         self.operation_duration_metric = operation_duration_metric
         self.start_time = start_time
@@ -92,8 +92,8 @@ class StreamWrapper(ObjectProxy):
         if self.usage:
             _record_token_usage_metrics(self.token_usage_metric, metrics_attributes, self.usage)
 
-        _send_log_events_from_stream_choices(
-            self.event_logger,
+        _send_logs_from_stream_choices(
+            self.logger,
             choices=self.choices,
             span=self.span,
             attributes=self.event_attributes,
@@ -161,7 +161,7 @@ class StreamWrapper(ObjectProxy):
             span_attributes=self.span_attributes,
             capture_message_content=self.capture_message_content,
             event_attributes=self.event_attributes,
-            event_logger=self.event_logger,
+            logger=self.logger,
             start_time=self.start_time,
             token_usage_metric=self.token_usage_metric,
             operation_duration_metric=self.operation_duration_metric,
