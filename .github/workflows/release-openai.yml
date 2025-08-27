@@ -21,7 +21,7 @@ jobs:
     env:
       PROJECT_DIR: instrumentation/elastic-opentelemetry-instrumentation-openai/
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - run: pip install build==1.2.1
         working-directory: ${{ env.PROJECT_DIR }}
