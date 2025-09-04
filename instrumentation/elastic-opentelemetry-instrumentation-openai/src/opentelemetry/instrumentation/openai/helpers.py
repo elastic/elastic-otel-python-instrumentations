@@ -15,10 +15,11 @@
 # limitations under the License.
 
 from collections.abc import Iterable, Mapping
+import inspect
 from timeit import default_timer
 from typing import TYPE_CHECKING, Optional
 
-from opentelemetry._logs import Logger, LogRecord
+from opentelemetry._logs import Logger, LogRecord, SeverityNumber
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
     GEN_AI_OPENAI_RESPONSE_SERVICE_TIER,
@@ -291,7 +292,8 @@ def _send_logs_from_messages(logger: Logger, messages, attributes: Attributes, c
             if message["role"] == "developer":
                 body["role"] = message["role"]
             # keep compat on the exported attributes with Event
-            log = LogRecord(
+            log = _new_log_record(
+                logger,
                 event_name=EVENT_GEN_AI_SYSTEM_MESSAGE,
                 body=body,
                 attributes={**attributes, "event.name": EVENT_GEN_AI_SYSTEM_MESSAGE},
@@ -299,7 +301,8 @@ def _send_logs_from_messages(logger: Logger, messages, attributes: Attributes, c
             logger.emit(log)
         elif message["role"] == "user":
             # keep compat on the exported attributes with Event
-            log = LogRecord(
+            log = _new_log_record(
+                logger,
                 event_name=EVENT_GEN_AI_USER_MESSAGE,
                 body=body,
                 attributes={**attributes, "event.name": EVENT_GEN_AI_USER_MESSAGE},
@@ -310,7 +313,8 @@ def _send_logs_from_messages(logger: Logger, messages, attributes: Attributes, c
             if tool_calls:
                 body["tool_calls"] = tool_calls
             # keep compat on the exported attributes with Event
-            log = LogRecord(
+            log = _new_log_record(
+                logger,
                 event_name=EVENT_GEN_AI_ASSISTANT_MESSAGE,
                 body=body,
                 attributes={**attributes, "event.name": EVENT_GEN_AI_ASSISTANT_MESSAGE},
@@ -319,7 +323,8 @@ def _send_logs_from_messages(logger: Logger, messages, attributes: Attributes, c
         elif message["role"] == "tool":
             body["id"] = message["tool_call_id"]
             # keep compat on the exported attributes with Event
-            log = LogRecord(
+            log = _new_log_record(
+                logger,
                 event_name=EVENT_GEN_AI_TOOL_MESSAGE,
                 body=body,
                 attributes={**attributes, "event.name": EVENT_GEN_AI_TOOL_MESSAGE},
@@ -337,10 +342,19 @@ def _send_logs_from_choices(logger: Logger, choices, attributes: Attributes, cap
             body["message"]["content"] = choice.message.content
 
         # keep compat on the exported attributes with Event
-        log = LogRecord(
+        log = _new_log_record(
+            logger,
             event_name=EVENT_GEN_AI_CHOICE, body=body, attributes={**attributes, "event.name": EVENT_GEN_AI_CHOICE}
         )
         logger.emit(log)
+
+
+def _new_log_record(logger: Logger, **kwargs):
+    mod = inspect.getmodule(logger.__class__)
+    LoggerLogRecord = getattr(mod, "LogRecord", None)
+    if LoggerLogRecord:
+        return LoggerLogRecord(**kwargs, severity_number=SeverityNumber.INFO)
+    return LogRecord(**kwargs)
 
 
 def _send_logs_from_stream_choices(
@@ -382,7 +396,8 @@ def _send_logs_from_stream_choices(
     # StreamWrapper is consumed after start_as_current_span exits, so capture the current span
     ctx = span.get_span_context()
     # keep compat on the exported attributes with Event
-    log = LogRecord(
+    log = _new_log_record(
+        logger,
         event_name=EVENT_GEN_AI_CHOICE,
         body=body,
         attributes={**attributes, "event.name": EVENT_GEN_AI_CHOICE},
