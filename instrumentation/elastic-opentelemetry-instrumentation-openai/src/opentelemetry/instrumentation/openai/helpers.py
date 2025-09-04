@@ -349,6 +349,9 @@ def _send_logs_from_choices(logger: Logger, choices, attributes: Attributes, cap
         logger.emit(log)
 
 
+# Workaround https://github.com/open-telemetry/opentelemetry-python/issues/4319 by
+# inspecting the logger to find the correct LogRecord class to create. Currently,
+# the SDK will crash on export if passing an API LogRecord to the SDK Logger.
 def _new_log_record(logger: Logger, **kwargs):
     mod = inspect.getmodule(logger.__class__)
     LoggerLogRecord = getattr(mod, "LogRecord", None)
