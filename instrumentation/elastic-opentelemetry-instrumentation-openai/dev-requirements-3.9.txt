@@ -45,31 +45,31 @@ importlib-metadata==8.7.0
     #   opentelemetry-api
 iniconfig==2.1.0
     # via pytest
-jiter==0.10.0
+jiter==0.11.0
     # via openai
 multidict==6.6.4
     # via yarl
 numpy==2.0.2
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-openai==1.101.0
+openai==1.108.0
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-opentelemetry-api==1.35.0
+opentelemetry-api==1.37.0
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   opentelemetry-instrumentation
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
     #   opentelemetry-test-utils
-opentelemetry-instrumentation==0.56b0
+opentelemetry-instrumentation==0.58b0
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
-opentelemetry-sdk==1.35.0
+opentelemetry-sdk==1.37.0
     # via opentelemetry-test-utils
-opentelemetry-semantic-conventions==0.56b0
+opentelemetry-semantic-conventions==0.58b0
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   opentelemetry-instrumentation
     #   opentelemetry-sdk
-opentelemetry-test-utils==0.56b0
+opentelemetry-test-utils==0.58b0
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
 packaging==25.0
     # via
@@ -82,7 +82,7 @@ pluggy==1.6.0
     # via pytest
 propcache==0.3.2
     # via yarl
-pydantic==2.11.7
+pydantic==2.11.9
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   openai
@@ -94,12 +94,12 @@ pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
-pytest==8.4.1
+pytest==8.4.2
     # via
     #   elastic-opentelemetry-instrumentation-openai (pyproject.toml)
     #   pytest-asyncio
     #   pytest-vcr
-pytest-asyncio==1.1.0
+pytest-asyncio==1.2.0
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
 pytest-vcr==1.0.2
     # via elastic-opentelemetry-instrumentation-openai (pyproject.toml)
