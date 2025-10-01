@@ -19,7 +19,7 @@ import os
 from timeit import default_timer
 from typing import Collection
 
-from opentelemetry._events import get_event_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.openai.environment_variables import (
     OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
@@ -33,8 +33,8 @@ from opentelemetry.instrumentation.openai.helpers import (
     _is_raw_response,
     _record_operation_duration_metric,
     _record_token_usage_metrics,
-    _send_log_events_from_choices,
-    _send_log_events_from_messages,
+    _send_logs_from_choices,
+    _send_logs_from_messages,
     _span_name_from_attributes,
 )
 from opentelemetry.instrumentation.openai.metrics import (
@@ -73,7 +73,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             **kwargs: Optional arguments
                 ``tracer_provider``: a TracerProvider, defaults to global
                 ``meter_provider``: a MeterProvider, defaults to global
-                ``event_logger_provider``: a EventLoggerProvider, defaults to global
+                ``logger_provider``: a LoggerProvider, defaults to global
                 ``capture_message_content``: to enable content capturing, defaults to False
         """
         capture_message_content = "true" if kwargs.get("capture_message_content") else "false"
@@ -96,8 +96,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
             meter_provider,
             schema_url=Schemas.V1_31_0.value,
         )
-        event_logger_provider = kwargs.get("event_logger_provider")
-        self.event_logger = get_event_logger(__name__, event_logger_provider)
+        logger_provider = kwargs.get("logger_provider")
+        self.logger = get_logger(__name__, logger_provider)
 
         self.token_usage_metric = self.meter.create_histogram(
             name=GEN_AI_CLIENT_TOKEN_USAGE,
@@ -117,7 +117,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
     def _patch(self, module):
         version = tuple([int(x) for x in getattr(getattr(module, "version"), "VERSION").split(".")])
-        self.beta_chat_available = version >= (1, 40, 0)
+        self.beta_chat_available = version >= (1, 40, 0) and version < (1, 93, 0)
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "Completions.create",
@@ -178,8 +178,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
             end_on_exit=False,
         ) as span:
             messages = kwargs.get("messages", [])
-            _send_log_events_from_messages(
-                self.event_logger,
+            _send_logs_from_messages(
+                self.logger,
                 messages=messages,
                 attributes=event_attributes,
                 capture_message_content=self.capture_message_content,
@@ -203,7 +203,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     span_attributes=span_attributes,
                     capture_message_content=self.capture_message_content,
                     event_attributes=event_attributes,
-                    event_logger=self.event_logger,
+                    logger=self.logger,
                     start_time=start_time,
                     token_usage_metric=self.token_usage_metric,
                     operation_duration_metric=self.operation_duration_metric,
@@ -226,8 +226,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
             _record_token_usage_metrics(self.token_usage_metric, metrics_attributes, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, metrics_attributes, start_time)
 
-            _send_log_events_from_choices(
-                self.event_logger,
+            _send_logs_from_choices(
+                self.logger,
                 choices=result.choices,
                 attributes=event_attributes,
                 capture_message_content=self.capture_message_content,
@@ -252,8 +252,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
             end_on_exit=False,
         ) as span:
             messages = kwargs.get("messages", [])
-            _send_log_events_from_messages(
-                self.event_logger,
+            _send_logs_from_messages(
+                self.logger,
                 messages=messages,
                 attributes=event_attributes,
                 capture_message_content=self.capture_message_content,
@@ -277,7 +277,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
                     span_attributes=span_attributes,
                     capture_message_content=self.capture_message_content,
                     event_attributes=event_attributes,
-                    event_logger=self.event_logger,
+                    logger=self.logger,
                     start_time=start_time,
                     token_usage_metric=self.token_usage_metric,
                     operation_duration_metric=self.operation_duration_metric,
@@ -300,8 +300,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
             _record_token_usage_metrics(self.token_usage_metric, metrics_attributes, result.usage)
             _record_operation_duration_metric(self.operation_duration_metric, metrics_attributes, start_time)
 
-            _send_log_events_from_choices(
-                self.event_logger,
+            _send_logs_from_choices(
+                self.logger,
                 choices=result.choices,
                 attributes=event_attributes,
                 capture_message_content=self.capture_message_content,

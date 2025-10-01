@@ -38,7 +38,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      py38: "3.8"
       py39: "3.9"
       py310: "3.10"
       py311: "3.11"
@@ -51,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [py38, py39, py310, py311, py312, py313]
+        python-version: [py39, py310, py311, py312, py313]
         openai-version: [baseline, latest]
     steps:
     - uses: actions/checkout@v5
@@ -60,10 +59,10 @@ jobs:
       with:
         python-version: ${{ env[matrix.python-version] }}
         architecture: "x64"
-    - if: ${{ env[matrix.python-version] == '3.8' || env[matrix.python-version] == '3.9' }}
+    - if: ${{ env[matrix.python-version] == '3.9' }}
       run: pip install -r dev-requirements-3.9.txt
       working-directory: ${{ env.working_dir }}
-    - if: ${{ env[matrix.python-version] != '3.8' && env[matrix.python-version] != '3.9' }}
+    - if: ${{ env[matrix.python-version] != '3.9' }}
       run: pip install -r dev-requirements.txt
       working-directory: ${{ env.working_dir }}
     - if: ${{ env[matrix.openai-version] }}

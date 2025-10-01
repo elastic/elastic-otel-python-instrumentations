@@ -24,7 +24,6 @@ from unittest import mock
 
 import openai
 import pytest
-from opentelemetry._events import Event
 from opentelemetry._logs import LogRecord
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
@@ -67,9 +66,10 @@ OPENAI_VERSION = tuple([int(x) for x in openai.version.VERSION.split(".")])
 TEST_CHAT_MODEL = "gpt-4o-mini"
 TEST_CHAT_RESPONSE_MODEL = "gpt-4o-mini-2024-07-18"
 TEST_CHAT_INPUT = "Answer in up to 3 words: Which ocean contains Bouvet Island?"
+HAS_BETA_CHAT_COMPLETIONS = (1, 40, 0) <= OPENAI_VERSION < (1, 93, 0)
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
     client = openai.OpenAI()
@@ -134,7 +134,7 @@ def test_chat(default_openai_env, trace_exporter, metrics_reader, logs_exporter)
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_with_developer_role_message(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
     client = openai.OpenAI()
@@ -207,7 +207,7 @@ def test_chat_with_developer_role_message(default_openai_env, trace_exporter, me
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_all_the_client_options(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
     client = openai.OpenAI()
@@ -296,7 +296,7 @@ def test_chat_all_the_client_options(default_openai_env, trace_exporter, metrics
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_multiple_choices_with_capture_message_content(
     default_openai_env, trace_exporter, metrics_reader, logs_exporter
@@ -371,7 +371,7 @@ def test_chat_multiple_choices_with_capture_message_content(
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_function_calling_with_tools(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
     client = openai.OpenAI()
@@ -474,7 +474,7 @@ def test_chat_function_calling_with_tools(default_openai_env, trace_exporter, me
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_tools_with_capture_message_content(default_openai_env, trace_exporter, logs_exporter, metrics_reader):
     # Redo the instrumentation dance to be affected by the environment variable
@@ -585,7 +585,7 @@ def test_chat_tools_with_capture_message_content(default_openai_env, trace_expor
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.integration
 def test_chat_tools_with_capture_message_content_integration(trace_exporter, logs_exporter, metrics_reader):
     client = get_integration_client()
@@ -696,7 +696,7 @@ def test_chat_tools_with_capture_message_content_integration(trace_exporter, log
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 def test_chat_connection_error(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
     client = openai.Client(base_url="http://localhost:9999/v5", api_key="not-read", max_retries=1)
     messages = [
@@ -747,7 +747,7 @@ def test_chat_connection_error(default_openai_env, trace_exporter, metrics_reade
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.integration
 def test_chat_with_capture_message_content_integration(trace_exporter, logs_exporter, metrics_reader):
     model = os.getenv("TEST_CHAT_MODEL", TEST_CHAT_MODEL)
@@ -823,7 +823,7 @@ def test_chat_with_capture_message_content_integration(trace_exporter, logs_expo
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_with_capture_message_content(default_openai_env, trace_exporter, logs_exporter, metrics_reader):
     client = openai.OpenAI()
@@ -894,7 +894,7 @@ def test_chat_with_capture_message_content(default_openai_env, trace_exporter, l
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_tools_with_followup_and_capture_message_content(
     default_openai_env, trace_exporter, metrics_reader, logs_exporter
@@ -1066,7 +1066,7 @@ def test_chat_tools_with_followup_and_capture_message_content(
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.asyncio
 @pytest.mark.vcr()
 async def test_chat_async(default_openai_env, trace_exporter, metrics_reader, logs_exporter):
@@ -1132,7 +1132,7 @@ async def test_chat_async(default_openai_env, trace_exporter, metrics_reader, lo
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.asyncio
 @pytest.mark.vcr()
 async def test_chat_async_with_capture_message_content(
@@ -1206,7 +1206,7 @@ async def test_chat_async_with_capture_message_content(
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_chat_async_with_capture_message_content_integration(trace_exporter, logs_exporter, metrics_reader):
@@ -1280,7 +1280,7 @@ async def test_chat_async_with_capture_message_content_integration(trace_exporte
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 @pytest.mark.asyncio
 async def test_chat_async_tools_with_capture_message_content(
@@ -1394,7 +1394,7 @@ async def test_chat_async_tools_with_capture_message_content(
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_without_model_parameter(default_openai_env, trace_exporter, metrics_reader):
     client = openai.OpenAI()
@@ -1440,7 +1440,7 @@ def test_chat_without_model_parameter(default_openai_env, trace_exporter, metric
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_with_model_not_found(default_openai_env, trace_exporter, metrics_reader):
     client = openai.OpenAI()
@@ -1486,7 +1486,7 @@ def test_chat_with_model_not_found(default_openai_env, trace_exporter, metrics_r
     )
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_exported_schema_version(default_openai_env, trace_exporter, metrics_reader):
     client = openai.OpenAI()
@@ -1512,7 +1512,7 @@ def test_chat_exported_schema_version(default_openai_env, trace_exporter, metric
             assert scope_metrics.schema_url == "https://opentelemetry.io/schemas/1.31.0"
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_parse_response_format_json_object_with_capture_message_content(
     default_openai_env, trace_exporter, metrics_reader, logs_exporter
@@ -1589,7 +1589,7 @@ class Reason(BaseModel):
     reason: str
 
 
-@pytest.mark.skipif(OPENAI_VERSION < (1, 40, 0), reason="beta completions added in 1.40.0")
+@pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_parse_response_format_structured_output_with_capture_message_content(
     default_openai_env, trace_exporter, metrics_reader, logs_exporter
@@ -1686,10 +1686,10 @@ def assert_tool_call_log_record(log_record: LogRecord, expected_tool_calls: List
     assert_tool_calls(message["tool_calls"], expected_tool_calls)
 
 
-def assert_tool_call_event(event: Event, expected_tool_calls: List[ToolCall]):
-    assert event.name == "gen_ai.content.completion"
+def assert_tool_call_log(log: LogRecord, expected_tool_calls: List[ToolCall]):
+    assert log.event_name == "gen_ai.content.completion"
     # The 'gen_ai.completion' attribute is a JSON string, so parse it first.
-    gen_ai_completions = json.loads(event.attributes["gen_ai.completion"])
+    gen_ai_completions = json.loads(log.attributes["gen_ai.completion"])
 
     gen_ai_completion = gen_ai_completions[0]
     assert gen_ai_completion["role"] == "assistant"

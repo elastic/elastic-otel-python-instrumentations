@@ -18,7 +18,7 @@ from collections.abc import Iterable, Mapping
 from timeit import default_timer
 from typing import TYPE_CHECKING, Optional
 
-from opentelemetry._events import Event, EventLogger
+from opentelemetry._logs import Logger, LogRecord
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
     GEN_AI_OPENAI_RESPONSE_SERVICE_TIER,
@@ -266,7 +266,7 @@ def _key_or_property(obj, name):
     return getattr(obj, name)
 
 
-def _serialize_tool_calls_for_event(tool_calls):
+def _serialize_tool_calls_for_log(tool_calls):
     return [
         {
             "id": _key_or_property(tool_call, "id"),
@@ -280,9 +280,7 @@ def _serialize_tool_calls_for_event(tool_calls):
     ]
 
 
-def _send_log_events_from_messages(
-    event_logger: EventLogger, messages, attributes: Attributes, capture_message_content: bool
-):
+def _send_logs_from_messages(logger: Logger, messages, attributes: Attributes, capture_message_content: bool):
     for message in messages:
         body = {}
         if capture_message_content:
@@ -292,48 +290,61 @@ def _send_log_events_from_messages(
         if message["role"] == "system" or message["role"] == "developer":
             if message["role"] == "developer":
                 body["role"] = message["role"]
-            event = Event(name=EVENT_GEN_AI_SYSTEM_MESSAGE, body=body, attributes=attributes)
-            event_logger.emit(event)
+            # keep compat on the exported attributes with Event
+            log = LogRecord(
+                event_name=EVENT_GEN_AI_SYSTEM_MESSAGE,
+                body=body,
+                attributes={**attributes, "event.name": EVENT_GEN_AI_SYSTEM_MESSAGE},
+            )
+            logger.emit(log)
         elif message["role"] == "user":
-            event = Event(name=EVENT_GEN_AI_USER_MESSAGE, body=body, attributes=attributes)
-            event_logger.emit(event)
+            # keep compat on the exported attributes with Event
+            log = LogRecord(
+                event_name=EVENT_GEN_AI_USER_MESSAGE,
+                body=body,
+                attributes={**attributes, "event.name": EVENT_GEN_AI_USER_MESSAGE},
+            )
+            logger.emit(log)
         elif message["role"] == "assistant":
-            tool_calls = _serialize_tool_calls_for_event(message.get("tool_calls", []))
+            tool_calls = _serialize_tool_calls_for_log(message.get("tool_calls", []))
             if tool_calls:
                 body["tool_calls"] = tool_calls
-            event = Event(
-                name=EVENT_GEN_AI_ASSISTANT_MESSAGE,
+            # keep compat on the exported attributes with Event
+            log = LogRecord(
+                event_name=EVENT_GEN_AI_ASSISTANT_MESSAGE,
                 body=body,
-                attributes=attributes,
+                attributes={**attributes, "event.name": EVENT_GEN_AI_ASSISTANT_MESSAGE},
             )
-            event_logger.emit(event)
+            logger.emit(log)
         elif message["role"] == "tool":
             body["id"] = message["tool_call_id"]
-            event = Event(
-                name=EVENT_GEN_AI_TOOL_MESSAGE,
+            # keep compat on the exported attributes with Event
+            log = LogRecord(
+                event_name=EVENT_GEN_AI_TOOL_MESSAGE,
                 body=body,
-                attributes=attributes,
+                attributes={**attributes, "event.name": EVENT_GEN_AI_TOOL_MESSAGE},
             )
-            event_logger.emit(event)
+            logger.emit(log)
 
 
-def _send_log_events_from_choices(
-    event_logger: EventLogger, choices, attributes: Attributes, capture_message_content: bool
-):
+def _send_logs_from_choices(logger: Logger, choices, attributes: Attributes, capture_message_content: bool):
     for choice in choices:
-        tool_calls = _serialize_tool_calls_for_event(choice.message.tool_calls or [])
+        tool_calls = _serialize_tool_calls_for_log(choice.message.tool_calls or [])
         body = {"finish_reason": choice.finish_reason, "index": choice.index, "message": {}}
         if tool_calls:
             body["message"]["tool_calls"] = tool_calls
         if capture_message_content and choice.message.content:
             body["message"]["content"] = choice.message.content
 
-        event = Event(name=EVENT_GEN_AI_CHOICE, body=body, attributes=attributes)
-        event_logger.emit(event)
+        # keep compat on the exported attributes with Event
+        log = LogRecord(
+            event_name=EVENT_GEN_AI_CHOICE, body=body, attributes={**attributes, "event.name": EVENT_GEN_AI_CHOICE}
+        )
+        logger.emit(log)
 
 
-def _send_log_events_from_stream_choices(
-    event_logger: EventLogger, choices, span: Span, attributes: Attributes, capture_message_content: bool
+def _send_logs_from_stream_choices(
+    logger: Logger, choices, span: Span, attributes: Attributes, capture_message_content: bool
 ):
     body = {}
     message = {}
@@ -370,15 +381,16 @@ def _send_log_events_from_stream_choices(
     }
     # StreamWrapper is consumed after start_as_current_span exits, so capture the current span
     ctx = span.get_span_context()
-    event = Event(
-        name=EVENT_GEN_AI_CHOICE,
+    # keep compat on the exported attributes with Event
+    log = LogRecord(
+        event_name=EVENT_GEN_AI_CHOICE,
         body=body,
-        attributes=attributes,
+        attributes={**attributes, "event.name": EVENT_GEN_AI_CHOICE},
         trace_id=ctx.trace_id,
         span_id=ctx.span_id,
         trace_flags=ctx.trace_flags,
     )
-    event_logger.emit(event)
+    logger.emit(log)
 
 
 def _is_raw_response(response):
