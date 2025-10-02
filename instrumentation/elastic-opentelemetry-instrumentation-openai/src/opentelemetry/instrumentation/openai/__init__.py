@@ -16,6 +16,7 @@
 
 import logging
 import os
+import warnings
 from timeit import default_timer
 from typing import Collection
 
@@ -60,6 +61,15 @@ EVENT_GEN_AI_CONTENT_PROMPT = "gen_ai.content.prompt"
 EVENT_GEN_AI_CONTENT_COMPLETION = "gen_ai.content.completion"
 
 logger = logging.getLogger(__name__)
+
+
+# silence warnings from OTel sdk LogRecord conversion
+try:
+    from opentelemetry.sdk._logs._internal import LogDeprecatedInitWarning
+
+    warnings.simplefilter("ignore", LogDeprecatedInitWarning)
+except ImportError:
+    pass
 
 
 class OpenAIInstrumentor(BaseInstrumentor):
