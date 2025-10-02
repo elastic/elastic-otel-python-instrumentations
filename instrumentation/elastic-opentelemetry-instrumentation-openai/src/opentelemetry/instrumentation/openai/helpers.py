@@ -18,13 +18,16 @@ from collections.abc import Iterable, Mapping
 from timeit import default_timer
 from typing import TYPE_CHECKING, Optional
 
+from opentelemetry import context
 from opentelemetry._logs import Logger, LogRecord
+from opentelemetry.metrics import Histogram
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
     GEN_AI_OPENAI_RESPONSE_SERVICE_TIER,
     GEN_AI_OPERATION_NAME,
     GEN_AI_OUTPUT_TYPE,
     GEN_AI_REQUEST_CHOICE_COUNT,
+    GEN_AI_REQUEST_ENCODING_FORMATS,
     GEN_AI_REQUEST_FREQUENCY_PENALTY,
     GEN_AI_REQUEST_MAX_TOKENS,
     GEN_AI_REQUEST_MODEL,
@@ -43,15 +46,8 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS, SERVER_PORT
-
-try:
-    from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_REQUEST_ENCODING_FORMATS
-except ImportError:
-    # available since 1.29.0
-    GEN_AI_REQUEST_ENCODING_FORMATS = "gen_ai.request.encoding_formats"
-
-from opentelemetry.metrics import Histogram
 from opentelemetry.trace import Span
+from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.util.types import Attributes
 
 EVENT_GEN_AI_ASSISTANT_MESSAGE = "gen_ai.assistant.message"
@@ -380,15 +376,13 @@ def _send_logs_from_stream_choices(
         "message": message,
     }
     # StreamWrapper is consumed after start_as_current_span exits, so capture the current span
-    ctx = span.get_span_context()
+    ctx = set_span_in_context(span, context.get_current())
     # keep compat on the exported attributes with Event
     log = LogRecord(
         event_name=EVENT_GEN_AI_CHOICE,
         body=body,
         attributes={**attributes, "event.name": EVENT_GEN_AI_CHOICE},
-        trace_id=ctx.trace_id,
-        span_id=ctx.span_id,
-        trace_flags=ctx.trace_flags,
+        context=ctx,
     )
     logger.emit(log)
 
