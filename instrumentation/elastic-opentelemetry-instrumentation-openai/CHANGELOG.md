@@ -1,5 +1,9 @@
 # Elastic OpenTelemetry Instrumentation OpenAI
 
+## v1.2.0
+
+- Switch from the Event API to the Logs API for sending GenAI Events, requires 1.37.0+ SDK (#90, #94)
+
 ## v1.1.1
 
 - Fix tracing of streamed `with_raw_response` API calls (#82)
