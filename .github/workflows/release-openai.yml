@@ -30,7 +30,7 @@ jobs:
         working-directory: ${{ env.PROJECT_DIR }}
 
       - name: Upload Packages
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: packages
           path: |
@@ -47,7 +47,7 @@ jobs:
     env:
       DIST_DIR: instrumentation/elastic-opentelemetry-instrumentation-openai/dist/
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: packages
           path: ${{ env.DIST_DIR }}
