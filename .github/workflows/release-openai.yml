@@ -14,9 +14,10 @@ permissions:
 jobs:
   openai-packages:
     permissions:
+      artifact-metadata: write
       attestations: write
-      id-token: write
       contents: read
+      id-token: write
     runs-on: ubuntu-latest
     env:
       PROJECT_DIR: instrumentation/elastic-opentelemetry-instrumentation-openai/
