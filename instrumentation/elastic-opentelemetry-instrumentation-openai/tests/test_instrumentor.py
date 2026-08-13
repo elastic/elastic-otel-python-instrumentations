@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
 
@@ -25,6 +27,8 @@ def test_capture_message_content_false_by_default(instrument):
 def test_can_override_capture_message_content_programmatically(instrument):
     instrument.uninstrument()
     instrumentor = OpenAIInstrumentor()
+    env_var = "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
+    os.environ.pop(env_var, None)
     instrumentor.instrument(capture_message_content=True)
     assert instrumentor.capture_message_content
     instrumentor.uninstrument()
