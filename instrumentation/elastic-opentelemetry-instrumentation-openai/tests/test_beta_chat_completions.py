@@ -20,6 +20,7 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import List, Optional
+
 import openai
 import pytest
 from opentelemetry._logs import LogRecord

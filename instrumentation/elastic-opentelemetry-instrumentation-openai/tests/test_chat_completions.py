@@ -19,6 +19,7 @@ import os
 import re
 from dataclasses import dataclass
 from typing import List, Optional
+
 import openai
 import pytest
 from opentelemetry._events import Event
