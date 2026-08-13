@@ -218,7 +218,9 @@ def test_chat_with_raw_response(default_openai_env, trace_exporter, metrics_read
 
 
 @pytest.mark.vcr()
-def test_chat_with_developer_role_message(default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+def test_chat_with_developer_role_message(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.OpenAI()
 
     messages = [
@@ -380,7 +382,9 @@ def test_chat_all_the_client_options(default_openai_env, trace_exporter, metrics
 
 @pytest.mark.skipif(OPENAI_VERSION < (1, 35, 0), reason="service tier added in 1.35.0")
 @pytest.mark.vcr()
-def test_chat_all_the_client_options_not_given(default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+def test_chat_all_the_client_options_not_given(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.OpenAI()
 
     messages = [
@@ -460,7 +464,8 @@ def test_chat_all_the_client_options_not_given(default_openai_env, trace_exporte
 
 @pytest.mark.vcr()
 def test_chat_multiple_choices_with_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     messages = [
@@ -527,7 +532,9 @@ def test_chat_multiple_choices_with_capture_message_content(
 
 
 @pytest.mark.vcr()
-def test_chat_function_calling_with_tools(default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+def test_chat_function_calling_with_tools(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.OpenAI()
 
     tools = [
@@ -628,7 +635,9 @@ def test_chat_function_calling_with_tools(default_openai_env, trace_exporter, me
 
 
 @pytest.mark.vcr()
-def test_chat_tools_with_capture_message_content(default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+def test_chat_tools_with_capture_message_content(
+    default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     tools = [
@@ -732,7 +741,9 @@ def test_chat_tools_with_capture_message_content(default_openai_env, trace_expor
 
 
 @pytest.mark.integration
-def test_chat_tools_with_capture_message_content_integration(trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+def test_chat_tools_with_capture_message_content_integration(
+    trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     client = get_integration_client()
     model = os.getenv("TEST_CHAT_MODEL", TEST_CHAT_MODEL)
 
@@ -886,7 +897,9 @@ def test_chat_connection_error(default_openai_env, trace_exporter, metrics_reade
 
 
 @pytest.mark.integration
-def test_chat_with_capture_message_content_integration(trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+def test_chat_with_capture_message_content_integration(
+    trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     model = os.getenv("TEST_CHAT_MODEL", TEST_CHAT_MODEL)
 
     client = get_integration_client()
@@ -953,7 +966,9 @@ def test_chat_with_capture_message_content_integration(trace_exporter, logs_expo
 
 
 @pytest.mark.vcr()
-def test_chat_with_capture_message_content(default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+def test_chat_with_capture_message_content(
+    default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     messages = [
@@ -1073,7 +1088,9 @@ def test_chat_stream(default_openai_env, trace_exporter, metrics_reader, logs_ex
 
 
 @pytest.mark.vcr()
-def test_chat_stream_with_context_manager(default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+def test_chat_stream_with_context_manager(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.OpenAI()
 
     messages = [
@@ -1192,7 +1209,9 @@ def test_chat_stream_with_raw_response(default_openai_env, trace_exporter, metri
 
 @pytest.mark.skipif(OPENAI_VERSION < (1, 35, 0), reason="service tier added in 1.35.0")
 @pytest.mark.vcr()
-def test_chat_stream_all_the_client_options(default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+def test_chat_stream_all_the_client_options(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.OpenAI()
 
     messages = [
@@ -1273,7 +1292,9 @@ def test_chat_stream_all_the_client_options(default_openai_env, trace_exporter, 
 
 @pytest.mark.skipif(OPENAI_VERSION < (1, 26, 0), reason="stream_options added in 1.26.0")
 @pytest.mark.vcr()
-def test_chat_stream_with_include_usage_option(default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+def test_chat_stream_with_include_usage_option(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.OpenAI()
 
     messages = [
@@ -1342,7 +1363,8 @@ def test_chat_stream_with_include_usage_option(default_openai_env, trace_exporte
 @pytest.mark.skipif(OPENAI_VERSION < (1, 26, 0), reason="stream_options added in 1.26.0")
 @pytest.mark.integration
 def test_chat_stream_with_include_usage_option_and_capture_message_content_integration(
-    default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+    default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     model = os.getenv("TEST_CHAT_MODEL", TEST_CHAT_MODEL)
 
     client = get_integration_client()
@@ -1416,7 +1438,8 @@ def test_chat_stream_with_include_usage_option_and_capture_message_content_integ
 
 @pytest.mark.vcr()
 def test_chat_stream_with_tools_and_capture_message_content(
-    default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+    default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     tools = [
@@ -1517,7 +1540,8 @@ def test_chat_stream_with_tools_and_capture_message_content(
 
 @pytest.mark.vcr()
 def test_chat_stream_with_parallel_tools_and_capture_message_content(
-    default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+    default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     tools = [
@@ -1605,7 +1629,8 @@ def test_chat_stream_with_parallel_tools_and_capture_message_content(
 
 @pytest.mark.vcr()
 def test_chat_tools_with_followup_and_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     tools = [
@@ -1831,7 +1856,9 @@ async def test_chat_async(default_openai_env, trace_exporter, metrics_reader, lo
 @pytest.mark.skipif(OPENAI_VERSION < (1, 8, 0), reason="LegacyAPIResponse available")
 @pytest.mark.asyncio
 @pytest.mark.vcr()
-async def test_chat_async_with_raw_response(default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+async def test_chat_async_with_raw_response(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.AsyncOpenAI()
 
     messages = [
@@ -1898,7 +1925,8 @@ async def test_chat_async_with_raw_response(default_openai_env, trace_exporter, 
 @pytest.mark.asyncio
 @pytest.mark.vcr()
 async def test_chat_async_with_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.AsyncOpenAI()
 
     messages = [
@@ -1964,7 +1992,9 @@ async def test_chat_async_with_capture_message_content(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_chat_async_with_capture_message_content_integration(trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+async def test_chat_async_with_capture_message_content_integration(
+    trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     model = os.getenv("TEST_CHAT_MODEL", TEST_CHAT_MODEL)
 
     messages = [
@@ -2089,7 +2119,8 @@ async def test_chat_async_stream(default_openai_env, trace_exporter, metrics_rea
 @pytest.mark.vcr()
 @pytest.mark.asyncio
 async def test_chat_async_stream_with_context_manager(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.AsyncOpenAI()
 
     messages = [
@@ -2149,7 +2180,9 @@ async def test_chat_async_stream_with_context_manager(
 @pytest.mark.skipif(OPENAI_VERSION < (1, 8, 0), reason="LegacyAPIResponse available")
 @pytest.mark.vcr()
 @pytest.mark.asyncio
-async def test_chat_async_stream_with_raw_response(default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+async def test_chat_async_stream_with_raw_response(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.AsyncOpenAI()
 
     messages = [
@@ -2212,7 +2245,8 @@ async def test_chat_async_stream_with_raw_response(default_openai_env, trace_exp
 @pytest.mark.vcr()
 @pytest.mark.asyncio
 async def test_chat_async_stream_with_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.AsyncOpenAI()
 
     messages = [
@@ -2275,7 +2309,8 @@ async def test_chat_async_stream_with_capture_message_content(
 @pytest.mark.vcr()
 @pytest.mark.asyncio
 async def test_chat_async_tools_with_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.AsyncOpenAI()
 
     tools = [

@@ -134,7 +134,9 @@ def test_chat(default_openai_env, trace_exporter, metrics_reader, logs_exporter,
 
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
-def test_chat_with_developer_role_message(default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+def test_chat_with_developer_role_message(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.OpenAI()
 
     messages = [
@@ -297,7 +299,8 @@ def test_chat_all_the_client_options(default_openai_env, trace_exporter, metrics
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_multiple_choices_with_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     messages = [
@@ -365,7 +368,9 @@ def test_chat_multiple_choices_with_capture_message_content(
 
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
-def test_chat_function_calling_with_tools(default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument):
+def test_chat_function_calling_with_tools(
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, instrument
+):
     client = openai.OpenAI()
 
     tools = [
@@ -468,7 +473,9 @@ def test_chat_function_calling_with_tools(default_openai_env, trace_exporter, me
 
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
-def test_chat_tools_with_capture_message_content(default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+def test_chat_tools_with_capture_message_content(
+    default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     tools = [
@@ -574,7 +581,9 @@ def test_chat_tools_with_capture_message_content(default_openai_env, trace_expor
 
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.integration
-def test_chat_tools_with_capture_message_content_integration(trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+def test_chat_tools_with_capture_message_content_integration(
+    trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     client = get_integration_client()
     model = os.getenv("TEST_CHAT_MODEL", TEST_CHAT_MODEL)
 
@@ -731,7 +740,9 @@ def test_chat_connection_error(default_openai_env, trace_exporter, metrics_reade
 
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.integration
-def test_chat_with_capture_message_content_integration(trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+def test_chat_with_capture_message_content_integration(
+    trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     model = os.getenv("TEST_CHAT_MODEL", TEST_CHAT_MODEL)
 
     client = get_integration_client()
@@ -799,7 +810,9 @@ def test_chat_with_capture_message_content_integration(trace_exporter, logs_expo
 
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
-def test_chat_with_capture_message_content(default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+def test_chat_with_capture_message_content(
+    default_openai_env, trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     messages = [
@@ -866,7 +879,8 @@ def test_chat_with_capture_message_content(default_openai_env, trace_exporter, l
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_chat_tools_with_followup_and_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     tools = [
@@ -1099,7 +1113,8 @@ async def test_chat_async(default_openai_env, trace_exporter, metrics_reader, lo
 @pytest.mark.asyncio
 @pytest.mark.vcr()
 async def test_chat_async_with_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.AsyncOpenAI()
 
     messages = [
@@ -1166,7 +1181,9 @@ async def test_chat_async_with_capture_message_content(
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_chat_async_with_capture_message_content_integration(trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument):
+async def test_chat_async_with_capture_message_content_integration(
+    trace_exporter, logs_exporter, metrics_reader, capture_message_content_instrument
+):
     model = os.getenv("TEST_CHAT_MODEL", TEST_CHAT_MODEL)
 
     messages = [
@@ -1236,7 +1253,8 @@ async def test_chat_async_with_capture_message_content_integration(trace_exporte
 @pytest.mark.vcr()
 @pytest.mark.asyncio
 async def test_chat_async_tools_with_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.AsyncOpenAI()
 
     tools = [
@@ -1461,7 +1479,8 @@ def test_chat_exported_schema_version(default_openai_env, trace_exporter, metric
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_parse_response_format_json_object_with_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     chat_input = """Provide up to 3 words explaining why 2 + 2 equals 4 in JSON format with a 'reason' key."""
@@ -1532,7 +1551,8 @@ class Reason(BaseModel):
 @pytest.mark.skipif(not HAS_BETA_CHAT_COMPLETIONS, reason="beta completions added in 1.40.0, removed in 1.93.0")
 @pytest.mark.vcr()
 def test_parse_response_format_structured_output_with_capture_message_content(
-    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument):
+    default_openai_env, trace_exporter, metrics_reader, logs_exporter, capture_message_content_instrument
+):
     client = openai.OpenAI()
 
     chat_input = """Provide up to 3 words explaining why 2 + 2 equals 4 in JSON format with a 'reason' key."""
