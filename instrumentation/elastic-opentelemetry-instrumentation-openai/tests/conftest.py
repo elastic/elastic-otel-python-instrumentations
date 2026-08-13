@@ -90,9 +90,19 @@ def clear_exporter(trace_exporter, metrics_reader, logs_exporter):
     logs_exporter.clear()
 
 
-# TODO: should drop autouse and use it explicitly?
-@pytest.fixture(autouse=True)
-def instrument():
+@pytest.fixture
+def instrument(clear_exporter):
+    instrumentor = OpenAIInstrumentor()
+    instrumentor.instrument()
+
+    yield instrumentor
+
+    instrumentor.uninstrument()
+
+
+@pytest.fixture
+def capture_message_content_instrument(monkeypatch, clear_exporter):
+    monkeypatch.setenv("OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT", "true")
     instrumentor = OpenAIInstrumentor()
     instrumentor.instrument()
 
