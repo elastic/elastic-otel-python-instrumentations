@@ -21,7 +21,8 @@ def test_capture_message_content_false_by_default(instrument):
     assert not instrument.capture_message_content
 
 
-def test_can_override_capture_message_content_programmatically():
+def test_can_override_capture_message_content_programmatically(monkeypatch):
+    monkeypatch.delenv("OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT", raising=False)
     instrumentor = OpenAIInstrumentor()
     try:
         instrumentor.instrument(capture_message_content=True)
