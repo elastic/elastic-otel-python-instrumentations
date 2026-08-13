@@ -91,7 +91,8 @@ def clear_exporter(trace_exporter, metrics_reader, logs_exporter):
 
 
 @pytest.fixture
-def instrument(clear_exporter):
+def instrument(monkeypatch, clear_exporter):
+    monkeypatch.delenv("OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT", raising=False)
     instrumentor = OpenAIInstrumentor()
     instrumentor.instrument()
 
