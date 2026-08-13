@@ -46,7 +46,7 @@ TEST_EMBEDDINGS_INPUT = "South Atlantic Ocean."
 
 
 @pytest.mark.vcr()
-def test_embeddings(default_openai_env, trace_exporter, metrics_reader):
+def test_embeddings(default_openai_env, trace_exporter, metrics_reader, instrument):
     client = openai.OpenAI()
 
     response = client.embeddings.create(model=TEST_EMBEDDINGS_MODEL, input=[TEST_EMBEDDINGS_INPUT])
@@ -85,7 +85,7 @@ def test_embeddings(default_openai_env, trace_exporter, metrics_reader):
 
 
 @pytest.mark.vcr()
-def test_embeddings_all_the_client_options(default_openai_env, trace_exporter, metrics_reader):
+def test_embeddings_all_the_client_options(default_openai_env, trace_exporter, metrics_reader, instrument):
     client = openai.OpenAI()
 
     response = client.embeddings.create(
@@ -134,7 +134,7 @@ def test_embeddings_all_the_client_options(default_openai_env, trace_exporter, m
 
 @pytest.mark.skipif(OPENAI_VERSION < (1, 13, 4), reason="openai.NOT_GIVEN not available")
 @pytest.mark.vcr()
-def test_embeddings_all_the_client_options_not_given(default_openai_env, trace_exporter, metrics_reader):
+def test_embeddings_all_the_client_options_not_given(default_openai_env, trace_exporter, metrics_reader, instrument):
     client = openai.OpenAI()
 
     response = client.embeddings.create(
@@ -181,7 +181,7 @@ def test_embeddings_all_the_client_options_not_given(default_openai_env, trace_e
 
 
 @pytest.mark.integration
-def test_embeddings_all_the_client_options_integration(trace_exporter, metrics_reader):
+def test_embeddings_all_the_client_options_integration(trace_exporter, metrics_reader, instrument):
     client = get_integration_client()
     model = os.getenv("TEST_EMBEDDINGS_MODEL", TEST_EMBEDDINGS_MODEL)
 
@@ -223,7 +223,7 @@ def test_embeddings_all_the_client_options_integration(trace_exporter, metrics_r
     )
 
 
-def test_embeddings_connection_error(trace_exporter, metrics_reader):
+def test_embeddings_connection_error(trace_exporter, metrics_reader, instrument):
     client = openai.Client(base_url="http://localhost:9999/v5", api_key="text-embedding-3-large", max_retries=1)
 
     with pytest.raises(Exception):
@@ -263,7 +263,7 @@ def test_embeddings_connection_error(trace_exporter, metrics_reader):
 
 @pytest.mark.vcr(cassette_name="test_embeddings.yaml")
 @pytest.mark.asyncio
-async def test_embeddings_async(default_openai_env, trace_exporter, metrics_reader):
+async def test_embeddings_async(default_openai_env, trace_exporter, metrics_reader, instrument):
     client = openai.AsyncOpenAI()
 
     response = await client.embeddings.create(model=TEST_EMBEDDINGS_MODEL, input=[TEST_EMBEDDINGS_INPUT])
@@ -309,7 +309,7 @@ async def test_embeddings_async(default_openai_env, trace_exporter, metrics_read
 
 @pytest.mark.vcr(cassette_name="test_embeddings_all_the_client_options.yaml")
 @pytest.mark.asyncio
-async def test_embeddings_async_all_the_client_options(default_openai_env, trace_exporter, metrics_reader):
+async def test_embeddings_async_all_the_client_options(default_openai_env, trace_exporter, metrics_reader, instrument):
     client = openai.AsyncOpenAI()
 
     response = await client.embeddings.create(
@@ -358,7 +358,7 @@ async def test_embeddings_async_all_the_client_options(default_openai_env, trace
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_embeddings_async_all_the_client_options_integration(trace_exporter, metrics_reader):
+async def test_embeddings_async_all_the_client_options_integration(trace_exporter, metrics_reader, instrument):
     client = get_integration_async_client()
     model = os.getenv("TEST_EMBEDDINGS_MODEL", TEST_EMBEDDINGS_MODEL)
 
@@ -409,7 +409,7 @@ async def test_embeddings_async_all_the_client_options_integration(trace_exporte
 
 
 @pytest.mark.asyncio
-async def test_embeddings_async_connection_error(default_openai_env, trace_exporter, metrics_reader):
+async def test_embeddings_async_connection_error(default_openai_env, trace_exporter, metrics_reader, instrument):
     client = openai.AsyncOpenAI(base_url="http://localhost:9999/v5", api_key="unused", max_retries=1)
 
     with pytest.raises(Exception):
@@ -449,7 +449,7 @@ async def test_embeddings_async_connection_error(default_openai_env, trace_expor
 
 
 @pytest.mark.vcr()
-def test_embeddings_without_model_parameter(default_openai_env, trace_exporter, metrics_reader):
+def test_embeddings_without_model_parameter(default_openai_env, trace_exporter, metrics_reader, instrument):
     client = openai.OpenAI()
 
     with pytest.raises(TypeError, match=re.escape("create() missing 1 required keyword-only argument: 'model'")):
@@ -485,7 +485,7 @@ def test_embeddings_without_model_parameter(default_openai_env, trace_exporter, 
 
 
 @pytest.mark.vcr()
-def test_embeddings_model_not_found(default_openai_env, trace_exporter, metrics_reader):
+def test_embeddings_model_not_found(default_openai_env, trace_exporter, metrics_reader, instrument):
     # force a timeout to don't slow down tests
     client = openai.OpenAI(timeout=1)
 
