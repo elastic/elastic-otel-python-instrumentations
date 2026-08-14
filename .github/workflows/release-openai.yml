@@ -14,14 +14,15 @@ permissions:
 jobs:
   openai-packages:
     permissions:
+      artifact-metadata: write
       attestations: write
-      id-token: write
       contents: read
+      id-token: write
     runs-on: ubuntu-latest
     env:
       PROJECT_DIR: instrumentation/elastic-opentelemetry-instrumentation-openai/
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: pip install build==1.2.1
         working-directory: ${{ env.PROJECT_DIR }}
@@ -30,7 +31,7 @@ jobs:
         working-directory: ${{ env.PROJECT_DIR }}
 
       - name: Upload Packages
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: packages
           path: |
@@ -47,14 +48,14 @@ jobs:
     env:
       DIST_DIR: instrumentation/elastic-opentelemetry-instrumentation-openai/dist/
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: packages
           path: ${{ env.DIST_DIR }}
 
       - name: Upload pypi.org
         if: startsWith(github.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           repository-url: https://upload.pypi.org/legacy/
           packages-dir: ${{ env.DIST_DIR }}
