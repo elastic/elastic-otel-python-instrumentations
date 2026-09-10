@@ -113,6 +113,20 @@ def capture_message_content_instrument(monkeypatch, clear_exporter):
 
 
 @pytest.fixture
+def otel_sdk_disabled_instrument(monkeypatch, clear_exporter):
+    monkeypatch.setenv("OTEL_SDK_DISABLED", "true")
+    instrumentor = OpenAIInstrumentor()
+    instrumentor.instrument(
+        tracer_provider=trace.NoOpTracerProvider(),
+        meter_provider=metrics.NoOpMeterProvider(),
+    )
+
+    yield instrumentor
+
+    instrumentor.uninstrument()
+
+
+@pytest.fixture
 def vcr_cassette_name(request):
     """
     Strips `_async` from the test function name as they use the same data.
